@@ -29,7 +29,7 @@ This project follows a structured approach:
 > **Deadline:** February 12, 2025  
 > **Goal:** Make the website interactive using React and integrate a FastAPI backend.
 
-- [ ] Set up React project structure  
+- [x] Set up React project structure  
 - [ ] Build core React components  
 - [ ] Set up FastAPI backend  
 - [ ] Connect frontend with API  
