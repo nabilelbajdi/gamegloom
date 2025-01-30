@@ -1,6 +1,6 @@
 import React from "react"; // Required for React components
 
-// Navigation Bar Component for desktop and mobile
+// Navigation Bar Component
 const Header = () => {
   return (
     <nav
