@@ -12,7 +12,7 @@ const Hero = () => {
         className="absolute inset-0 w-full h-full object-cover opacity-70"
         aria-label="Background Video"
       >
-        <source src="/assets/videos/elden-ring.mp4" type="video/mp4" />
+        <source src="src/assets/videos/elden-ring.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
@@ -27,7 +27,7 @@ const Hero = () => {
         <p className="text-xl mb-4 --text-gradient">
           Discover, Track, and Share Your Favorite Games
         </p>
-        <button className="btn-hero mt-4">Get Started</button>
+        <button className="btn-hero">Get Started</button>
       </div>
     </section>
   );
