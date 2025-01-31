@@ -1,4 +1,6 @@
 import React from "react"; // Required for React components
+import searchIcon from "../assets/icons/search.svg";
+import globeIcon from "../assets/icons/globe.svg";
 
 // Navigation Bar Component
 const Header = () => {
@@ -37,8 +39,8 @@ const Header = () => {
 
         {/* Right icons + Sign Up button */}
         <div className="hidden md:flex items-center space-x-4">
-          <div className="icon search-icon" aria-hidden="true"></div>
-          <div className="icon globe-icon" aria-hidden="true"></div>
+          <img src={searchIcon} alt="Search" className="icon search-icon" aria-hidden="true"></img>
+          <img src={globeIcon} alt="Globe Icon" className="icon globe-icon" aria-hidden="true"></img>
           <button className="btn-nav" onclick="redirectToLogin()">Sign Up</button>
         </div>
       </div>

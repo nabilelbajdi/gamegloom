@@ -70,11 +70,9 @@
   transform: scale(1.1);
 }
 .search-icon {
-  background-image: url('assets/icons/search.svg');
   cursor: pointer;
 }
 .globe-icon {
-  background-image: url('assets/icons/globe.svg');
   cursor: pointer;
 }
 
