@@ -1,2 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600&family=Quando&display=swap');
+
 @import "tailwindcss";
-@import "./styles/styles.css";
+@import "./styles/styles.css"
