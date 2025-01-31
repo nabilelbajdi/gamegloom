@@ -12,7 +12,7 @@ const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislik
         />
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold --text-gradient">{gameTitle}</h3>
+            <h3 className="text-xl font-semibold text-gradient">{gameTitle}</h3>
             <span className="text-sm font-bold text-gray-400">{platform}</span>
           </div>
           <p className="mt-2 text-gray-300">{reviewText}</p>

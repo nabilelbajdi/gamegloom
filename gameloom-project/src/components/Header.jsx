@@ -1,16 +1,15 @@
-import React from "react"; // Required for React components
+import React from "react";
 import searchIcon from "../assets/icons/search.svg";
 import globeIcon from "../assets/icons/globe.svg";
 
-// Header Component
 const Header = () => {
   return (
     <nav className="bg-gray-950 p-3 fixed w-full z-20" role="navigation" aria-label="Main Navigation">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo */}
         <a href="/" className="text-2xl font-gameloom">
-          <span className="thin">Game</span>
-          <span className="bold">Loom</span>
+          <span className="font-extralight text-[#C8AA6E] hover:text-[#ddb158] underline transition-colors duration-300">Game</span>
+          <span className="font-semibold text-[#a879d7ea] hover:text-[#a065dc] underline transition-colors duration-300">Loom</span>
         </a>
 
         {/* Hamburger Icon (mobile only) */}
