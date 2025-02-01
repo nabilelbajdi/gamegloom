@@ -21,12 +21,8 @@ const Hero = () => {
 
       {/* Hero Text & CTA */}
       <div className="relative z-10 text-center px-4">
-        <h1 className="text-6xl font-bold mb-2 font-heading text-gradient">
-          Track Your Gaming Journey
-        </h1>
-        <p className="text-xl mb-4 text-gradient">
-          Discover, Track, and Share Your Favorite Games
-        </p>
+        <h1 className="mb-2 font-heading text-gradient">Track Your Gaming Journey</h1>
+        <p className="text-xl mb-4 font-body text-gradient">Discover, Track, and Share Your Favorite Games</p>
         <button className="btn-hero">Get Started</button>
       </div>
     </section>
