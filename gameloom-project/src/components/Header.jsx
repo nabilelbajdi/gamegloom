@@ -13,7 +13,7 @@ const Header = () => {
         </a>
 
         {/* Hamburger Icon (mobile only) */}
-        <div className="hamburger md:hidden" onclick="document.getElementById('mobileNav').classList.toggle('open');" aria-label="Toggle Navigation">
+        <div className="hamburger md:hidden" onClick={() => {document.getElementById('mobileNav').classList.toggle('open');}}>
           <span></span>
           <span></span>
           <span></span>
