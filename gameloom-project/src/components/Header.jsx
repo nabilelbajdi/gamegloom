@@ -1,16 +1,17 @@
 import React from "react";
 import searchIcon from "../assets/icons/search.svg";
 import globeIcon from "../assets/icons/globe.svg";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
     <nav className="bg-gray-950 p-3 fixed w-full z-20" role="navigation" aria-label="Main Navigation">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo */}
-        <a href="/" className="text-2xl font-gameloom">
+        <Link to="/" className="text-2xl font-gameloom">
           <span className="font-extralight text-[#C8AA6E] hover:text-[#ddb158] underline transition-colors duration-300">Game</span>
           <span className="font-semibold text-[#a879d7ea] hover:text-[#a065dc] underline transition-colors duration-300">Loom</span>
-        </a>
+        </Link>
 
         {/* Hamburger Icon (mobile only) */}
         <div className="hamburger md:hidden" onClick={() => {document.getElementById('mobileNav').classList.toggle('open');}}>
@@ -21,12 +22,12 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="desktop-menu hidden md:flex text-sm text-transform: uppercase">
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">Home</a>
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">My Games</a>
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">Discover</a>
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">Community</a>
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">News</a>
-          <a href="#" className="nav-link text-gray-300 hover:text-violet-400">More</a>
+          <Link to="/" className="nav-link text-gray-300 hover:text-violet-400">Home</Link>
+          <Link to="/my-games" className="nav-link text-gray-300 hover:text-violet-400">My Games</Link>
+          <Link to="/discover" className="nav-link text-gray-300 hover:text-violet-400">Discover</Link>
+          <Link to="/community" className="nav-link text-gray-300 hover:text-violet-400">Community</Link>
+          <Link to="/news" className="nav-link text-gray-300 hover:text-violet-400">News</Link>
+          <Link to="/more" className="nav-link text-gray-300 hover:text-violet-400">More</Link>
         </div>
 
         {/* Top Right Icons + Sign Up Button */}
@@ -39,12 +40,12 @@ const Header = () => {
 
       {/* Mobile Nav */}
       <div id="mobileNav" className="mobile-nav bg-gray-950 w-full h-auto mt-2 p-4 text-sm">
-        <a href="index.html" className="block nav-link text-gray-300 hover:text-violet-400">Home</a>
-        <a href="my-games.html" className="block nav-link text-gray-300 hover:text-violet-400">My Games</a>
-        <a href="#" className="block nav-link text-gray-300 hover:text-violet-400">Discover</a>
-        <a href="#" className="block nav-link text-gray-300 hover:text-violet-400">Community</a>
-        <a href="#" className="block nav-link text-gray-300 hover:text-violet-400">News</a>
-        <a href="#" className="block nav-link text-gray-300 hover:text-violet-400">More</a>
+        <Link to="/" className="block nav-link text-gray-300 hover:text-violet-400">Home</Link>
+        <Link to="/my-games" className="block nav-link text-gray-300 hover:text-violet-400">My Games</Link>
+        <Link to="/discover" className="block nav-link text-gray-300 hover:text-violet-400">Discover</Link>
+        <Link to="/community" className="block nav-link text-gray-300 hover:text-violet-400">Community</Link>
+        <Link to="/news" className="block nav-link text-gray-300 hover:text-violet-400">News</Link>
+        <Link to="/more" className="block nav-link text-gray-300 hover:text-violet-400">More</Link>
         <div className="flex items-center space-x-4 mt-4">
           <div className="icon search-icon" aria-hidden="true"></div>
           <div className="icon globe-icon" aria-hidden="true"></div>
