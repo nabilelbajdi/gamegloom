@@ -13,6 +13,7 @@ const reviewedGames = [
     date: "Feb 20, 2025",
     likes: 12,
     dislikes: 3,
+    comments: 3,
     coverImage: eldenRingCover,
     userAvatar: userAvatar
   },
@@ -24,6 +25,7 @@ const reviewedGames = [
     date: "Feb 22, 2025",
     likes: 20,
     dislikes: 5,
+    comments: 11,
     coverImage: witcher3Cover,
     userAvatar: userAvatar
   },
@@ -35,6 +37,7 @@ const reviewedGames = [
     date: "Feb 10, 2025",
     likes: 10,
     dislikes: 2,
+    comments: null,
     coverImage: baldurGateCover,
     userAvatar: userAvatar
   },
@@ -46,6 +49,7 @@ const reviewedGames = [
     date: "Feb 15, 2025",
     likes: 15,
     dislikes: 3,
+    comments: 7,
     coverImage: poe2Cover,
     userAvatar: userAvatar
   }

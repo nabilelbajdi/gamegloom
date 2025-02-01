@@ -1,6 +1,6 @@
 import React from "react";
 
-const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislikes, coverImage, userAvatar }) => {
+const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislikes, comments, coverImage, userAvatar }) => {
   return (
     <article className="bg-gray-800 rounded-lg shadow p-4 flex flex-col justify-between">
       {/* Top Section: Cover + Info */}
@@ -32,12 +32,16 @@ const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislik
         <div className="flex items-center gap-4 text-sm text-gray-500">
           <span>{date}</span>
           <div className="flex items-center gap-1">
-            <i className="fas fa-heart text-red-700"></i>
+            <i className="fas fa-thumbs-up text-gray-500"></i>
             <span>{likes}</span>
           </div>
           <div className="flex items-center gap-1">
             <i className="fas fa-thumbs-down text-gray-500"></i>
             <span>{dislikes}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <i className="fas fa-comment text-gray-500"></i>
+            <span>{comments}</span>
           </div>
         </div>
       </div>
