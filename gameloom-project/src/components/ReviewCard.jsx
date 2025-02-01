@@ -8,11 +8,11 @@ const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislik
         <img
           src={coverImage}
           alt={`${gameTitle} cover`}
-          className="w-24 h-32 object-cover rounded-m"
+          className="w-24 h-32 object-cover rounded-md hover:scale-105 transition-all duration-300 cursor-pointer"
         />
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gradient">{gameTitle}</h3>
+            <h3 className="cursor-pointer text-xl font-semibold text-gradient">{gameTitle}</h3> 
             <span className="text-sm font-bold text-gray-400">{platform}</span>
           </div>
           <p className="mt-2 text-gray-300">{reviewText}</p>
@@ -32,11 +32,11 @@ const ReviewCard = ({ gameTitle, platform, reviewText, user, date, likes, dislik
         <div className="flex items-center gap-4 text-sm text-gray-500">
           <span>{date}</span>
           <div className="flex items-center gap-1">
-            <i className="fa fa-heart text-red-700"></i>
+            <i className="fas fa-heart text-red-700"></i>
             <span>{likes}</span>
           </div>
           <div className="flex items-center gap-1">
-            <i className="fa fa-thumbs-down text-gray-500"></i>
+            <i className="fas fa-thumbs-down text-gray-500"></i>
             <span>{dislikes}</span>
           </div>
         </div>
