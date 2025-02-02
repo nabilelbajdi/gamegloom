@@ -45,7 +45,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Navigation (Dropdown) */}
-      <div className={`absolute top-16 left-0 right-0 bg-navbar-bg border-t border-navbar-border transition-all duration-300 ${isOpen ? "block opacity-100 py-4" : "hidden opacity-0"}`}>
+      <div className={`md:hidden bg-navbar-bg border-t border-navbar-border transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>
         <div className="flex flex-col space-y-4 p-4">
           {navItems.map((item, index) => (
             <Link key={index} to={`/${item.toLowerCase().replace(" ", "-")}`} className="nav-link" onClick={() => setIsOpen(false)}>
