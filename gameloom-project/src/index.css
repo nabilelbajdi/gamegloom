@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* 🎨 Theme Configuration */
 @theme {
   /* Colors */
   --color-primary: #C8AA6E; /* Gold */
@@ -19,7 +18,6 @@
   --font-heading: "Poppins", sans-serif;
 }
 
-/* 🌍 Base Styles */
 @layer base {
   body {
     @apply bg-[var(--color-dark)] text-[var(--color-light)] antialiased;
@@ -40,9 +38,8 @@
   }
 }
 
-/* 🎨 Component Styles */
 @layer components {
-  /* 🔹 Navbar */
+  /* Navbar */
   .nav-link {
     @apply relative px-4 py-3 uppercase text-sm transition-all duration-300;
     color: var(--navbar-text);
@@ -64,7 +61,7 @@
     width: 100%;
   }
 
-  /* 🔹 Navbar Icons */
+  /* Navbar Icons */
   .icon {
     @apply inline-block w-4 h-4 bg-cover transition-transform duration-200 cursor-pointer;
     color: var(--navbar-text);
@@ -74,7 +71,7 @@
     @apply scale-110;
   }
 
-  /* 🔹 Buttons */
+  /* Buttons */
   .btn-nav {
     @apply px-6 py-1.5 text-dark font-semibold rounded-lg transition-all duration-300;
     background-color: var(--color-primary);
@@ -95,20 +92,19 @@
     cursor: pointer;
   }
 
-  /* 🔹 Hero Section */
+  /* Hero Section */
   .hero-overlay {
     @apply absolute inset-0 bg-black opacity-50;
   }
 
-  /* 🔹 Sections */
+  /* Sections */
   .section {
     @apply container mx-auto px-4 py-16;
   }
 }
 
-/* 📏 Utility Classes */
 @layer utilities {
-  /* 🔹 Flex & Grid */
+  /* Flex & Grid */
   .flex-center {
     @apply flex items-center justify-center;
   }
@@ -117,12 +113,12 @@
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
   }
 
-  /* 🔹 Fullscreen Height */
+  /* Fullscreen Height */
   .full-screen {
     @apply min-h-screen flex items-center justify-center;
   }
 
-  /* 🔹 Blurred Navbar Background */
+  /* Blurred Navbar Background */
   .navbar-blur {
     backdrop-filter: blur(12px);
     background-color: rgba(10, 14, 23, 0.7);
