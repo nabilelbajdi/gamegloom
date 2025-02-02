@@ -1,30 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600&family=Quando&display=swap');
 @import "tailwindcss";
 
-/* FONTS */
-.font-gameloom {
-    font-family: "Quando", "Poppins", serif;
-  }
-  .font-heading {
-    font-family: "Poppins", serif;
-    font-weight: 600;
-    font-size: 2.5rem;
-    line-height: normal;
-  }
-  .font-body {
-    font-family: "Poppins", "Quando", serif;
-    font-weight: 400;
+/* Theme Configuration */
+@theme {
+  /* Colors */
+  --color-gaming-primary: #0A0E17;
+  --color-gaming-secondary: #00F0FF;
+  --color-gaming-accent: #8B5CF6;
+  --color-gaming-dark: #050709;
+  --color-gaming-light: #E2E8F0;
+  --color-navbar-bg: rgba(10, 14, 23, 0.8);
+  --color-navbar-border: rgba(255, 255, 255, 0.1);
+  --color-navbar-text: #E2E8F0;
+  --color-navbar-hover: #8B5CF6;
+
+  /* Typography */
+  --font-body: "Poppins", sans-serif;
+  --font-heading: "Quando", serif;
+  --font-navbar: "Poppins", sans-serif;
+
+  /* Spacing */
+  --icon-spacing: 1.5rem;
+}
+
+/* Base Styles */
+@layer base {
+  body {
+    @apply bg-gaming-primary text-gaming-light antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-body);
   }
   
-  /* TEXT & LINKS */
+  nav {
+    font-family: var(--font-navbar);
+  }
+}
+
+/* Component Styles */
+@layer components {
+  /* Buttons */
+  .btn-nav {
+    @apply px-6 py-2 text-white rounded-lg transition-all duration-300;
+    background: linear-gradient(to right, #6e48aa, #9d50bb);
+  }
+  .btn-nav:hover {
+    background-position: right center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .btn-hero {
+    @apply bg-yellow-500 text-black px-6 py-3 text-lg font-semibold uppercase rounded-lg border-2 border-transparent transition-all duration-300;
+  }
+  .btn-hero:hover {
+    @apply bg-yellow-400 cursor-pointer;
+  }
+
+  /* Navigation Links */
   .nav-link {
-    position: relative;
-    padding: 18px;
+    @apply relative px-4 py-3 text-navbar-text transition-all duration-300;
   }
   .nav-link:hover {
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    color: #C8AA6E;
+    @apply bg-gray-800 rounded-lg text-navbar-hover;
   }
   .nav-link:hover::after {
     content: '';
@@ -36,109 +72,47 @@
     background-color: #C8AA6E;
     border-radius: 2px;
   }
+
+  /* Text Gradient */
   .text-gradient {
     background: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  
-  /* ICONS */
+
+  /* Icons */
   .icon {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    background-size: cover;
-    transition: transform 0.3s ease-in-out;
+    @apply inline-block w-6 h-6 bg-cover transition-transform duration-300;
   }
   .icon:hover {
-    transform: scale(1.1);
+    @apply scale-110;
   }
-  .search-icon {
-    cursor: pointer;
-  }
-  .globe-icon {
-    cursor: pointer;
-  }
-  
-  /* BUTTONS */
-  .btn-nav {
-    margin: 10px;
-    padding: 6px 18px;
-    text-align: center;
-    transition: all 0.3s ease;
-    background-size: 200% auto;
-    color: white;
-    border-radius: 8px;
-    display: inline-block;
-    background-image: linear-gradient(to right, #6e48aa, #9d50bb);
-  }
-  .btn-nav:hover {
-    background-position: right center;
-    color: #ffffff;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .btn-hero {
-    background-color: #c8aa6e;
-    color: #0c1a36;
-    padding: 15px 30px;
-    font-family: "Poppins", serif;
-    font-weight: 600;
-    font-size: 18px;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    border-radius: 8px;
-  }
-  .btn-hero:hover {
-    background-color: #e2c07b;
-    cursor: pointer;
-  }
-  
-  .btn-body {
-    margin-top: 15px;
-    padding: 6px 18px;
-    text-align: center;
-    transition: all 0.3s ease;
-    background-size: 200% auto;
-    color: white;
-    border-radius: 8px;
-    display: inline-block;
-    background-image: linear-gradient(to right, #6e48aa, #9d50bb);
-  }
-  
-  .btn-body:hover {
-    background-position: right center;
-    cursor: pointer;
-  }
-  
-  /* MOBILE NAV TOGGLE */
+
+  /* Mobile Nav */
   .mobile-nav {
-    display: none;
+    @apply hidden;
   }
   .mobile-nav.open {
-    display: block;
+    @apply block;
   }
+}
+
+/* Utility Classes (Handled by Tailwind utility classes) */
+/* @layer utilities {
   .hamburger {
-    display: none;
-    flex-direction: column;
-    cursor: pointer;
+    @apply hidden flex-col cursor-pointer;
   }
   .hamburger span {
-    height: 3px;
-    width: 25px;
-    background: #ddd;
-    margin-bottom: 4px;
-    border-radius: 5px;
+    @apply h-1 w-6 bg-gray-300 mb-1 rounded-lg;
   }
-  
-  /* MEDIA QUERIES */
+
   @media (max-width: 768px) {
     .hamburger {
-      display: flex;
+      @apply flex;
     }
     .desktop-menu {
-      display: none;
+      @apply hidden;
     }
   }
+} */
