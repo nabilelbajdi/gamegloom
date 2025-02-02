@@ -1,118 +1,131 @@
 @import "tailwindcss";
 
-/* Theme Configuration */
+/* 🎨 Theme Configuration */
 @theme {
   /* Colors */
-  --color-gaming-primary: #0A0E17;
-  --color-gaming-secondary: #00F0FF;
-  --color-gaming-accent: #8B5CF6;
-  --color-gaming-dark: #050709;
-  --color-gaming-light: #E2E8F0;
-  --color-navbar-bg: rgba(10, 14, 23, 0.8);
-  --color-navbar-border: rgba(255, 255, 255, 0.1);
-  --color-navbar-text: #E2E8F0;
-  --color-navbar-hover: #8B5CF6;
+  --color-primary: #C8AA6E; /* Gold */
+  --color-secondary: #7A5C95; /* Soft Purple */
+  --color-dark: #0A0E17;
+  --color-light: #E2E8F0;
+  
+  /* Navbar */ 
+  --navbar-bg: rgba(10, 14, 23, 0.8);
+  --navbar-border: #C8AA6E;
+  --navbar-text: #E2E8F0;
+  --navbar-hover: #C8AA6E;
 
   /* Typography */
   --font-body: "Poppins", sans-serif;
-  --font-heading: "Quando", serif;
-  --font-navbar: "Poppins", sans-serif;
-
-  /* Spacing */
-  --icon-spacing: 1.5rem;
+  --font-heading: "Poppins", sans-serif;
 }
 
-/* Base Styles */
+/* 🌍 Base Styles */
 @layer base {
   body {
-    @apply bg-gaming-primary text-gaming-light antialiased;
+    @apply bg-[var(--color-dark)] text-[var(--color-light)] antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-family: var(--font-body);
   }
-  
-  nav {
-    font-family: var(--font-navbar);
-  }
-}
 
-/* Component Styles */
-@layer components {
-  /* Buttons */
-  .btn-nav {
-    @apply px-6 py-2 text-white rounded-lg transition-all duration-300;
-    background: linear-gradient(to right, #6e48aa, #9d50bb);
-  }
-  .btn-nav:hover {
-    background-position: right center;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .btn-hero {
-    @apply bg-yellow-500 text-black px-6 py-3 text-lg font-semibold uppercase rounded-lg border-2 border-transparent transition-all duration-300;
-  }
-  .btn-hero:hover {
-    @apply bg-yellow-400 cursor-pointer;
-  }
-
-  /* Navigation Links */
-  .nav-link {
-    @apply relative px-4 py-3 text-navbar-text transition-all duration-300;
-  }
-  .nav-link:hover {
-    @apply bg-gray-800 rounded-lg text-navbar-hover;
-  }
-  .nav-link:hover::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -2px;
-    height: 2px;
-    background-color: #C8AA6E;
-    border-radius: 2px;
-  }
-
-  /* Text Gradient */
-  .text-gradient {
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
     background: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  /* Icons */
-  .icon {
-    @apply inline-block w-6 h-6 bg-cover transition-transform duration-300;
-  }
-  .icon:hover {
-    @apply scale-110;
-  }
-
-  /* Mobile Nav */
-  .mobile-nav {
-    @apply hidden;
-  }
-  .mobile-nav.open {
-    @apply block;
+  nav {
+    font-family: var(--font-body);
   }
 }
 
-/* Utility Classes (Handled by Tailwind utility classes) */
-/* @layer utilities {
-  .hamburger {
-    @apply hidden flex-col cursor-pointer;
+/* 🎨 Component Styles */
+@layer components {
+  /* 🔹 Navbar */
+  .nav-link {
+    @apply relative px-4 py-3 uppercase text-sm transition-all duration-300;
+    color: var(--navbar-text);
   }
-  .hamburger span {
-    @apply h-1 w-6 bg-gray-300 mb-1 rounded-lg;
+  .nav-link:hover {
+    color: var(--navbar-hover);
   }
 
-  @media (max-width: 768px) {
-    .hamburger {
-      @apply flex;
-    }
-    .desktop-menu {
-      @apply hidden;
-    }
+  /* Hover Underline Effect */
+  .nav-link::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 0;
+    background-color: var(--navbar-hover);
+    transition: width 0.3s ease-in-out;
   }
-} */
+  .nav-link:hover::after {
+    width: 100%;
+  }
+
+  /* 🔹 Navbar Icons */
+  .icon {
+    @apply inline-block w-4 h-4 bg-cover transition-transform duration-200 cursor-pointer;
+    color: var(--navbar-text);
+  }
+  .icon:hover {
+    color: var(--navbar-hover);
+    @apply scale-110;
+  }
+
+  /* 🔹 Buttons */
+  .btn-nav {
+    @apply px-6 py-1.5 text-dark font-semibold rounded-lg transition-all duration-300;
+    background-color: var(--color-primary);
+  }
+  .btn-nav:hover {
+    background-color: var(--color-secondary);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .btn-hero {
+    @apply px-6 py-3 text-lg font-semibold uppercase rounded-lg border-2 border-transparent transition-all duration-300;
+    background-color: var(--color-primary);
+    color: var(--color-dark);
+  }
+  .btn-hero:hover {
+    background-color: var(--color-secondary);
+    cursor: pointer;
+  }
+
+  /* 🔹 Hero Section */
+  .hero-overlay {
+    @apply absolute inset-0 bg-black opacity-50;
+  }
+
+  /* 🔹 Sections */
+  .section {
+    @apply container mx-auto px-4 py-16;
+  }
+}
+
+/* 📏 Utility Classes */
+@layer utilities {
+  /* 🔹 Flex & Grid */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .grid-layout {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  }
+
+  /* 🔹 Fullscreen Height */
+  .full-screen {
+    @apply min-h-screen flex items-center justify-center;
+  }
+
+  /* 🔹 Blurred Navbar Background */
+  .navbar-blur {
+    backdrop-filter: blur(12px);
+    background-color: rgba(10, 14, 23, 0.7);
+    border-bottom: 2px solid rgba(200, 170, 110, 0.1);
+  }
+}
