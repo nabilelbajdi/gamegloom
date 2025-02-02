@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "./UI/Button";
 import Icon from "./UI/Icon";
@@ -40,7 +39,7 @@ export default function Navbar() {
 
         {/* Mobile Menu Button */}
         <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X className="icon" /> : <Menu className="icon" />}
+          {isOpen ? <Icon name="close" className="icon" /> : <Icon name="menu" className="icon" />}
         </button>
       </div>
 
