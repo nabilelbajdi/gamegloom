@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "./UI/Button";
 import Icon from "./UI/Icon";
+import Logo from "./UI/Logo"; // ✅ Correct import for the component
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,9 +15,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
         
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-gaming-secondary to-gaming-accent bg-clip-text text-transparent">
-          GameLoom
-        </Link>
+        <Logo className="h-40 md:h-40 lg:h-40 mt-3 transition-transform duration-300 hover:scale-105 " />
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-2">
@@ -32,8 +31,6 @@ export default function Navbar() {
           {icons.map((icon, index) => (
             <Icon key={index} name={icon} className="icon" />
           ))}
-
-          {/* Sign Up Button */}
           <Button to="/signup" label="Sign Up" variant="nav" />
         </div>
 
@@ -43,7 +40,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Navigation (Dropdown) */}
+      {/* Mobile Navigation */}
       <div className={`md:hidden bg-navbar-bg border-t border-navbar-border transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>
         <div className="flex flex-col space-y-4 p-4">
           {navItems.map((item, index) => (
@@ -51,8 +48,6 @@ export default function Navbar() {
               {item}
             </Link>
           ))}
-
-          {/* Sign Up Button in Mobile Menu */}
           <Button to="/signup" label="Sign Up" variant="nav" onClick={() => setIsOpen(false)} />
         </div>
       </div>
