@@ -100,7 +100,7 @@
     background-color: var(--color-primary);
   }
   .btn-nav:hover {
-    background-color: var(--color-secondary);
+    background-color: #efcb83;
     text-decoration: none;
     cursor: pointer;
   }
@@ -111,7 +111,7 @@
     color: var(--color-dark);
   }
   .btn-hero:hover {
-    background-color: var(--color-secondary);
+    background-color: #efcb83;
     cursor: pointer;
   }
 
@@ -121,17 +121,11 @@
   }
 
   .hero-title {
-    background: var(--text-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    @apply font-semibold;
   }
 
   .hero-subtitle {
-    background: var(--text-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    @apply text-light opacity-90;
   }
 
   /* Sections */
