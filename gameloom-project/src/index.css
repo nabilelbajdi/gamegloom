@@ -119,6 +119,45 @@
   .section {
     @apply container mx-auto px-4 py-16;
   }
+
+  /* Footer */
+  .footer-link {
+    @apply text-sm text-gray-400 transition-all duration-300;
+  }
+  .footer-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  .footer-icon {
+    @apply w-6 h-6 text-gray-400 transition-all duration-300;
+  }
+  .footer-icon:hover {
+    color: var(--color-primary);
+    transform: scale(1.1);
+  }
+
+  .social-link {
+    @apply p-2 rounded-lg bg-gray-900 transition-all duration-300;
+  }
+  .social-link:hover {
+    background-color: rgba(200, 170, 110, 0.5);
+}
+
+  /* Newsletter Input */
+  input::placeholder {
+    color: var(--color-light);
+    opacity: 0.7;
+  }
+
+  /* Subscribe Button */
+  .btn-subscribe {
+    @apply px-4 text-light font-semibold transition-all text-sm;
+  }
+  .btn-subscribe:hover {
+    color: var(--color-primary);
+  }
+  
 }
 
 @layer utilities {
