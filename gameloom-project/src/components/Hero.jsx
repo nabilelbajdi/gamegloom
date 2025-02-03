@@ -3,8 +3,8 @@ import Button from "./UI/Button";
 
 const Hero = () => {
   const stats = [
-    { label: "Games Tracked", value: "10,000+" },
-    { label: "Active Users", value: "500,000+" },
+    { label: "Games Tracked", value: "10.000+" },
+    { label: "Active Users", value: "500.000+" },
     { label: "Reviews Posted", value: "1M+" },
   ];
 
@@ -16,7 +16,7 @@ const Hero = () => {
         playsInline
         loop
         muted
-        className="absolute inset-0 w-full h-full object-cover opacity-70"
+        className="absolute inset-0 w-full h-full object-cover opacity-80 blur-[3px]"
         aria-label="Background Video"
       >
         <source src="/videos/hero-video-dark.mp4" type="video/mp4" />
@@ -34,7 +34,7 @@ const Hero = () => {
 
         {/* Call-to-Action */}
         <div className="mt-10">
-          <Button to="/signup" label="Get Started" variant="hero" />
+          <Button to="/signup" label="Explore Games" variant="hero" />
         </div>
       </div>
       
@@ -51,7 +51,7 @@ const Hero = () => {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-smooth">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-6 w-6 text-[var(--color-light)]"

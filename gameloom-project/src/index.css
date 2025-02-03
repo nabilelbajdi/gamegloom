@@ -109,10 +109,12 @@
     @apply px-8 py-4 text-lg font-semibold uppercase rounded-lg transition-all duration-300;
     background-color: var(--color-primary);
     color: var(--color-dark);
+    box-shadow: 0px 0px 8px rgba(200, 170, 110, 0.3);
   }
   .btn-hero:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 15px rgba(200, 170, 110, 0.5);
     background-color: #efcb83;
-    cursor: pointer;
   }
 
   /* Hero Section */
@@ -173,6 +175,20 @@
   
   .logo {
     height: var(--logo-height, 3rem);
+  }
+
+  /* Smooth Scroll Animation */
+  @keyframes bounceSmooth {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(6px);
+    }
+  }
+  
+  .animate-bounce-smooth {
+    animation: bounceSmooth 1.2s infinite ease-in-out;
   }
 }
 
