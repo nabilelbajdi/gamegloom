@@ -6,6 +6,7 @@
   --color-secondary: #7A5C95; /* Soft Purple */
   --color-dark: #0A0E17;
   --color-light: #E2E8F0;
+  --text-gradient: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
   
   /* Navbar */ 
   --navbar-bg: rgba(10, 14, 23, 0.8);
@@ -51,14 +52,17 @@
   /* Hover Underline Effect */
   .nav-link::after {
     content: '';
-    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
     height: 2px;
     width: 0;
     background-color: var(--navbar-hover);
-    transition: width 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
   }
   .nav-link:hover::after {
     width: 100%;
+    left: 0;
   }
 
   /* Navbar Icons */
@@ -83,7 +87,7 @@
   }
 
   .btn-hero {
-    @apply px-6 py-3 text-lg font-semibold uppercase rounded-lg border-2 border-transparent transition-all duration-300;
+    @apply px-8 py-4 text-lg font-semibold uppercase rounded-lg transition-all duration-300;
     background-color: var(--color-primary);
     color: var(--color-dark);
   }
@@ -95,6 +99,20 @@
   /* Hero Section */
   .hero-overlay {
     @apply absolute inset-0 bg-black opacity-50;
+  }
+
+  .hero-title {
+    background: var(--text-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-subtitle {
+    background: var(--text-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   /* Sections */
@@ -120,8 +138,25 @@
 
   /* Blurred Navbar Background */
   .navbar-blur {
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
     background-color: rgba(10, 14, 23, 0.7);
     border-bottom: 2px solid rgba(200, 170, 110, 0.1);
+  }
+
+  .fade-in {
+    animation: fadeIn 1s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+
+    }
   }
 }
