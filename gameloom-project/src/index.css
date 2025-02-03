@@ -40,6 +40,25 @@
 }
 
 @layer components {
+
+  .logo {
+    object-fit: contain;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+
+  /* Desktop size */
+  @media (min-width: 768px) {
+    .logo {
+      height: var(--logo-size-desktop);
+    }
+  }
+
+  /* Hover effects */
+  .logo:hover {
+    transform: scale(var(--logo-hover-scale));
+    opacity: 0.9; /* Slight fade on hover */
+  }
+    
   /* Navbar */
   .nav-link {
     @apply relative px-4 py-3 uppercase text-sm transition-all duration-300;
@@ -158,6 +177,9 @@
     color: var(--color-primary);
   }
   
+  .logo {
+    height: var(--logo-height, 3rem);
+  }
 }
 
 @layer utilities {
