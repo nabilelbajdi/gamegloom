@@ -8,7 +8,7 @@ const GameCard = ({ coverImage, title, genre, rating }) => {
       <img
         src={coverImage}
         alt={title} 
-        className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-102"
+        className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-102"
       />
 
       {/* Dark Overlay on Hover */}
