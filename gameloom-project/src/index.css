@@ -41,6 +41,25 @@
 
 @layer components {
 
+  /* Featured Game Card */
+  .game-card {
+    @apply bg-gray-800 rounded-lg overflow-hidden hover:shadow-lg cursor-pointer;
+  }
+
+  /* Dark Overlay on Hover */
+  .game-overlay {
+    @apply absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-300;
+  }
+
+  .group:hover .game-overlay {
+    @apply opacity-40 transition-opacity duration-300;
+  }
+
+  /* Game Info Section */
+  .game-info {
+    @apply absolute bottom-0 left-0 right-0 p-3 space-y-2 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent;
+  }
+
   .logo {
     object-fit: contain;
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
