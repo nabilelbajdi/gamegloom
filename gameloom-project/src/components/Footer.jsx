@@ -5,8 +5,8 @@ import Button from "./UI/Button";
 
 const Footer = () => {
   return (
-    <footer className="bg-[var(--color-dark)] text-gray-400 py-10 px-6 border-t border-[var(--color-primary)]">
-      <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 text-center md:text-left justify-items-center">
+    <footer className="container mx-auto my-6 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent">
+      <div className="container mx-auto px-4 md:px-20 py-8 md:py-10 grid grid-cols-1 md:grid-cols-4 gap-10 text-center md:text-left justify-items-center">
         
         {/* Brand & About */}
         <div>
