@@ -48,11 +48,11 @@
 
   /* Dark Overlay on Hover */
   .game-overlay {
-    @apply absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-300;
+    @apply absolute inset-0 bg-black opacity-15 group-hover:opacity-5 transition-opacity duration-300;
   }
 
-  .group:hover .game-overlay {
-    @apply opacity-40 transition-opacity duration-300;
+  .group:hover {
+    box-shadow: 0px 10px 20px 1px rgba(200, 170, 110, 0.3); /* Soft Golden Glow on bottom */
   }
 
   /* Game Info Section */
