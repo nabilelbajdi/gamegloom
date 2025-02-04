@@ -3,9 +3,9 @@ import Button from "./UI/Button";
 
 const Hero = () => {
   const stats = [
-    { label: "Games Tracked", value: "10.000+" },
-    { label: "Active Users", value: "500.000+" },
-    { label: "Reviews Posted", value: "1M+" },
+    { label: "Games Tracked", value: "1M+" },
+    { label: "Active Users", value: "500.00+" },
+    { label: "Reviews Posted", value: "200.00+" },
   ];
 
   return (
