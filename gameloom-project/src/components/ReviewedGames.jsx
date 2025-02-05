@@ -1,17 +1,21 @@
 import React from "react";
 import ReviewCard from "./ReviewCard";
 import reviewedGames from "../data/reviewedGames";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import { ChevronRight } from "lucide-react";
 
 const ReviewedGames = () => {
   return (
-    <section className="container mx-auto px-4 md:px-20 py-8 md:py-10">
-      <div className="flex flex-col">
-        <h2 className="text-2xl font-bold font-heading text-gradient">Recently Reviewed</h2>
-        <p className="text-xl text-gray-400 mb-8">What our community is talking about.</p>
+    <section className="container mx-auto px-4 md:px-20 py-12">
+      {/* Section Title */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-light">Recently Reviewed</h2>
+        <button className="text-sm flex items-center hover:text-primary transition-colors cursor-pointer hover:underline">
+          View All <ChevronRight className="ml-1 w-4 h-4" />
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Vertical Timeline Layout */}
+      <div className="space-y-3 border-l-2 pl-6 custom-border-gradient">
         {reviewedGames.map((review, index) => (
           <ReviewCard key={index} {...review} />
         ))}
