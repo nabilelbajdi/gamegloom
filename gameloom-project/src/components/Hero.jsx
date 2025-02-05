@@ -42,7 +42,7 @@ const Hero = () => {
       <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-8">
         {stats.map((stat, index) => (
           <div key={index} className="text-center">
-            <span className="text-3xl font-bold text-[var(--color-primary)]">
+            <span className="text-3xl font-bold text-primary">
               {stat.value}
             </span>
             <p className="text-sm text-gray-300">{stat.label}</p>
@@ -54,7 +54,7 @@ const Hero = () => {
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-smooth">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-[var(--color-light)]"
+          className="h-6 w-6 text-light"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
