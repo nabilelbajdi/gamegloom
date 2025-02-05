@@ -233,6 +233,10 @@
     border-bottom: 2px solid rgba(200, 170, 110, 0.1);
   }
 
+  .custom-border-gradient {
+    border-image: linear-gradient(to bottom, transparent, var(--color-primary), transparent) 1;
+  }
+
   .fade-in {
     animation: fadeIn 1s ease-in-out;
   }
