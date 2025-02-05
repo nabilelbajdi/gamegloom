@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ThumbsUp, MessageCircle, Calendar, UserPlus, UserX } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ReviewCard = ({ 
   gameTitle, 
@@ -18,6 +19,7 @@ const ReviewCard = ({
   const [hasLiked, setHasLiked] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <article className="flex gap-6 p-6 border-l-6 border-gray-700 bg-gray-800 rounded-lg shadow-lg">
@@ -49,7 +51,12 @@ const ReviewCard = ({
 
       {/* Cover Art Section */}
       <div className="w-34 flex-shrink-0">
-        <img src={coverImage} alt={`${gameTitle} cover`} className="game-card relative group w-full h-48 object-cover transition-transform duration-300 group-hover:scale-102" />
+        <img 
+          src={coverImage} 
+          alt={`${gameTitle} cover`} 
+          className="game-card relative group w-full h-48 object-cover transition-transform duration-300 group-hover:scale-102 cursor-pointer"
+          onClick={() => navigate(`/game/${gameTitle}`)}
+        />
       </div>
 
       {/* Review Content */}

@@ -1,7 +1,7 @@
 import React from "react";
 
-const Community = () => {
-  return <h1 className="text-3xl text-white">Community Page</h1>;
+const CommunityPage = () => {
+  return <h1 className="flex justify-center items-center h-screen text-3xl text-white">Community Page</h1>;
 };
 
-export default Community;
+export default CommunityPage;

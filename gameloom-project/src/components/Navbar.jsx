@@ -2,12 +2,20 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "./UI/Button";
 import Icon from "./UI/Icon";
-import Logo from "./UI/Logo"; // ✅ Correct import for the component
+import Logo from "./UI/Logo";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const navItems = ["Home", "My Games", "Discover", "Community", "News", "More"];
+  const navItems = [
+    { name: "Home", path: "/" },
+    { name: "My Library", path: "/library" },
+    { name: "Discover", path: "/discover" },
+    { name: "Community", path: "/community" },
+    { name: "Articles", path: "/articles" },
+    { name: "Stats & Insights", path: "/stats" },
+  ];
+  
   const icons = ["search", "bell", "user"];
 
   return (
@@ -20,8 +28,8 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-2">
           {navItems.map((item, index) => (
-            <Link key={index} to={`/${item.toLowerCase().replace(" ", "-")}`} className="nav-link">
-              {item}
+            <Link key={index} to={item.path} className="nav-link">
+              {item.name}
             </Link>
           ))}
         </div>
@@ -44,8 +52,8 @@ export default function Navbar() {
       <div className={`md:hidden bg-navbar-bg border-t border-navbar-border transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>
         <div className="flex flex-col space-y-4 p-4">
           {navItems.map((item, index) => (
-            <Link key={index} to={`/${item.toLowerCase().replace(" ", "-")}`} className="nav-link" onClick={() => setIsOpen(false)}>
-              {item}
+            <Link key={index} to={item.path} className="nav-link" onClick={() => setIsOpen(false)}>
+              {item.name}
             </Link>
           ))}
           <Button to="/signup" label="Sign Up" variant="nav" onClick={() => setIsOpen(false)} />

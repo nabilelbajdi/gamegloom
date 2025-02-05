@@ -1,25 +1,32 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
-import Home from "./pages/HomePage";
-import MyGames from "./pages/MyGamesPage";
-import Discover from "./pages/DiscoverPage";
-import Community from "./pages/CommunityPage";
-import GameDetails from "./pages/GameDetailsPage";
-import NotFound from "./pages/NotFoundPage";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import HomePage from "./pages/HomePage";
+import MyLibraryPage from "./pages/MyLibraryPage";
+import DiscoverPage from "./pages/DiscoverPage";
+import CommunityPage from "./pages/CommunityPage";
+import StatsPage from "./pages/StatsPage";
+import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ArticlesPage from "./pages/ArticlesPage";
+import SignUpPage from "./pages/SignUpPage";
+import GamePage from "./pages/GamePage";
 
 const App = () => {
   return (
     <Router>
+      <Navbar />
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="my-games" element={<MyGames />} />
-          <Route path="discover" element={<Discover />} />
-          <Route path="community" element={<Community />} />
-          <Route path="game/:id" element={<GameDetails />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/library" element={<MyLibraryPage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/stats" element={<StatsPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/articles" element={<ArticlesPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/game/:title" element={<GamePage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

@@ -1,7 +1,7 @@
 import React from "react";
 
-const Discover = () => {
-  return <h1 className="flex text-3xl text-white ">Discover Page</h1>;
+const DiscoverPage = () => {
+  return <h1 className="flex justify-center items-center h-screen text-3xl text-white">Discover Page</h1>;
 };
 
-export default Discover;
+export default DiscoverPage;

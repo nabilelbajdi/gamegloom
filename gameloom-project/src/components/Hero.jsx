@@ -34,7 +34,7 @@ const Hero = () => {
 
         {/* Call-to-Action */}
         <div className="mt-10">
-          <Button to="/signup" label="Explore Games" variant="hero" />
+          <Button to="/discover" label="Explore Games" variant="hero" />
         </div>
       </div>
       

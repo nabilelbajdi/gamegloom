@@ -1,6 +1,6 @@
 import React from "react";
 
-const NotFound = () => {
+const NotFoundPage = () => {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-120px)] text-center">
         <div>
@@ -11,4 +11,4 @@ const NotFound = () => {
     );
   };
 
-export default NotFound;
+export default NotFoundPage;

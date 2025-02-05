@@ -6,7 +6,7 @@ import JoinCommunity from "../components/JoinCommunity";
 import TrendingGames from "../components/TrendingGames";
 import NewGames from "../components/NewGames";
 
-const Home = () => {
+const HomePage = () => {
   return (
     <>
       <Hero />
@@ -19,4 +19,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default HomePage;
