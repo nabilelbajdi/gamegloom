@@ -1,0 +1,77 @@
+.
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── project-structure.txt
+├── public
+│   ├── images
+│   │   └── logo.svg
+│   └── videos
+│       ├── hero-video-dark.mp4
+│       └── hero-video-light.mp4
+├── src
+│   ├── App.jsx
+│   ├── assets
+│   │   ├── icons
+│   │   │   ├── favicon.png
+│   │   │   ├── globe.svg
+│   │   │   └── search.svg
+│   │   └── images
+│   │       ├── avatars
+│   │       │   ├── diablo-avatar.jpg
+│   │       │   ├── raven.jpeg
+│   │       │   ├── tyrande.png
+│   │       │   └── winton.png
+│   │       └── game-covers
+│   │           ├── baldurs-gate-3.png
+│   │           ├── cyberpunk2077.jpg
+│   │           ├── elden-ring.jpg
+│   │           ├── gta6.png
+│   │           ├── last-of-us-2.png
+│   │           ├── marvel-rivals.jpg
+│   │           ├── overwatch.jpg
+│   │           ├── poe2.jpg
+│   │           ├── resident-evil-4.jpg
+│   │           └── witcher3.jpg
+│   ├── components
+│   │   ├── UI
+│   │   │   ├── Button.jsx
+│   │   │   ├── Icon.jsx
+│   │   │   └── Logo.jsx
+│   │   ├── game
+│   │   │   ├── GameCard.jsx
+│   │   │   └── ReviewCard.jsx
+│   │   ├── home
+│   │   │   ├── FeaturedGames.jsx
+│   │   │   ├── Hero.jsx
+│   │   │   ├── JoinCommunity.jsx
+│   │   │   ├── NewGames.jsx
+│   │   │   ├── ReviewedGames.jsx
+│   │   │   └── TrendingGames.jsx
+│   │   └── layout
+│   │       ├── Footer.jsx
+│   │       ├── Layout.jsx
+│   │       └── Navbar.jsx
+│   ├── constants
+│   │   ├── featuredGames.js
+│   │   ├── newGames.js
+│   │   ├── reviewedGames.js
+│   │   └── trendingGames.js
+│   ├── index.css
+│   ├── main.jsx
+│   └── pages
+│       ├── ArticlesPage.jsx
+│       ├── CommunityPage.jsx
+│       ├── DiscoverPage.jsx
+│       ├── GamePage.jsx
+│       ├── HomePage.jsx
+│       ├── LoginPage.jsx
+│       ├── MyLibraryPage.jsx
+│       ├── NotFoundPage.jsx
+│       ├── SignUpPage.jsx
+│       └── StatsPage.jsx
+└── vite.config.js
+
+17 directories, 58 files

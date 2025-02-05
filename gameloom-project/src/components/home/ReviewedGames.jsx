@@ -1,6 +1,6 @@
 import React from "react";
-import ReviewCard from "./ReviewCard";
-import reviewedGames from "../data/reviewedGames";
+import ReviewCard from "../game/ReviewCard";
+import reviewedGames from "../../constants/reviewedGames";
 import { ChevronRight } from "lucide-react";
 
 const ReviewedGames = () => {

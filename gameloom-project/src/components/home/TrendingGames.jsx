@@ -1,6 +1,6 @@
 import React from "react";
-import GameCard from "./GameCard";
-import trendingGames from "../data/trendingGames";
+import GameCard from "../game/GameCard";
+import trendingGames from "../../constants/trendingGames";
 import { ChevronRight } from "lucide-react";
 
 const TrendingGames = () => {

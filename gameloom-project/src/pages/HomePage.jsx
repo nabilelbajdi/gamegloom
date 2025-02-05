@@ -1,10 +1,10 @@
 import React from "react";
-import Hero from "../components/Hero";
-import FeaturedGames from "../components/FeaturedGames";
-import ReviewedGames from "../components/ReviewedGames";
-import JoinCommunity from "../components/JoinCommunity";
-import TrendingGames from "../components/TrendingGames";
-import NewGames from "../components/NewGames";
+import Hero from "../components/home/Hero";
+import FeaturedGames from "../components/home/FeaturedGames";
+import ReviewedGames from "../components/home/ReviewedGames";
+import JoinCommunity from "../components/home/JoinCommunity";
+import TrendingGames from "../components/home/TrendingGames";
+import NewGames from "../components/home/NewGames";
 
 const HomePage = () => {
   return (

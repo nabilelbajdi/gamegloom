@@ -1,6 +1,6 @@
 import React from "react";
-import GameCard from "./GameCard";
-import newGames from "../data/newGames";
+import GameCard from "../game/GameCard";
+import newGames from "../../constants/newGames";
 import { ChevronRight } from "lucide-react";
 
 const NewGames = () => {
