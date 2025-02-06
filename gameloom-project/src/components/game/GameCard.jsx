@@ -14,7 +14,7 @@ const GameCard = ({ coverImage, title, genre, rating }) => {
       <img
         src={coverImage}
         alt={title} 
-        className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-102"
+        className="w-full h-54 object-cover transition-transform duration-300 group-hover:scale-102"
       />
 
       {/* Dark Overlay on Hover */}
@@ -22,8 +22,8 @@ const GameCard = ({ coverImage, title, genre, rating }) => {
 
       {/* Game Info */}
       <div className="game-info">
-        <h3 className="text font-bold truncate">{title}</h3>
-        <div className="flex items-center justify-between text-xs text-gray-400">
+        <h3 className="text-sm font-bold truncate">{title}</h3>
+        <div className="flex items-center justify-between text-xs text-gray-400 truncate">
           <span>{genre}</span>
           <div className="flex items-center">
             <Star className="w-3 h-3 text-primary mr-1" />
