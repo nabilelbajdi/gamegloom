@@ -13,3 +13,9 @@ pnpm-debug.log*
 
 # Environment variables
 .env
+
+# Virtual environment
+venv/
+
+# Python
+__pycache__/
