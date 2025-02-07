@@ -3,7 +3,7 @@ import Hero from "../components/home/Hero";
 import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
 import JoinCommunity from "../components/home/JoinCommunity";
-import TrendingGames from "../components/home/TrendingGames";
+import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import NewGames from "../components/home/NewGames";
 
 const HomePage = () => {
@@ -11,7 +11,7 @@ const HomePage = () => {
     <>
       <Hero />
       <AnticipatedGames />
-      <TrendingGames />
+      <HighlyRatedGames />
       <NewGames />
       <ReviewedGames />
       <JoinCommunity />
