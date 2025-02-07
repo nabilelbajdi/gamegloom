@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
-import Button from "./UI/Button";
+import Button from "../UI/Button";
 
 const Footer = () => {
   return (

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage";
 import MyLibraryPage from "./pages/MyLibraryPage";
 import DiscoverPage from "./pages/DiscoverPage";
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/game/:title" element={<GamePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Footer />
     </Router>
   );
 };
