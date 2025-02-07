@@ -4,7 +4,7 @@ import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
 import JoinCommunity from "../components/home/JoinCommunity";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
-import NewGames from "../components/home/NewGames";
+import LatestGames from "../components/home/LatestGames";
 
 const HomePage = () => {
   return (
@@ -12,7 +12,7 @@ const HomePage = () => {
       <Hero />
       <AnticipatedGames />
       <HighlyRatedGames />
-      <NewGames />
+      <LatestGames />
       <ReviewedGames />
       <JoinCommunity />
     </>
