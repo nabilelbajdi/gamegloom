@@ -31,8 +31,8 @@ This project follows a structured approach:
 
 - [x] Set up React project structure  
 - [ ] Build core React components  
-- [x] Set up FastAPI backend  
-- [x] Connect frontend with API  
+- [ ] Set up FastAPI backend  
+- [ ] Connect frontend with API  
 - [ ] Implement game tracking features  
 
 ---
