@@ -22,10 +22,10 @@ const ReviewCard = ({
   const navigate = useNavigate();
 
   return (
-    <article className="flex gap-6 p-6 border-l-6 border-gray-700 bg-gray-800 rounded-lg shadow-lg">
+    <article className="flex flex-col sm:flex-row gap-6 p-6 border-l-2 sm:border-l-6 border-gray-700 bg-gray-800 rounded-lg shadow-lg max-w-full overflow-hidden">
       {/* Left Section: User Info */}
-      <div className="flex flex-col items-center w-32">
-        <img src={userAvatar} alt={`${user} avatar`} className="w-24 h-24 mb-2 rounded-full object-cover ring-2 ring-gray-700 hover:ring-secondary transition-all duration-300 cursor-pointer" />
+      <div className="w-24 sm:w-32 flex-shrink-0 flex flex-col items-center">
+        <img src={userAvatar} alt={`${user} avatar`} className="w-20 h-20 sm:w-24 sm:h-24 mb-2 rounded-full object-cover ring-2 ring-gray-700 hover:ring-secondary transition-all duration-300 cursor-pointer" />
         <div className="mt-2 text-sm font-bold text-light cursor-pointer">{user}</div>
         <button
           onClick={() => setIsFollowing(!isFollowing)}
@@ -50,11 +50,11 @@ const ReviewCard = ({
       </div>
 
       {/* Cover Art Section */}
-      <div className="w-34 flex-shrink-0">
+      <div className="max-w-[8rem] sm:max-w-[9rem] flex-shrink-0">
         <img 
           src={coverImage} 
           alt={`${gameTitle} cover`} 
-          className="game-card relative group w-full h-48 object-cover transition-transform duration-300 group-hover:scale-102 cursor-pointer"
+          className="relative group w-full h-48 object-cover transition-transform duration-300 group-hover:scale-102 cursor-pointer"
           onClick={() => navigate(`/game/${gameTitle}`)}
         />
       </div>
@@ -79,7 +79,7 @@ const ReviewCard = ({
           <span className="text-gray-500 flex items-center"><Calendar className="w-4 h-4 mr-1" /> {date}</span>
 
           {/* Right Section: Rating & Review Actions */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             {/* Star Rating */}
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
