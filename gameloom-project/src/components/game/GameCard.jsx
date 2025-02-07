@@ -2,13 +2,13 @@ import React from "react";
 import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const GameCard = ({ coverImage, title, genre, rating }) => {
+const GameCard = ({ coverImage, title, genre, rating, id }) => {
   const navigate = useNavigate();
 
   return (
     <div 
       className="game-card relative group" 
-      onClick={() => navigate(`/game/${title}`)}
+      onClick={() => navigate(`/game/${id}`)}
     >
       {/* Cover Image */}
       <img
