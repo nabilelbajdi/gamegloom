@@ -3,6 +3,7 @@ import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -28,6 +29,9 @@ IGDB_URL = "https://api.igdb.com/v4/games"
 if not IGDB_CLIENT_ID or not IGDB_ACCESS_TOKEN:
     raise ValueError("Missing IGDB API credentials. Check your .env file.")
 
+current_timestamp = int(datetime.now().timestamp())
+
+# Anticipated Games
 @app.get("/anticipated-games")
 def list_anticipated_games():
     """Fetch anticipated games from IGDB and return them to the frontend."""
@@ -37,9 +41,10 @@ def list_anticipated_games():
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    body = """
+
+    body = f"""
         fields name, cover.url, first_release_date, platforms.name, genres.name, summary, hypes;
-        where first_release_date > 1738790400 & hypes != null & hypes > 10; 
+        where first_release_date > {current_timestamp} & hypes != null & hypes > 10; 
         sort hypes desc;
         limit 7;
     """ 
@@ -52,6 +57,7 @@ def list_anticipated_games():
 
     return response.json()
 
+# Highly Rated Games
 @app.get("/highly-rated-games")
 def list_highly_rated_games():
     """Fetch highly rated games using IGDB PopScore (based on IGDB visits)."""
@@ -77,6 +83,33 @@ def list_highly_rated_games():
 
     return response.json()
 
+# Latest Games
+@app.get("/latest-games")
+def list_latest_games():
+    """Fetch latest games using IGDB."""
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    body = f"""
+        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
+        where cover != null & first_release_date <= {current_timestamp};
+        sort first_release_date desc;
+        limit 7;
+    """
+
+    try:
+        response = requests.post(IGDB_URL, headers=headers, data=body)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching games: {str(e)}")
+
+    return response.json()
+
+# Game Details
 @app.get("/games/{game_id}")
 def get_game(game_id: int):
     """Fetch a specific game's details from IGDB."""
