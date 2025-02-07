@@ -10,6 +10,7 @@ async function fetchGames(endpoint) {
 
     const data = await response.json();
     return data.map((game) => ({
+      id: game.id,
       title: game.name,
       genre: game.genres?.[0]?.name || "Unknown",
       rating: game.rating ? (game.rating / 20).toFixed(1) : "N/A",
@@ -20,6 +21,21 @@ async function fetchGames(endpoint) {
     return [];
   }
 }
+
+export const fetchGameDetails = async (gameId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/games/${gameId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+    const data = await response.json();
+    // IGDB returns an array; we take the first (and only) item.
+    return data[0];
+  } catch (error) {
+    console.error("Error fetching game details:", error);
+    return null;
+  }
+};
 
 export const fetchAnticipatedGames = () => fetchGames("anticipated-games");
 export const fetchHighlyRatedGames = () => fetchGames("highly-rated-games");
