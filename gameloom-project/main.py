@@ -28,9 +28,9 @@ IGDB_URL = "https://api.igdb.com/v4/games"
 if not IGDB_CLIENT_ID or not IGDB_ACCESS_TOKEN:
     raise ValueError("Missing IGDB API credentials. Check your .env file.")
 
-@app.get("/games")
-def list_games():
-    """Fetch games from IGDB and return them to the frontend."""
+@app.get("/anticipated-games")
+def list_anticipated_games():
+    """Fetch anticipated games from IGDB and return them to the frontend."""
     headers = {
         "Client-ID": IGDB_CLIENT_ID,
         "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
@@ -42,7 +42,6 @@ def list_games():
         where first_release_date > 1738790400 & hypes != null & hypes > 10; 
         sort hypes desc;
         limit 7;
-
     """ 
 
     try:
@@ -53,6 +52,30 @@ def list_games():
 
     return response.json()
 
+@app.get("/highly-rated-games")
+def list_highly_rated_games():
+    """Fetch highly rated games using IGDB PopScore (based on IGDB visits)."""
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    body = """
+        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
+        where cover != null & total_rating > 85 & total_rating_count > 500;
+        sort total_rating desc;
+        limit 7;
+    """
+
+    try:
+        response = requests.post(IGDB_URL, headers=headers, data=body)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching games: {str(e)}")
+
+    return response.json()
 
 @app.get("/games/{game_id}")
 def get_game(game_id: int):
