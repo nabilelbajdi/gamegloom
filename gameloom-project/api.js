@@ -1,6 +1,6 @@
 const BASE_URL = "http://localhost:8000/games"; 
 
-export async function fetchFeaturedGames() {
+export async function fetchAnticipatedGames() {
   try {
     const response = await fetch(BASE_URL);
 
@@ -16,7 +16,7 @@ export async function fetchFeaturedGames() {
       coverImage: game.cover?.url.replace("t_thumb", "t_cover_big") || "",
     }));
   } catch (error) {
-    console.error("Error fetching featured games:", error);
+    console.error("Error fetching anticipated games:", error);
     return [];
   }
 }

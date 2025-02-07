@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import GameCard from "../game/GameCard";
 import { ChevronRight } from "lucide-react";
-import { fetchFeaturedGames } from "../../../api";
+import { fetchAnticipatedGames } from "../../../api";
 
-const FeaturedGames = () => {
+const AnticipatedGames = () => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,7 +12,7 @@ const FeaturedGames = () => {
     async function getGames() {
       setLoading(true);
       try {
-        const data = await fetchFeaturedGames();
+        const data = await fetchAnticipatedGames();
         setGames(data);
       } catch (err) {
         setError("Failed to fetch games");
@@ -27,7 +27,7 @@ const FeaturedGames = () => {
   return (
     <section className="container mx-auto px-4 md:px-20 py-8 md:py-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gaming-light">Featured Games</h2>
+        <h2 className="text-2xl font-bold text-gaming-light">Most Anticipated Games</h2>
         <a href="/discover" className="text-gaming-secondary text-sm hover:underline hover:text-primary flex items-center">
           View All <ChevronRight className="ml-1 w-4 h-4" />
         </a>
@@ -48,4 +48,4 @@ const FeaturedGames = () => {
   );
 };
 
-export default FeaturedGames;
+export default AnticipatedGames;

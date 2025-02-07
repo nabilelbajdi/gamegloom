@@ -37,7 +37,13 @@ def list_games():
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    body = "fields name,genres.name,rating,cover.url; limit 7;"
+    body = """
+        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, hypes;
+        where first_release_date > 1738790400 & hypes != null & hypes > 10; 
+        sort hypes desc;
+        limit 7;
+
+    """ 
 
     try:
         response = requests.post(IGDB_URL, headers=headers, data=body)
@@ -57,7 +63,7 @@ def get_game(game_id: int):
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    body = f"fields name,genres.name,rating,cover.url; where id = {game_id};"
+    body = f"fields name,genres.name,rating,cover.url,total_rating_count,first_release_date,platforms.name,summary; where id = {game_id};"
 
     try:
         response = requests.post(IGDB_URL, headers=headers, data=body)

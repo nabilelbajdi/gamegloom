@@ -1,6 +1,6 @@
 import React from "react";
 import Hero from "../components/home/Hero";
-import FeaturedGames from "../components/home/FeaturedGames";
+import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
 import JoinCommunity from "../components/home/JoinCommunity";
 import TrendingGames from "../components/home/TrendingGames";
@@ -10,7 +10,7 @@ const HomePage = () => {
   return (
     <>
       <Hero />
-      <FeaturedGames />
+      <AnticipatedGames />
       <TrendingGames />
       <NewGames />
       <ReviewedGames />
