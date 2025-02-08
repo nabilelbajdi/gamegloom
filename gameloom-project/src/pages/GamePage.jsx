@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchGameDetails } from "../../api";
-import GameHeader from "../components/GamePage/GameHero";
+import GameHero from "../components/GamePage/GameHero";
 
 const GamePage = () => {
   const { gameId } = useParams(); // Get gameId from URL
@@ -33,11 +33,14 @@ const GamePage = () => {
   if (!game) return <div className="flex-center h-screen">No game details found.</div>;
 
   return (
-    <div className="container mx-auto px-4 md:px-20 py-12">
-      {/* Game Header */}
-      <GameHeader game={game} />
+    <div className="w-full">
+      {/* Game Hero - Full width section */}
+      <GameHero game={game} />
 
-      {/* Other components like GameInfo, MediaGallery, Reviews will be added later */}
+      {/* Content with container */}
+      <div className="container mx-auto px-4 md:px-20 py-12">
+        {/* Other game details/components */}
+      </div>
     </div>
   );
 };
