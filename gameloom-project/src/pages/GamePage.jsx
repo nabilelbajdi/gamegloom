@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchGameDetails } from "../../api";
+import { Star, Calendar, Play, Bookmark, Flame, Users, List } from "lucide-react";
 
 const GamePage = () => {
   const { gameId } = useParams();
@@ -27,76 +28,63 @@ const GamePage = () => {
     getGameDetails();
   }, [gameId]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-300">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
-  if (!game) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-300">No game details found.</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex-center h-screen">Loading...</div>;
+  if (error) return <div className="flex-center h-screen text-red-500">{error}</div>;
+  if (!game) return <div className="flex-center h-screen">No game details found.</div>;
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      {/* Hero Section with Cover Image */}
+    <div className="container mx-auto px-6 py-12 text-[var(--color-light)]">
+      {/* Hero Section */}
       <div className="relative h-96">
-        <img
-          src={game.cover?.url.replace("t_thumb", "t_1080p")}
-          alt={game.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="absolute bottom-4 left-4 text-white">
-          <h1 className="text-4xl font-bold">{game.name}</h1>
-          <p className="mt-2">
-            {game.first_release_date
-              ? new Date(game.first_release_date * 1000).toLocaleDateString()
-              : "Unknown Release Date"}
+        {game.coverImage && (
+          <img src={game.coverImage} alt={game.name} className="w-full h-full object-cover brightness-50 rounded-lg" />
+        )}
+        <div className="absolute inset-0 flex-center flex-col text-center px-6">
+          <h1 className="text-5xl font-bold">{game.name}</h1>
+          <p className="mt-2 text-lg text-gray-400">
+            <Calendar className="inline-block w-5 h-5 mr-1" /> {game.releaseDate}
+          </p>
+          <div className="mt-4 space-x-4">
+            <button className="btn-hero flex items-center">
+              <Bookmark className="w-5 h-5 mr-2" /> Add to Library
+            </button>
+            <button className="btn-hero bg-secondary flex items-center">
+              <Play className="w-5 h-5 mr-2" /> Watch Trailer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Game Details */}
+      <div className="mt-8">
+        <h2 className="text-3xl font-semibold mb-4">Game Overview</h2>
+        <p className="text-gray-300 mb-4">{game.storyline}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <p><strong>Genres:</strong> {game.genres}</p>
+          <p><strong>Platforms:</strong> {game.platforms}</p>
+          <p><strong>Developers:</strong> {game.developers}</p>
+          <p><strong>Game Modes:</strong> {game.gameModes}</p>
+          <p><strong>Player Perspective:</strong> {game.playerPerspectives}</p>
+          <p><strong>Themes:</strong> {game.themes}</p>
+          <p className="flex items-center">
+            <Flame className="w-5 h-5 text-red-400 mr-2" /> <strong>Hype:</strong> {game.hypes}
           </p>
         </div>
       </div>
 
-      {/* Game Details Section */}
-      <div className="mt-6 text-gray-300">
-        <h2 className="text-2xl font-semibold mb-4">Overview</h2>
-        <p className="mb-4">{game.summary}</p>
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <span className="font-bold">Genres:</span>{" "}
-            {game.genres ? game.genres.map((g) => g.name).join(", ") : "N/A"}
-          </div>
-          <div>
-            <span className="font-bold">Platforms:</span>{" "}
-            {game.platforms ? game.platforms.map((p) => p.name).join(", ") : "N/A"}
-          </div>
-          <div>
-            <span className="font-bold">Rating:</span>{" "}
-            {game.rating ? (game.rating / 20).toFixed(1) : "N/A"}{" "}
-            {game.total_rating_count ? `(${game.total_rating_count} reviews)` : ""}
+      {/* Similar Games */}
+      {game.similarGames.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Similar Games</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {game.similarGames.map((gameId, index) => (
+              <div key={index} className="p-4 bg-gray-800 rounded-lg text-center">
+                <p className="text-gray-300">Game ID: {gameId}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* Reviews Section */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">User Reviews</h2>
-        <p className="text-gray-500">Reviews will be displayed here in future.</p>
-      </div>
+      )}
     </div>
   );
 };

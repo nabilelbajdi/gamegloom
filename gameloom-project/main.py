@@ -119,12 +119,27 @@ def get_game(game_id: int):
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    body = f"fields name,genres.name,rating,cover.url,total_rating_count,first_release_date,platforms.name,summary; where id = {game_id};"
+
+    body = f"""
+        fields name, summary, storyline, first_release_date, 
+               genres.name, platforms.name, cover.image_id, 
+               screenshots.image_id, videos.video_id, rating, 
+               aggregated_rating, total_rating, hypes, similar_games,
+               involved_companies.company.name, game_modes.name, 
+               player_perspectives.name, themes.name;
+        where id = {game_id};
+    """
 
     try:
         response = requests.post(IGDB_URL, headers=headers, data=body)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching games: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching game details: {str(e)}")
 
-    return response.json()
+    game_data = response.json()
+
+    if not game_data:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    return game_data[0]
+
