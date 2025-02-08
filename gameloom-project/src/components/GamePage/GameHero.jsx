@@ -1,0 +1,86 @@
+import React, { useState } from "react";
+import { Bookmark, Star, PlusCircle, ChevronDown, ChevronUp } from "lucide-react";
+
+const GameHero = ({ game }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  // Use first screenshot as background, fallback to cover image if unavailable
+  const backgroundImage = game.screenshots?.length > 0 
+    ? game.screenshots[0] 
+    : game.coverImage;
+
+  return (
+    <section className="relative w-full h-auto flex flex-col justify-end bg-black text-light">
+      {/* Background Screenshot */}
+      {backgroundImage && (
+        <div
+          className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        ></div>
+      )}
+
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black opacity-50"></div>
+
+      {/* Content Wrapper */}
+      <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 container mx-auto px-6 py-12 md:py-20">
+        
+        {/* Game Cover (Small) */}
+        <img
+          src={game.coverImage}
+          alt={game.name}
+          className="w-40 md:w-52 lg:w-64 h-auto rounded-lg shadow-lg object-cover"
+        />
+
+        {/* Game Details */}
+        <div className="flex flex-col gap-3 w-full max-w-3xl">
+          <h1 className="text-3xl md:text-5xl font-bold text-light">{game.name}</h1>
+          <p className="text-sm md:text-lg text-gray-300">
+            {game.releaseDate ? `Released: ${game.releaseDate}` : "TBA"}
+          </p>
+
+          {/* Genres & Platforms */}
+          <div className="flex gap-3 flex-wrap text-sm md:text-lg text-gray-400">
+            <span>{game.genres || "Unknown Genre"}</span>
+            <span>|</span>
+            <span>{game.platforms || "Unknown Platform"}</span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-2">
+            <button className="btn-hero flex items-center gap-2">
+              <PlusCircle className="w-5 h-5" /> Add to Library
+            </button>
+            <button className="btn-nav flex items-center gap-2">
+              <Bookmark className="w-5 h-5" /> Wishlist
+            </button>
+            <button className="btn-nav flex items-center gap-2">
+              <Star className="w-5 h-5" /> Rate
+            </button>
+          </div>
+
+          {/* Game Description */}
+          {game.summary && (
+            <div className="mt-6 bg-gray-900/80 p-4 rounded-lg">
+              <h2 className="text-xl font-semibold text-light mb-2">About the Game</h2>
+              <p className={`text-gray-300 text-sm md:text-base ${expanded ? "" : "line-clamp-3"}`}>
+                {game.summary}
+              </p>
+              {game.summary.length > 300 && (
+                <button 
+                  onClick={() => setExpanded(!expanded)} 
+                  className="flex items-center text-primary text-sm mt-2 hover:text-primary/80 transition-colors cursor-pointer"
+                >
+                  {expanded ? "Show Less" : "Read More"} 
+                  {expanded ? <ChevronUp className="ml-1 w-4 h-4" /> : <ChevronDown className="ml-1 w-4 h-4" />}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default GameHero;

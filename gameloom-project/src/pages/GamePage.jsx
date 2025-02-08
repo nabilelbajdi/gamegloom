@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchGameDetails } from "../../api";
-import GameHeader from "../components/GamePage/GameHeader";
+import GameHeader from "../components/GamePage/GameHero";
 
 const GamePage = () => {
   const { gameId } = useParams(); // Get gameId from URL
