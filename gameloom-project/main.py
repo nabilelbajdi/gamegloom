@@ -124,7 +124,7 @@ def get_game(game_id: int):
         fields name, summary, storyline, first_release_date, 
                genres.name, platforms.name, cover.image_id, 
                screenshots.image_id, videos.video_id, rating, 
-               aggregated_rating, total_rating, hypes, similar_games,
+               aggregated_rating, total_rating, total_rating_count, hypes, similar_games,
                involved_companies.company.name, game_modes.name, 
                player_perspectives.name, themes.name;
         where id = {game_id};

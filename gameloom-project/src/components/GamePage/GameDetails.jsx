@@ -17,18 +17,23 @@ const GameDetails = ({ game }) => {
         {game.developers.split(", ").slice(0, 3).join(" • ") || "Unknown"}
       </div>
         
-      {/* Rating, Total Ratings & Reviews */}
+      {/* Rating, Total Ratings */}
       <div className="text-gray-400 text-md sm:text-base flex items-center gap-4">
-        <div className="flex items-center text-3xl space-x-1">
+        <div className="flex items-center text-3xl space-x-1 mt-1">
           {[...Array(5)].map((_, i) => (
             <span key={i} className={`text-yellow-500 ${i < Math.round(game.aggregatedRating / 2) ? 'fill-current' : 'text-gray-500'}`}>
               ★
             </span>
           ))}
         </div>
-        <span className="text-sm mt-2">
+        <span className="text-xl mt-2">
           {game.aggregatedRating !== "N/A" ? `${game.aggregatedRating}/5.0` : "This game has no ratings yet."}
         </span>
+        {game.aggregatedRating !== "N/A" && (
+          <span className="text-sm mt-2">
+            {game.totalRatings} ratings
+          </span>
+        )}
       </div>
 
       {/* Game Summary */}
