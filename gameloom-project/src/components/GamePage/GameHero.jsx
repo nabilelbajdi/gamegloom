@@ -65,7 +65,7 @@ const GameHero = ({ game }) => {
 
             {/* Game Description */}
             {game.summary && (
-              <div className="mt-6 bg-gray-900/80 p-4 rounded-lg">
+              <div className="mt-6 bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/10">
                 <h2 className="text-lg sm:text-xl font-semibold text-light mb-2">About the Game</h2>
                 <p className={`text-gray-300 text-sm sm:text-base ${expanded ? "" : "line-clamp-3"}`}>
                   {game.summary}

@@ -19,15 +19,15 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-12">
         
         {/* Logo */}
-        <Logo className="h-40 md:h-40 lg:h-40 mt-3 transition-transform duration-300 hover:scale-105 " />
+        <Logo className="h-28 md:h-28 lg:h-28 mt-1 transition-transform duration-300 hover:scale-105 " />
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-2">
           {navItems.map((item, index) => (
-            <Link key={index} to={item.path} className="nav-link">
+            <Link key={index} to={item.path} className="nav-link text-xs">
               {item.name}
             </Link>
           ))}

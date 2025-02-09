@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import PropTypes from 'prop-types';
 
 const variants = {
-  nav: "btn-nav",
+  nav: "btn-nav relative px-4 uppercase text-xs transition-all duration-300",
   hero: "btn-hero",
   subscribe: "btn-subscribe",
 };
