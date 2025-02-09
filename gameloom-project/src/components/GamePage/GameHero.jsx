@@ -16,17 +16,16 @@ const GameHero = ({ game }) => {
         {/* Background Image */}
         {backgroundImage && (
           <div
-            className="absolute inset-0 w-full h-full bg-cover bg-center opacity-40"
-            style={{ backgroundImage: `url(${backgroundImage})` }}
+          className="absolute inset-0 w-full h-full bg-cover bg-center brightness-[0.6]"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
           ></div>
         )}
 
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
 
         {/* Content Wrapper */}
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end gap-6 container mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 lg:py-20">
-        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end gap-6 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 lg:py-20">        
           
           {/* Game Cover (Small) */}
           <div className="w-full flex justify-center md:justify-start">
@@ -52,14 +51,14 @@ const GameHero = ({ game }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-3">
-              <button className="btn-hero flex items-center gap-2 px-4 py-2 text-sm sm:text-base">
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+              <button className="btn-hero flex items-center gap-2 px-5 py-3 text-sm sm:text-base rounded-lg shadow-md hover:shadow-lg transition-all">
                 <PlusCircle className="w-5 h-5" /> Add to Library
               </button>
-              <button className="btn-nav flex items-center gap-2 px-4 py-2 text-sm sm:text-base">
+              <button className="btn-nav flex items-center gap-2 px-5 py-3 text-sm sm:text-base rounded-lg shadow-md hover:shadow-lg transition-all">
                 <Bookmark className="w-5 h-5" /> Wishlist
               </button>
-              <button className="btn-nav flex items-center gap-2 px-4 py-2 text-sm sm:text-base">
+              <button className="btn-nav flex items-center gap-2 px-5 py-3 text-sm sm:text-base rounded-lg shadow-md hover:shadow-lg transition-all">
                 <Star className="w-5 h-5" /> Rate
               </button>
             </div>
