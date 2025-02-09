@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchGameDetails } from "../../api";
-import GameHero from "../components/GamePage/GameHero";
+import GameSticky from "../components/GamePage/GameSticky";
+import GameDetails from "../components/GamePage/GameDetails";
 
 const GamePage = () => {
-  const { gameId } = useParams(); // Get gameId from URL
+  const { gameId } = useParams();
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,14 +33,34 @@ const GamePage = () => {
   if (error) return <div className="flex-center h-screen text-red-500">{error}</div>;
   if (!game) return <div className="flex-center h-screen">No game details found.</div>;
 
-  return (
-    <div className="w-full">
-      {/* Game Hero - Full width section */}
-      <GameHero game={game} />
+  const backgroundImage = game.screenshots?.length > 0 
+    ? game.screenshots[0] 
+    : game.coverImage;
 
-      {/* Content with container */}
-      <div className="container mx-auto px-4 md:px-20 py-12">
-        {/* Other game details/components */}
+  return (
+    <div className="relative w-full">
+      {/* Background Image */}
+      {backgroundImage && (
+        <div
+        className="absolute inset-0 w-full h-full bg-cover bg-center brightness-[0.6]"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+        ></div>
+      )}
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+
+      {/* Content Section */}
+      <div className="relative container mx-auto px-4 md:px-20 py-12 md:pt-24 grid grid-cols-1 md:grid-cols-[minmax(250px,350px)_1fr] gap-16 items-start">
+        {/* Sticky Game Cover - Left Section */}
+        <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
+          <GameSticky coverImage={game.coverImage} name={game.name} />
+        </div>
+
+        {/* Game Details - Right Section */}
+        <div className="w-full max-w-3xl">
+          <GameDetails game={game} />
+        </div>
       </div>
     </div>
   );
