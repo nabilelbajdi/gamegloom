@@ -19,14 +19,16 @@ const GameDetails = ({ game }) => {
         
       {/* Rating, Total Ratings & Reviews */}
       <div className="text-gray-400 text-md sm:text-base flex items-center gap-4">
-        <div className="flex items-center text-4xl space-x-1">
+        <div className="flex items-center text-3xl space-x-1">
           {[...Array(5)].map((_, i) => (
             <span key={i} className={`text-yellow-500 ${i < Math.round(game.aggregatedRating / 2) ? 'fill-current' : 'text-gray-500'}`}>
               ★
             </span>
           ))}
         </div>
-        <span className="text-lg mt-2">{game.aggregatedRating}/5.0</span>
+        <span className="text-sm mt-2">
+          {game.aggregatedRating !== "N/A" ? `${game.aggregatedRating}/5.0` : "This game has no ratings yet."}
+        </span>
       </div>
 
       {/* Game Summary */}
