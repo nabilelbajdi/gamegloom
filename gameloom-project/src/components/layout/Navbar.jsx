@@ -12,8 +12,7 @@ export default function Navbar() {
     { name: "My Library", path: "/library" },
     { name: "Discover", path: "/discover" },
     { name: "Community", path: "/community" },
-    { name: "Articles", path: "/articles" },
-    { name: "Stats & Insights", path: "/stats" },
+    { name: "Articles", path: "/articles" }
   ];
   
   const icons = ["search", "bell", "user"];
@@ -43,7 +42,12 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
+        <button 
+          className="md:hidden p-2"
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen(!isOpen)}
+        >
           {isOpen ? <Icon name="close" className="icon" /> : <Icon name="menu" className="icon" />}
         </button>
       </div>
