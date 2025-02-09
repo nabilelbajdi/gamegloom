@@ -5,7 +5,7 @@ import Button from "../UI/Button";
 
 const Footer = () => {
   return (
-    <footer className="container mx-auto my-6 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent">
+    <footer className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent">
       <div className="container mx-auto px-4 md:px-20 py-8 md:py-10 grid grid-cols-1 md:grid-cols-4 gap-10 text-center md:text-left justify-items-center">
         
         {/* Brand & About */}
@@ -53,7 +53,7 @@ const Footer = () => {
         <div>
           <h3 className="text-xl font-semibold text-white mb-4">Stay Updated</h3>
           <p className="text-sm mb-3">Subscribe for the latest gaming news and exclusive offers.</p>
-          <form className="flex items-center border border-[var(--color-primary)] rounded-md overflow-hidden p-1">
+          <form className="flex items-center border border-primary rounded-md overflow-hidden p-1">
             <input
               type="email"
               placeholder="Your email..."
@@ -65,7 +65,7 @@ const Footer = () => {
       </div>
       
       {/* Separator Line */}
-      <div className="container mx-auto my-6 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent"></div>
+      <div className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
       
       {/* Copyright */}
       <div className="text-center text-sm text-gray-500">
