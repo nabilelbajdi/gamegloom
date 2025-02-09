@@ -46,7 +46,7 @@ def list_anticipated_games():
         fields name, cover.url, first_release_date, platforms.name, genres.name, summary, hypes;
         where first_release_date > {current_timestamp} & hypes != null & hypes > 10; 
         sort hypes desc;
-        limit 7;
+        limit 14;
     """ 
 
     try:
@@ -72,7 +72,7 @@ def list_highly_rated_games():
         fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
         where cover != null & total_rating > 85 & total_rating_count > 500;
         sort total_rating desc;
-        limit 7;
+        limit 14;
     """
 
     try:
@@ -98,7 +98,7 @@ def list_latest_games():
         fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
         where cover != null & first_release_date <= {current_timestamp};
         sort first_release_date desc;
-        limit 7;
+        limit 14;
     """
 
     try:
