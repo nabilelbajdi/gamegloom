@@ -4,8 +4,8 @@ import Button from "../UI/Button";
 const Hero = () => {
   const stats = [
     { label: "Games Tracked", value: "1M+" },
-    { label: "Active Users", value: "500.00+" },
-    { label: "Reviews Posted", value: "200.00+" },
+    { label: "Active Users", value: "500K+" },
+    { label: "Reviews Posted", value: "200K+" },
   ];
 
   return (
@@ -16,6 +16,7 @@ const Hero = () => {
         playsInline
         loop
         muted
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-cover opacity-80 blur-[3px]"
         aria-label="Background Video"
       >
