@@ -10,5 +10,5 @@ const icons = {
 
 export default function Icon({ name, className }) {
   const IconComponent = icons[name];
-  return IconComponent ? <IconComponent className={className} /> : null;
+  return IconComponent ? <IconComponent className={`w-4 h-4 ${className}`} /> : null;
 }
