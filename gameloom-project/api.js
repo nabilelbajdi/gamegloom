@@ -56,7 +56,7 @@ export const fetchGameDetails = async (gameId) => {
       genres: data.genres?.map(g => g.name).join(", ") || "Unknown",
       platforms: data.platforms?.map(p => p.name).join(", ") || "Unknown",
       rating: data.rating ? (data.rating / 20).toFixed(1) : "N/A",
-      aggregatedRating: data.aggregated_rating ? data.aggregated_rating.toFixed(1) : "N/A",
+      aggregatedRating: data.aggregated_rating ? (data.aggregated_rating / 20).toFixed(1) : "N/A",
       totalRating: data.total_rating ? data.total_rating.toFixed(1) : "N/A",
       hypes: data.hypes || 0,
       similarGames: data.similar_games || [],
