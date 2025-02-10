@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const GameDetails = ({ game }) => {
+const GameDetails = ({ game, timeToBeat }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSummary = () => {
@@ -81,7 +81,7 @@ const GameDetails = ({ game }) => {
 
       {/* 📋 Additional Meta Info */}
       <div className="flex flex-col gap-2 mt-6 text-gray-400 text-sm">
-        <p><strong>Time to Beat:</strong> {game.playtime || "Unknown"}</p>
+        <p><strong>Time to Beat:</strong> {timeToBeat ? `${(timeToBeat.normally / 3600).toFixed(1)} hours` : "Unknown"}</p>
         <p><strong>Release Date:</strong> {game.releaseDate}</p>
         <p><strong>Platforms:</strong> {game.platforms}</p>
         <p><strong>Theme:</strong> {game.themes}</p>

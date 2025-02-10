@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { fetchGameDetails } from "../../api";
+import { fetchGameDetails, fetchGameTimeToBeat } from "../../api";
 import GameSticky from "../components/GamePage/GameSticky";
 import GameDetails from "../components/GamePage/GameDetails";
+import GameMedia from "../components/GamePage/GameMedia";
 
 const GamePage = () => {
   const { gameId } = useParams();
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [timeToBeat, setTimeToBeat] = useState(null);
 
   useEffect(() => {
     async function getGameDetails() {
@@ -17,6 +19,8 @@ const GamePage = () => {
         const data = await fetchGameDetails(gameId);
         if (data) {
           setGame(data);
+          const timeToBeatData = await fetchGameTimeToBeat(gameId);
+          setTimeToBeat(timeToBeatData);
         } else {
           setError("Game not found.");
         }
@@ -40,12 +44,10 @@ const GamePage = () => {
   return (
     <div className="relative w-full">
       {/* Background Image */}
-      {backgroundImage && (
-        <div
-        className="absolute inset-0 w-full h-full bg-cover bg-center brightness-[0.6]"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-        ></div>
-      )}
+      <div 
+        className={`absolute inset-0 w-full h-full bg-cover bg-center brightness-[0.6] ${backgroundImage ? 'bg-image' : ''}`}
+        style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}
+      ></div>
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
@@ -59,7 +61,8 @@ const GamePage = () => {
 
         {/* Game Details - Right Section */}
         <div className="w-full max-w-3xl">
-          <GameDetails game={game} />
+          <GameDetails game={game} timeToBeat={timeToBeat} />
+          {/* <GameMedia screenshots={game.screenshots} videos={game.videos} /> */}
         </div>
       </div>
     </div>
