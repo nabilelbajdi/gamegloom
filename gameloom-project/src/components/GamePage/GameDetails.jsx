@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Image as ImageIcon, Menu } from 'lucide-react';
 
-const GameDetails = ({ game, timeToBeat }) => {
+const GameDetails = ({ game, timeToBeat, trailer }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSummary = () => {
@@ -46,8 +47,8 @@ const GameDetails = ({ game, timeToBeat }) => {
       <h1 className="text-5xl font-bold leading-tight">{game.name}</h1>
 
       {/* Game Developers */}
-      <div className="text-gray-400 text-sm sm:text-base">
-        {game.developers.split(", ").slice(0, 3).join(" • ") || "Unknown"}
+      <div className="text-gray-400 text-md mt-2">
+        {game.developers ? game.developers.split(", ").slice(0, 3).join(" • ") : "Unknown"}
       </div>
 
       {/* Rating Section */}
@@ -57,34 +58,72 @@ const GameDetails = ({ game, timeToBeat }) => {
         {game.totalRatings && <span className="text-sm">{game.totalRatings} ratings</span>}
       </div>
 
-      {/* Game Summary */}
-      <div className="text-gray-300 mt-4">
-        <p className={isExpanded ? "" : "line-clamp-3"}>
-          {game.summary}
-        </p>
-        {game.summary.length > 300 && (
-          <button
-            onClick={toggleSummary}
-            className="text-blue-500 text-xs cursor-pointer"
-          >
-            {isExpanded ? "Show Less" : "Show More"}
-          </button>
+      {/* Seperator */}
+      <div className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+
+      {/* Description Section */}
+      <div className="mt-6">
+        <div className="flex items-center gap-2 text-gray-400 text-md font-semibold">
+          <Menu className="w-5 h-5" />
+          <span>DESCRIPTION</span>
+        </div>
+
+        <div className="text-gray-300 mt-2 text-sm">
+          <p className={isExpanded ? "" : "line-clamp-3"}>
+            {game.summary}
+          </p>
+          {game.summary.length > 300 && (
+            <button
+              onClick={toggleSummary}
+              className="text-blue-500 text-xs cursor-pointer"
+            >
+              {isExpanded ? "Show Less" : "Show More"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Game Trailer and Screenshots */}
+      <div className="flex flex-col md:flex-row gap-4 mt-6 items-start">
+        {trailer && (
+          <div className="flex-shrink-0 w-full md:w-1/2">
+            <iframe
+              width="100%"
+              height="200"
+              src={trailer}
+              title="Game Trailer"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="rounded-lg shadow-md"
+            ></iframe>
+          </div>
         )}
-      </div>
-
-      {/* 🎭 Game Genres */}
-      <div className="text-gray-400 text-xs flex flex-wrap gap-2 mt-4">
-        {game.genres.split(", ").map((genre, index) => (
-          <span key={index} className="bg-gray-700 px-2 py-1 rounded">{genre}</span>
-        ))}
-      </div>
-
-      {/* 📋 Additional Meta Info */}
-      <div className="flex flex-col gap-2 mt-6 text-gray-400 text-sm">
-        <p><strong>Time to Beat:</strong> {timeToBeat ? `${(timeToBeat.normally / 3600).toFixed(1)} hours` : "Unknown"}</p>
-        <p><strong>Release Date:</strong> {game.releaseDate}</p>
-        <p><strong>Platforms:</strong> {game.platforms}</p>
-        <p><strong>Theme:</strong> {game.themes}</p>
+        {game.screenshots && game.screenshots.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 w-full md:w-1/2">
+            {game.screenshots.slice(0, 3).map((screenshot, index) => (
+              <img
+                key={index}
+                src={screenshot}
+                alt={`Screenshot ${index + 1}`}
+                className="w-full h-auto object-cover rounded-lg shadow-md"
+              />
+            ))}
+            {game.screenshots.length > 3 && (
+              <div className="relative w-full h-auto rounded-lg shadow-md overflow-hidden">
+                <img
+                  src={game.screenshots[3]}
+                  alt="Screenshot 4"
+                  className="w-full h-full object-cover filter blur-sm"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="text-white mr-2" />
+                  <span className="text-white text-sm cursor-pointer">View More</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
