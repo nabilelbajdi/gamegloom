@@ -46,14 +46,14 @@ const GamePage = () => {
       {/* Background Container */}
       <div className="fixed inset-0 -z-10">
         <div 
-          className="absolute inset-0 bg-cover bg-center brightness-[0.6]"
+          className="absolute inset-0 bg-cover bg-center brightness-[0.6] blur-xs"
           style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
       </div>
 
       {/* Content Section */}
-      <div className="relative container mx-auto px-4 md:px-20 py-12 md:pt-24 grid grid-cols-1 md:grid-cols-[minmax(250px,350px)_1fr] gap-16 items-start">
+      <div className="relative container mx-auto px-4 md:px-20 py-12 md:pt-12 grid grid-cols-1 md:grid-cols-[minmax(250px,350px)_1fr] gap-16 items-start">
         {/* Left Section */}
         <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
           <GameSticky coverImage={game.coverImage} name={game.name} />
@@ -61,7 +61,7 @@ const GamePage = () => {
 
         {/* Right Section */}
         <div className="w-full max-w-3xl">
-          <GameDetails game={game} timeToBeat={timeToBeat} />
+          <GameDetails game={game} timeToBeat={timeToBeat} trailer={game.videos[0]} />
           <GameMedia screenshots={game.screenshots} videos={game.videos} />
         </div>
       </div>
