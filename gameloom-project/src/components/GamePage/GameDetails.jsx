@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Image as ImageIcon, Menu } from 'lucide-react';
+import { Image as ImageIcon, Menu, Clock, Calendar, Monitor } from 'lucide-react';
 
-const GameDetails = ({ game, timeToBeat, trailer }) => {
+const GameDetails = ({ game, trailer, timeToBeat }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSummary = () => {
@@ -26,10 +26,7 @@ const GameDetails = ({ game, timeToBeat, trailer }) => {
         {decimalPart > 0 && (
           <span className="relative">
             <span className="text-gray-500">★</span>
-            <span
-              className="absolute top-0 left-0 overflow-hidden"
-              style={{ width: `${decimalPart * 100}%` }}
-            >
+            <span className="absolute top-0 left-0 overflow-hidden" style={{ width: `${decimalPart * 100}%` }}>
               ★
             </span>
           </span>
@@ -54,12 +51,19 @@ const GameDetails = ({ game, timeToBeat, trailer }) => {
       {/* Rating Section */}
       <div className="text-gray-400 text-md sm:text-base flex items-center gap-4 mt-2">
         {getStarRating(game.aggregatedRating)}
-        <span className="text-lg">{game.aggregatedRating !== "N/A" ? `${game.aggregatedRating}/5.0` : ""}</span>
+        <span className="text-2xl">
+          {game.aggregatedRating !== "N/A" ? (
+            <>
+              {game.aggregatedRating}
+              <span className="text-sm">/5.0</span>
+            </>
+          ) : ""}
+        </span>
         {game.totalRatings && <span className="text-sm">{game.totalRatings} ratings</span>}
       </div>
 
-      {/* Seperator */}
-      <div className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+      {/* Separator */}
+      <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
 
       {/* Description Section */}
       <div className="mt-6">
@@ -73,10 +77,7 @@ const GameDetails = ({ game, timeToBeat, trailer }) => {
             {game.summary}
           </p>
           {game.summary.length > 300 && (
-            <button
-              onClick={toggleSummary}
-              className="text-blue-500 text-xs cursor-pointer"
-            >
+            <button onClick={toggleSummary} className="text-blue-500 text-xs cursor-pointer">
               {isExpanded ? "Show Less" : "Show More"}
             </button>
           )}
@@ -102,26 +103,69 @@ const GameDetails = ({ game, timeToBeat, trailer }) => {
         {game.screenshots && game.screenshots.length > 0 && (
           <div className="grid grid-cols-2 gap-2 w-full md:w-1/2">
             {game.screenshots.slice(0, 3).map((screenshot, index) => (
-              <img
-                key={index}
-                src={screenshot}
-                alt={`Screenshot ${index + 1}`}
-                className="w-full h-auto object-cover rounded-lg shadow-md"
-              />
+              <img key={index} src={screenshot} alt={`Screenshot ${index + 1}`} className="w-full h-auto object-cover rounded-lg shadow-md" />
             ))}
             {game.screenshots.length > 3 && (
               <div className="relative w-full h-auto rounded-lg shadow-md overflow-hidden">
-                <img
-                  src={game.screenshots[3]}
-                  alt="Screenshot 4"
-                  className="w-full h-full object-cover filter blur-sm"
-                />
+                <img src={game.screenshots[3]} alt="Screenshot 4" className="w-full h-full object-cover filter blur-sm" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <ImageIcon className="text-white mr-2" />
                   <span className="text-white text-sm cursor-pointer">View More</span>
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </div>
+
+
+      {/* Genres and Themes Section */}
+      {(game.genres || game.themes) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {game.genres && game.genres.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
+            <span
+              key={`genre-${index}`}
+              className="bg-gray-800 text-white text-xs font-semibold px-3 py-1 rounded-full cursor-pointer hover:bg-gray-700"
+            >
+              {genre}
+            </span>
+          ))}
+          {game.themes && game.themes.split(", ").map((theme, index) => (
+            <span
+              key={`theme-${index}`}
+              className="bg-gray-800 text-white text-xs font-semibold px-3 py-1 rounded-full cursor-pointer hover:bg-gray-700"
+            >
+              {theme}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Time to Beat, Release Year, Release Date, and Platforms Section */}
+      <div className="mt-4 space-y-2">
+        {/* Time to Beat */}
+        {timeToBeat && (
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <Clock className="w-5 h-5" />
+            <span>
+              Approximate time to beat: {timeToBeat.normally ? ` ${(timeToBeat.normally / 3600).toFixed(0)} hours` : " Unknown"}
+            </span>
+          </div>
+        )}
+
+        {/* Released On */}
+        {game.releaseDate && (
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <Calendar className="w-5 h-5" />
+            <span>Released on: {game.releaseDate}</span>
+          </div>
+        )}
+
+        {/* Platforms */}
+        {game.platforms && (
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <Monitor className="w-5 h-5" />
+            <span>Platforms: {game.platforms.replace("PC (Microsoft Windows)", "PC").replace("PlayStation 5", "PS5").replace("PlayStation 4", "PS4").replace("Nintendo Switch", "Switch").replace("PlayStation 3", "PS3").replace("PlayStation 2", "PS2")}</span>
           </div>
         )}
       </div>
