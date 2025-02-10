@@ -43,26 +43,26 @@ const GamePage = () => {
 
   return (
     <div className="relative w-full">
-      {/* Background Image */}
-      <div 
-        className={`absolute inset-0 w-full h-full bg-cover bg-center brightness-[0.6] ${backgroundImage ? 'bg-image' : ''}`}
-        style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}
-      ></div>
-
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+      {/* Background Container */}
+      <div className="fixed inset-0 -z-10">
+        <div 
+          className="absolute inset-0 bg-cover bg-center brightness-[0.6]"
+          style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+      </div>
 
       {/* Content Section */}
       <div className="relative container mx-auto px-4 md:px-20 py-12 md:pt-24 grid grid-cols-1 md:grid-cols-[minmax(250px,350px)_1fr] gap-16 items-start">
-        {/* Sticky Game Cover - Left Section */}
+        {/* Left Section */}
         <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
           <GameSticky coverImage={game.coverImage} name={game.name} />
         </div>
 
-        {/* Game Details - Right Section */}
+        {/* Right Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} timeToBeat={timeToBeat} />
-          {/* <GameMedia screenshots={game.screenshots} videos={game.videos} /> */}
+          <GameMedia screenshots={game.screenshots} videos={game.videos} />
         </div>
       </div>
     </div>
