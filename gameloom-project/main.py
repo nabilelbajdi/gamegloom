@@ -25,13 +25,13 @@ app.add_middleware(
 IGDB_CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 IGDB_ACCESS_TOKEN = os.getenv("IGDB_ACCESS_TOKEN")
 IGDB_URL = "https://api.igdb.com/v4/games"
-
+IGDB_TIME_TO_BEAT_URL = "https://api.igdb.com/v4/game_time_to_beats"
 if not IGDB_CLIENT_ID or not IGDB_ACCESS_TOKEN:
     raise ValueError("Missing IGDB API credentials. Check your .env file.")
 
 current_timestamp = int(datetime.now().timestamp())
 
-# Anticipated Games
+# List of anticipated games
 @app.get("/anticipated-games")
 def list_anticipated_games():
     """Fetch anticipated games from IGDB and return them to the frontend."""
@@ -57,10 +57,10 @@ def list_anticipated_games():
 
     return response.json()
 
-# Highly Rated Games
+# List of highly rated games
 @app.get("/highly-rated-games")
 def list_highly_rated_games():
-    """Fetch highly rated games using IGDB PopScore (based on IGDB visits)."""
+    """Fetch highly rated games using IGDB PopScore."""
     headers = {
         "Client-ID": IGDB_CLIENT_ID,
         "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
@@ -83,7 +83,7 @@ def list_highly_rated_games():
 
     return response.json()
 
-# Latest Games
+# List of latest game releases
 @app.get("/latest-games")
 def list_latest_games():
     """Fetch latest games using IGDB."""
@@ -109,7 +109,7 @@ def list_latest_games():
 
     return response.json()
 
-# Game Details
+# Game Details for a specific game
 @app.get("/games/{game_id}")
 def get_game(game_id: int):
     """Fetch a specific game's details from IGDB."""
@@ -142,4 +142,33 @@ def get_game(game_id: int):
         raise HTTPException(status_code=404, detail="Game not found")
 
     return game_data[0]
+
+# Fetch time to beat game
+@app.get("/game-time-to-beat/{game_id}")
+def get_game_time_to_beat(game_id: int):
+    """Fetch a specific game's time to beat details from IGDB."""
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    body = f"""
+        fields game_id, hastily, normally, completely;
+        where game_id = {game_id};
+    """
+
+    try:
+        response = requests.post(IGDB_TIME_TO_BEAT_URL, headers=headers, data=body)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching game time to beat: {str(e)}")
+
+    time_to_beat_data = response.json()
+
+    if not time_to_beat_data:
+        raise HTTPException(status_code=404, detail="Time to beat data not found")
+
+    return time_to_beat_data[0]
 

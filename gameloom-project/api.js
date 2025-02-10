@@ -70,3 +70,17 @@ export const fetchGameDetails = async (gameId) => {
     return null;
   }
 };
+
+// Fetch time to beat
+export const fetchGameTimeToBeat = async (gameId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/game-time-to-beat/${gameId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching game time to beat:", error);
+    return null;
+  }
+};
