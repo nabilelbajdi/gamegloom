@@ -1,27 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import GameCard from "../game/GameCard";
 import { ChevronRight } from "lucide-react";
-import { fetchTrendingGames } from "../../../api";
+import useGameStore from "../../store/useGameStore";
 
 const TrendingGames = () => {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { games, fetchTrendingGames } = useGameStore();
 
   useEffect(() => {
-    async function getGames() {
-      setLoading(true);
-      try {
-        const data = await fetchTrendingGames();
-        setGames(data);
-      } catch (err) {
-        setError("Failed to fetch games");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    getGames();
+    fetchTrendingGames(); // Fetch games once, then reuse from state
   }, []);
 
   return (
@@ -33,10 +19,8 @@ const TrendingGames = () => {
         </a>
       </div>
 
-      {loading ? (
+      {games.length === 0 ? (
         <p className="text-center text-gray-400">Loading games...</p>
-      ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {games.map((game, index) => (
