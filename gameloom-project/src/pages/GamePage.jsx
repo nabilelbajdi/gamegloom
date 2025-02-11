@@ -37,9 +37,7 @@ const GamePage = () => {
   if (error) return <div className="flex-center h-screen text-red-500">{error}</div>;
   if (!game) return <div className="flex-center h-screen">No game details found.</div>;
 
-  const backgroundImage = game.screenshots?.length > 0 
-    ? game.screenshots[0] 
-    : game.coverImage;
+  const backgroundImage = game.screenshots?.[0] || game.coverImage || "/public/images/fallback.jpg";
 
   return (
     <div className="relative w-full">
