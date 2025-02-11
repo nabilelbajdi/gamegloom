@@ -36,14 +36,21 @@ export const fetchGameDetails = async (gameId) => {
 
     if (!data) return null;
 
+    const rawTimestamp = data.first_release_date;
+    const isValidDate = rawTimestamp && !isNaN(rawTimestamp) && rawTimestamp > 0;
+
     return {
       id: data.id,
       name: data.name,
       summary: data.summary || "No summary available.",
       storyline: data.storyline || "No storyline available.",
-      releaseDate: data.first_release_date
-        ? new Date(data.first_release_date * 1000).toLocaleDateString()
-        : "Unknown Release Date",
+      releaseDate: isValidDate 
+        ? new Date(rawTimestamp).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : "TBA",
       coverImage: data.cover?.image_id
         ? `https://images.igdb.com/igdb/image/upload/t_1080p/${data.cover.image_id}.jpg`
         : null,

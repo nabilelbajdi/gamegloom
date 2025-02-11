@@ -141,6 +141,13 @@ def get_game(game_id: int):
     if not game_data:
         raise HTTPException(status_code=404, detail="Game not found")
 
+    # Convert Unix timestamp to milliseconds
+    release_date = game_data[0].get('first_release_date')
+    if release_date and release_date > 0:
+        game_data[0]['first_release_date'] = release_date * 1000
+    else:
+        game_data[0]['first_release_date'] = None
+
     return game_data[0]
 
 # Fetch time to beat game
