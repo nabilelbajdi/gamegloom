@@ -29,11 +29,22 @@ export const fetchLatestGames = () => fetchGames("latest-games");
 export const fetchGameDetails = async (gameId) => {
   try {
     const response = await fetch(`${BASE_URL}/games/${gameId}`);
+    
+    if (response.status === 404) {
+      console.warn(`Game with ID ${gameId} not found.`);
+      return null;  // Handle 'not found' separately
+    }
+    
+    if (response.status >= 500) {
+      console.error(`Server error: ${response.status}`);
+      return null;  // Handle server errors separately
+    }
+    
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
     }
+    
     const data = await response.json();
-
     if (!data) return null;
 
     const rawTimestamp = data.first_release_date;
