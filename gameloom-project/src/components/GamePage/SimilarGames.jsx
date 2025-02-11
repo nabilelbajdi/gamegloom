@@ -9,7 +9,7 @@ const SimilarGames = memo(({ games }) => {
     return <p className="text-center text-gray-400">No similar games found.</p>;
   }
 
-  const displayedGames = games.slice(0, 8);
+  const displayedGames = games?.slice(0, 8) || [];
 
   const settings = {
     dots: true,
