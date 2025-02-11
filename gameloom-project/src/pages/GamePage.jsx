@@ -5,6 +5,8 @@ import GameSticky from "../components/GamePage/GameSticky";
 import GameDetails from "../components/GamePage/GameDetails";
 import GameMedia from "../components/GamePage/GameMedia";
 import SimilarGames from "../components/GamePage/SimilarGames";
+import GamesBySameDeveloper from "../components/GamePage/GamesBySameDeveloper";
+
 const GamePage = () => {
   const { gameId } = useParams();
   const [game, setGame] = useState(null);
@@ -62,6 +64,7 @@ const GamePage = () => {
           <GameDetails game={game} timeToBeat={timeToBeat} trailer={game.videos[0]} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
           <SimilarGames games={game.similarGames} />
+          <GamesBySameDeveloper games={game.gamesBySameDeveloper} developerName={game.developers} />
           <GameMedia screenshots={game.screenshots} videos={game.videos} />
         </div>
       </div>
