@@ -39,6 +39,24 @@ export const fetchGameDetails = async (gameId) => {
     const rawTimestamp = data.first_release_date;
     const isValidDate = rawTimestamp && !isNaN(rawTimestamp) && rawTimestamp > 0;
 
+    // Fetch details for similar games
+    const similarGames = data.similar_games ? await Promise.all(
+      data.similar_games.map(async (similarGameId) => {
+        const response = await fetch(`${BASE_URL}/games/${similarGameId}`);
+        if (!response.ok) return null;
+        const similarGameData = await response.json();
+        return {
+          id: similarGameData.id,
+          title: similarGameData.name,
+          genre: similarGameData.genres?.[0]?.name || "Unknown",
+          rating: similarGameData.rating ? (similarGameData.rating / 20).toFixed(1) : "N/A",
+          coverImage: similarGameData.cover?.image_id 
+            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${similarGameData.cover.image_id}.jpg`
+            : "",
+        };
+      })
+    ) : [];
+
     return {
       id: data.id,
       name: data.name,
@@ -66,7 +84,7 @@ export const fetchGameDetails = async (gameId) => {
       aggregatedRating: data.aggregated_rating ? (data.aggregated_rating / 20).toFixed(1) : "N/A",
       totalRatings: data.total_rating_count || 0,
       hypes: data.hypes || 0,
-      similarGames: data.similar_games || [],
+      similarGames: similarGames.filter(game => game !== null), // Remove null values
       developers: data.involved_companies?.map(c => c.company.name).join(" • "),
       gameModes: data.game_modes?.map(m => m.name).join(", ") || "Unknown",
       playerPerspectives: data.player_perspectives?.map(p => p.name).join(", ") || "Unknown",
