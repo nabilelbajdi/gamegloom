@@ -3,12 +3,12 @@ import React from "react";
 const GameMedia = React.memo(({ screenshots, videos }) => {
   return (
     <div className="mt-8">
-      <h2 className="text-3xl font-bold mb-4">Media</h2>
+      <h2 className="text-2xl font-bold mb-4">Media</h2>
       
       {/* Videos Section */}
       {videos.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-2">Videos</h3>
+          <h3 className="text-md font-semibold mb-2">Videos</h3>
           <div className="flex gap-4 overflow-x-auto">
             {videos.map((video, index) => (
               <iframe
@@ -30,7 +30,7 @@ const GameMedia = React.memo(({ screenshots, videos }) => {
       {/* Screenshots Section */}
       {screenshots.length > 0 && (
         <div>
-          <h3 className="text-xl font-semibold mb-2">Screenshots</h3>
+          <h3 className="text-md font-semibold mb-2">Screenshots</h3>
           <div className="flex gap-4 overflow-x-auto">
             {screenshots.map((screenshot, index) => (
               <img
