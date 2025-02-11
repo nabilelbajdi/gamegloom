@@ -4,7 +4,7 @@ import { fetchGameDetails, fetchGameTimeToBeat } from "../../api";
 import GameSticky from "../components/GamePage/GameSticky";
 import GameDetails from "../components/GamePage/GameDetails";
 import GameMedia from "../components/GamePage/GameMedia";
-
+import SimilarGames from "../components/GamePage/SimilarGames";
 const GamePage = () => {
   const { gameId } = useParams();
   const [game, setGame] = useState(null);
@@ -62,6 +62,8 @@ const GamePage = () => {
         {/* Right Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} timeToBeat={timeToBeat} trailer={game.videos[0]} />
+          <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+          <SimilarGames games={game.similarGames} />
           <GameMedia screenshots={game.screenshots} videos={game.videos} />
         </div>
       </div>
