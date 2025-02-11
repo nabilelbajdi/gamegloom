@@ -231,3 +231,67 @@ def get_games_by_developer(developer_name: str):
         }
         for game in game_data
     ]
+
+# List of trending games based on Steam's 24hr peak players
+@app.get("/trending-games")
+def list_trending_games():
+    """Fetch trending games based on Steam 24hr peak players from IGDB."""
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    body = """
+        fields game_id, value, popularity_type;
+        where popularity_type = 5;
+        sort value desc;
+        limit 7;
+    """
+
+    try:
+        response = requests.post("https://api.igdb.com/v4/popularity_primitives", headers=headers, data=body)
+        response.raise_for_status()
+        popularity_data = response.json()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching trending games: {str(e)}")
+
+    # Extract game IDs
+    game_ids = [str(game["game_id"]) for game in popularity_data]
+
+    if not game_ids:
+        return []
+
+    # Fetch detailed game info
+    game_details_body = f"""
+        fields id, name, cover.image_id, genres.name, rating;
+        where id = ({",".join(game_ids)});
+    """
+
+    try:
+        response = requests.post(IGDB_URL, headers=headers, data=game_details_body)
+        response.raise_for_status()
+        game_details = response.json()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching game details: {str(e)}")
+
+    # Combine details with popularity score
+    trending_games = []
+    for game in game_details:
+        popularity_entry = next((p for p in popularity_data if p["game_id"] == game["id"]), None)
+        trending_score = round(popularity_entry["value"] * 100) if popularity_entry else 0
+
+        cover_image = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{game['cover']['image_id']}.jpg" \
+            if game.get("cover") else None
+
+        trending_games.append({
+            "id": game["id"],
+            "name": game["name"],
+            "genres": [{"name": game.get("genres", [{}])[0].get("name", "Unknown")}],
+            "rating": game.get("rating", 0),
+            "cover": {"url": cover_image} if cover_image else None,
+            "steamPeakPlayers": trending_score,
+        })
+
+    return trending_games

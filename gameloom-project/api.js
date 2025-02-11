@@ -14,6 +14,7 @@ async function fetchGames(endpoint) {
       genre: game.genres?.[0]?.name || "Unknown",
       rating: game.rating ? (game.rating / 20).toFixed(1) : "N/A",
       coverImage: game.cover?.url.replace("t_thumb", "t_cover_big") || "",
+      steamPeakPlayers: game.steamPeakPlayers || 0,
     }));
   } catch (error) {
     console.error(`Error fetching ${endpoint}:`, error);
@@ -24,6 +25,7 @@ async function fetchGames(endpoint) {
 export const fetchAnticipatedGames = () => fetchGames("anticipated-games");
 export const fetchHighlyRatedGames = () => fetchGames("highly-rated-games");
 export const fetchLatestGames = () => fetchGames("latest-games");
+export const fetchTrendingGames = () => fetchGames("trending-games");
 
 // Fetch single game details
 export const fetchGameDetails = async (gameId) => {
