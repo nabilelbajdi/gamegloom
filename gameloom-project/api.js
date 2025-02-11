@@ -32,12 +32,12 @@ export const fetchGameDetails = async (gameId) => {
     
     if (response.status === 404) {
       console.warn(`Game with ID ${gameId} not found.`);
-      return null;  // Handle 'not found' separately
+      return null;
     }
     
     if (response.status >= 500) {
       console.error(`Server error: ${response.status}`);
-      return null;  // Handle server errors separately
+      return null;
     }
     
     if (!response.ok) {
@@ -68,6 +68,10 @@ export const fetchGameDetails = async (gameId) => {
       })
     ) : [];
 
+    // Fetch games by the same developer
+    const developerName = data.involved_companies?.[0]?.company?.name || null;
+    const gamesBySameDeveloper = developerName ? await fetchGamesByDeveloper(developerName) : [];
+
     return {
       id: data.id,
       name: data.name,
@@ -95,11 +99,12 @@ export const fetchGameDetails = async (gameId) => {
       aggregatedRating: data.aggregated_rating ? (data.aggregated_rating / 20).toFixed(1) : "N/A",
       totalRatings: data.total_rating_count || 0,
       hypes: data.hypes || 0,
-      similarGames: similarGames.filter(game => game !== null), // Remove null values
+      similarGames: similarGames.filter(game => game !== null),
       developers: data.involved_companies?.map(c => c.company.name).join(" • "),
       gameModes: data.game_modes?.map(m => m.name).join(", ") || "Unknown",
       playerPerspectives: data.player_perspectives?.map(p => p.name).join(", ") || "Unknown",
       themes: data.themes?.map(t => t.name).join(", "),
+      gamesBySameDeveloper,
     };
   } catch (error) {
     console.error("Error fetching game details:", error);
@@ -118,5 +123,18 @@ export const fetchGameTimeToBeat = async (gameId) => {
   } catch (error) {
     console.error("Error fetching game time to beat:", error);
     return null;
+  }
+};
+
+export const fetchGamesByDeveloper = async (developerName) => {
+  try {
+    const response = await fetch(`${BASE_URL}/games-by-developer/${encodeURIComponent(developerName)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching games by developer:", error);
+    return [];
   }
 };

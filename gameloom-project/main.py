@@ -141,7 +141,6 @@ def get_game(game_id: int):
     if not game_data:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    # Convert Unix timestamp to milliseconds
     release_date = game_data[0].get('first_release_date')
     if release_date and release_date > 0:
         game_data[0]['first_release_date'] = release_date * 1000
@@ -179,3 +178,56 @@ def get_game_time_to_beat(game_id: int):
 
     return time_to_beat_data[0]
 
+# Fetch games developed by a specific company
+@app.get("/games-by-developer/{developer_name}")
+def get_games_by_developer(developer_name: str):
+    """Fetch games developed by a specific company from IGDB."""
+    headers = {
+        "Client-ID": IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    # Step 1: Get developer details
+    company_body = f"""
+        fields id, name, developed;
+        where name ~ "{developer_name}";
+    """
+    
+    try:
+        company_response = requests.post("https://api.igdb.com/v4/companies", headers=headers, data=company_body)
+        company_response.raise_for_status()
+        company_data = company_response.json()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching company details: {str(e)}")
+
+    if not company_data or not company_data[0].get("developed"):
+        return []
+
+    developed_game_ids = company_data[0]["developed"][:8]  # Limit to 8 games
+
+    # Step 2: Fetch game details for the developed games
+    game_body = f"""
+        fields id, name, genres.name, cover.image_id, rating;
+        where id = ({','.join(map(str, developed_game_ids))});
+    """
+
+    try:
+        game_response = requests.post(IGDB_URL, headers=headers, data=game_body)
+        game_response.raise_for_status()
+        game_data = game_response.json()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching games by developer: {str(e)}")
+
+    return [
+        {
+            "id": game["id"],
+            "title": game["name"],
+            "genre": game.get("genres", [{}])[0].get("name", "Unknown"),
+            "rating": f"{(game.get('rating', 0) / 20):.1f}" if game.get("rating") else "N/A",
+            "coverImage": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{game['cover']['image_id']}.jpg"
+            if game.get("cover") else None,
+        }
+        for game in game_data
+    ]
