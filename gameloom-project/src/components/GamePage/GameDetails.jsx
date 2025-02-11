@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Image as ImageIcon, Menu, Clock, Calendar, Monitor } from 'lucide-react';
+import { Image as ImageIcon, Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
 
 const GameDetails = ({ game, trailer, timeToBeat }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -9,19 +9,32 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
   };
 
   // Helper function to generate stars based on decimal rating
-  const getStarRating = (rating) => {
-    if (!rating || rating === "N/A") return <span className="text-gray-500">No ratings yet.</span>;
-
+  const getStarRating = (rating, releaseDate) => {
     const maxStars = 5;
+    const isUnreleased = !releaseDate || new Date(releaseDate) > new Date();
+  
+    if (!rating || rating === "N/A") {
+      return (
+        <div className="flex items-center text-gray-500 text-2xl">
+          {[...Array(maxStars)].map((_, i) => (
+            <span key={i}>★</span>
+          ))}
+          <span className="text-base ml-2">
+            {isUnreleased ? "This game has no ratings yet" : "Ratings available after release"}
+          </span>
+        </div>
+      );
+    }
+  
     const fullStars = Math.floor(rating);
     const decimalPart = rating - fullStars;
     const emptyStars = maxStars - Math.ceil(rating);
-
+  
     return (
-      <div className="flex items-center text-yellow-400 text-2xl">
+      <div className="flex items-center text-primary text-2xl">
         {/* Full Stars */}
         {[...Array(fullStars)].map((_, i) => <span key={i}>★</span>)}
-
+  
         {/* Partial Star */}
         {decimalPart > 0 && (
           <span className="relative">
@@ -31,12 +44,14 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
             </span>
           </span>
         )}
-
+  
         {/* Empty Stars */}
         {[...Array(emptyStars)].map((_, i) => <span key={i} className="text-gray-500">★</span>)}
       </div>
     );
   };
+  
+  
 
   return (
     <div className="py-12">
@@ -44,13 +59,13 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
       <h1 className="text-5xl font-bold leading-tight">{game.name}</h1>
 
       {/* Game Developers */}
-      <div className="text-gray-400 text-md mt-2">
-        {game.developers ? game.developers.split(", ").slice(0, 3).join(" • ") : "Unknown"}
+      <div className="text-gray-400 text-md mt-2 line-clamp-1">
+        {game.developers ? game.developers.split(", ").join(" • ") : "No developer found for this game"}
       </div>
 
       {/* Rating Section */}
       <div className="text-gray-400 text-md sm:text-base flex items-center gap-4 mt-2">
-        {getStarRating(game.aggregatedRating)}
+        {getStarRating(game.aggregatedRating, game.releaseDate)}
         <span className="text-2xl">
           {game.aggregatedRating !== "N/A" ? (
             <>
@@ -59,7 +74,7 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
             </>
           ) : ""}
         </span>
-        {game.totalRatings && <span className="text-sm">{game.totalRatings} ratings</span>}
+        {game.totalRatings > 0 && <span className="text-sm">{game.totalRatings} ratings</span>}
       </div>
 
       {/* Separator */}
@@ -118,8 +133,7 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         )}
       </div>
 
-
-      {/* Genres and Themes Section */}
+      {/* Genres and themes section */}
       {(game.genres || game.themes) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {game.genres && game.genres.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
@@ -141,10 +155,10 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         </div>
       )}
 
-      {/* Time to Beat, Release Year, Release Date, and Platforms Section */}
+      {/* Time to beat, release date and platforms section */}
       <div className="mt-4 space-y-2">
-        {/* Time to Beat */}
-        {timeToBeat && (
+        {/* Time to beat */}
+        {timeToBeat && timeToBeat.normally && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Clock className="w-5 h-5" />
             <span>
@@ -153,19 +167,30 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
           </div>
         )}
 
-        {/* Released On */}
+        {/* Release date */}
         {game.releaseDate && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Calendar className="w-5 h-5" />
-            <span>Released on: {game.releaseDate}</span>
+            <span>Release date: {game.releaseDate}</span>
           </div>
         )}
 
         {/* Platforms */}
         {game.platforms && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <Monitor className="w-5 h-5" />
-            <span>Platforms: {game.platforms.replace("PC (Microsoft Windows)", "PC").replace("PlayStation 5", "PS5").replace("PlayStation 4", "PS4").replace("Nintendo Switch", "Switch").replace("PlayStation 3", "PS3").replace("PlayStation 2", "PS2")}</span>
+            <Gamepad2 className="w-5 h-5" />
+            <span>
+              Platforms: {game.platforms
+                .replace("PC (Microsoft Windows)", "PC")
+                .replace("PlayStation 5", "PS5")
+                .replace("PlayStation 4", "PS4")
+                .replace("Nintendo Switch", "Switch")
+                .replace("PlayStation 3", "PS3")
+                .replace("PlayStation 2", "PS2")
+                .split(", ")
+                .sort()
+                .join(", ")}
+            </span>
           </div>
         )}
       </div>

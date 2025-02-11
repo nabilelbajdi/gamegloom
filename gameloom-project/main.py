@@ -168,7 +168,7 @@ def get_game_time_to_beat(game_id: int):
     time_to_beat_data = response.json()
 
     if not time_to_beat_data:
-        raise HTTPException(status_code=404, detail="Time to beat data not found")
+        return {}
 
     return time_to_beat_data[0]
 

@@ -53,17 +53,17 @@ export const fetchGameDetails = async (gameId) => {
       videos: data.videos?.map(v => 
         `https://www.youtube.com/embed/${v.video_id}`
       ) || [],
-      genres: data.genres?.map(g => g.name).join(", ") || "Unknown",
+      genres: data.genres?.map(g => g.name).join(", "),
       platforms: data.platforms?.map(p => p.name).join(", ") || "Unknown",
       rating: data.rating ? (data.rating / 20).toFixed(1) : "N/A",
       aggregatedRating: data.aggregated_rating ? (data.aggregated_rating / 20).toFixed(1) : "N/A",
       totalRatings: data.total_rating_count || 0,
       hypes: data.hypes || 0,
       similarGames: data.similar_games || [],
-      developers: data.involved_companies?.map(c => c.company.name).join(" • ") || "Unknown",
+      developers: data.involved_companies?.map(c => c.company.name).join(" • "),
       gameModes: data.game_modes?.map(m => m.name).join(", ") || "Unknown",
       playerPerspectives: data.player_perspectives?.map(p => p.name).join(", ") || "Unknown",
-      themes: data.themes?.map(t => t.name).join(", ") || "Unknown",
+      themes: data.themes?.map(t => t.name).join(", "),
     };
   } catch (error) {
     console.error("Error fetching game details:", error);

@@ -37,12 +37,12 @@ const GameSticky = ({ coverImage, name }) => {
       {/* Rate Game Section */}
       <div className="mt-4 w-full flex flex-col items-center">
         <span className="text-gray-400 text-xs">Rate this game</span>
-        <div className="flex items-center mt-1 text-yellow-400 text-2xl">
+        <div className="flex items-center mt-1 text-primary text-2xl">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
               key={star}
               className={`w-6 h-6 cursor-pointer ${
-                star <= (hoverRating || userRating) ? "text-yellow-400" : "text-gray-400"
+                star <= (hoverRating || userRating) ? "text-primary" : "text-gray-400"
               }`}
               onClick={() => handleStarClick(star)}
               onMouseEnter={() => handleStarMouseEnter(star)}
