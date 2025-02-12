@@ -1,27 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import GameCard from "../game/GameCard";
 import { ChevronRight } from "lucide-react";
-import { fetchAnticipatedGames } from "../../../api";
+import useGameStore from "../../store/useGameStore";
 
 const AnticipatedGames = () => {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { anticipatedGames, fetchAnticipatedGames } = useGameStore();
 
   useEffect(() => {
-    async function getGames() {
-      setLoading(true);
-      try {
-        const data = await fetchAnticipatedGames();
-        setGames(data);
-      } catch (err) {
-        setError("Failed to fetch games");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    getGames();
+    fetchAnticipatedGames();
   }, []);
 
   return (
@@ -33,14 +19,12 @@ const AnticipatedGames = () => {
         </a>
       </div>
 
-      {loading ? (
+      {anticipatedGames.length === 0 ? (
         <p className="text-center text-gray-400">Loading games...</p>
-      ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          {games.map((game, index) => (
-            <GameCard key={index} {...game} />
+          {anticipatedGames.map((game) => (
+            <GameCard key={game.id} {...game} />
           ))}
         </div>
       )}

@@ -7,7 +7,7 @@ const TrendingGames = () => {
   const { games, fetchTrendingGames } = useGameStore();
 
   useEffect(() => {
-    fetchTrendingGames(); // Fetch games once, then reuse from state
+    fetchTrendingGames();
   }, []);
 
   return (
