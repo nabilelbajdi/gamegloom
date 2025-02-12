@@ -7,7 +7,7 @@ const GameCard = ({ coverImage, title, genre, rating, id }) => {
 
   return (
     <div 
-      className="game-card relative group" 
+      className="game-card relative group cursor-pointer" 
       onClick={() => navigate(`/game/${id}`)}
     >
       {/* Cover Image */}
@@ -15,13 +15,14 @@ const GameCard = ({ coverImage, title, genre, rating, id }) => {
         src={coverImage}
         alt={title} 
         className="w-full h-54 object-cover transition-transform duration-300 group-hover:scale-102"
+        loading="lazy"
       />
 
       {/* Dark Overlay on Hover */}
       <div className="game-overlay"></div>
 
       {/* Game Info */}
-      <div className="game-info">
+      <div className="absolute bottom-0 p-2 w-full bg-black/80 text-white">
         <h3 className="text-sm font-bold truncate">{title}</h3>
         <div className="flex items-center justify-between text-xs text-gray-400 truncate">
           <span>{genre}</span>
