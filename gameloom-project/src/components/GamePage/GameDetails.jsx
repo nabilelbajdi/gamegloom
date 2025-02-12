@@ -118,7 +118,7 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         {game.screenshots && game.screenshots.length > 0 && (
           <div className="grid grid-cols-2 gap-2 w-full md:w-1/2">
             {game.screenshots.slice(0, 3).map((screenshot, index) => (
-              <img key={index} src={screenshot} alt={`Screenshot ${index + 1}`} className="w-full h-auto object-cover rounded-lg shadow-md" />
+              <img key={index} src={screenshot} alt={`Screenshot ${index + 1}`} className="w-full h-auto object-cover rounded-lg shadow-md" loading="lazy" />
             ))}
             {game.screenshots.length > 3 && (
               <div className="relative w-full h-auto rounded-lg shadow-md overflow-hidden">
