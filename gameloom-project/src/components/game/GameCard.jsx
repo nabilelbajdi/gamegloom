@@ -1,38 +1,54 @@
-import React from "react";
-import { Star } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Heart, Play, Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const GameCard = ({ coverImage, title, genre, rating, id }) => {
-  const navigate = useNavigate();
-
+const GameCard = ({ game }) => {
   return (
-    <div 
-      className="game-card relative group cursor-pointer" 
-      onClick={() => navigate(`/game/${id}`)}
+    <Link 
+      to={`/game/${game.id}`} 
+      className="block group relative overflow-hidden rounded-lg bg-surface transition-all hover:bg-surface-hover"
     >
-      {/* Cover Image */}
-      <img
-        src={coverImage}
-        alt={title} 
-        className="w-full h-54 object-cover transition-transform duration-300 group-hover:scale-102"
-        loading="lazy"
-      />
-
-      {/* Dark Overlay on Hover */}
-      <div className="game-overlay"></div>
+      {/* Game Cover */}
+      <div className="aspect-[3/4] overflow-hidden rounded-md">
+        <img
+          src={game.coverImage} 
+          alt={game.name}
+          className="h-full w-full object-cover transition-transform group-hover:scale-110"
+        />
+      </div>
 
       {/* Game Info */}
-      <div className="absolute bottom-0 p-2 w-full bg-black/80 text-white">
-        <h3 className="text-sm font-bold truncate">{title}</h3>
-        <div className="flex items-center justify-between text-xs text-gray-400 truncate">
-          <span>{genre}</span>
-          <div className="flex items-center">
-            <Star className="w-3 h-3 text-primary mr-1" />
-            <span>{rating}</span>
+      <div className="p-3">
+        <h3 className="text-sm font-semibold text-heading truncate">
+          {game.name}
+        </h3>
+        <p className="text-xs text-muted truncate">
+          {game.genre || "Unknown Genre"}
+        </p>
+
+        {/* Rating & Actions */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <span className="text-primary text-xs">★</span>
+            <span className="text-xs text-muted">
+              {game.rating !== "N/A" ? game.rating : "N/A"}
+            </span>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-1">
+            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-primary transition-colors">
+              <Heart className="h-3 w-3" />
+            </button>
+            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-secondary transition-colors">
+              <Play className="h-3 w-3" />
+            </button>
+            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-success transition-colors">
+              <Check className="h-3 w-3" />
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
