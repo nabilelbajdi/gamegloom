@@ -22,9 +22,9 @@ const AnticipatedGames = () => {
       {anticipatedGames.length === 0 ? (
         <p className="text-center text-gray-400">Loading games...</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {anticipatedGames.map((game) => (
-            <GameCard key={game.id} {...game} />
+            <GameCard key={game.id} game={game} />
           ))}
         </div>
       )}
