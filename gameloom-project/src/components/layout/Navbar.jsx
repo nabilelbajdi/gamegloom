@@ -6,7 +6,7 @@ import Icon from "../UI/Icon";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [watchlistCount, setWatchlistCount] = useState(52); // Example count
+  const [watchlistCount, setWatchlistCount] = useState(52);
 
   const navItems = [
     { name: "My Library", path: "/library" },
@@ -26,7 +26,9 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
         {/* Logo */}
-        <span className="text-lg font-bold cursor-pointer">GameLoom</span>
+        <Link to="/" className="text-lg font-bold cursor-pointer">
+          GameLoom
+        </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex pl-10">
