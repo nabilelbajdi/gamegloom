@@ -3,7 +3,7 @@ import Slider from "react-slick";
 import GameCard from "../game/GameCard";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import { getSliderSettings } from "../../../utils/sliderConfig"; // Import the utility
+import { getSliderSettings } from "../../../utils/sliderConfig";
 
 const GamesBySameDeveloper = memo(({ games, developerName }) => {
   if (!games || games.length === 0) {
@@ -15,7 +15,7 @@ const GamesBySameDeveloper = memo(({ games, developerName }) => {
 
   console.log("📢 DEBUG: GamesBySameDeveloper - Displayed Games:", displayedGames);
 
-  const settings = getSliderSettings(displayedGames.length); // Use the utility
+  const settings = getSliderSettings(displayedGames.length);
 
   return (
     <section className="mt-12">
