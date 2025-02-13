@@ -43,10 +43,10 @@ def list_anticipated_games():
     }
 
     body = f"""
-        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, hypes;
+        fields name, cover.url, cover.image_id, first_release_date, platforms.name, genres.name, summary, hypes;
         where first_release_date > {current_timestamp} & hypes != null & hypes > 10; 
         sort hypes desc;
-        limit 7;
+        limit 6;
     """ 
 
     try:
@@ -69,10 +69,10 @@ def list_highly_rated_games():
     }
 
     body = """
-        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
+        fields name, cover.url, cover.image_id, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
         where cover != null & total_rating > 85 & total_rating_count > 500;
         sort total_rating desc;
-        limit 7;
+        limit 6;
     """
 
     try:
@@ -95,10 +95,10 @@ def list_latest_games():
     }
 
     body = f"""
-        fields name, cover.url, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
+        fields name, cover.url, cover.image_id, first_release_date, platforms.name, genres.name, summary, total_rating, total_rating_count;
         where cover != null & first_release_date <= {current_timestamp};
         sort first_release_date desc;
-        limit 7;
+        limit 6;
     """
 
     try:
@@ -125,7 +125,7 @@ def get_game(game_id: int):
                genres.name, platforms.name, cover.image_id, 
                screenshots.image_id, videos.video_id, rating, 
                aggregated_rating, total_rating, total_rating_count, hypes, similar_games,
-               involved_companies.company.name, game_modes.name, 
+               involved_companies.company.name, involved_companies.developer, game_modes.name, 
                player_perspectives.name, themes.name;
         where id = {game_id};
     """
@@ -179,8 +179,8 @@ def get_game_time_to_beat(game_id: int):
     return time_to_beat_data[0]
 
 # Fetch games developed by a specific company
-@app.get("/games-by-developer/{developer_name}")
-def get_games_by_developer(developer_name: str):
+@app.get("/games-by-developer/{company_id}")
+def get_games_by_developer(company_id: int):
     """Fetch games developed by a specific company from IGDB."""
     headers = {
         "Client-ID": IGDB_CLIENT_ID,
@@ -190,10 +190,8 @@ def get_games_by_developer(developer_name: str):
     }
 
     # Step 1: Get developer details
-    company_body = f"""
-        fields id, name, developed;
-        where name ~ "{developer_name}";
-    """
+    company_body = f"fields developed; where id = {company_id};"
+
     
     try:
         company_response = requests.post("https://api.igdb.com/v4/companies", headers=headers, data=company_body)
@@ -205,7 +203,7 @@ def get_games_by_developer(developer_name: str):
     if not company_data or not company_data[0].get("developed"):
         return []
 
-    developed_game_ids = company_data[0]["developed"][:8]  # Limit to 8 games
+    developed_game_ids = company_data[0]["developed"][:8]
 
     # Step 2: Fetch game details for the developed games
     game_body = f"""
@@ -226,7 +224,7 @@ def get_games_by_developer(developer_name: str):
             "title": game["name"],
             "genre": game.get("genres", [{}])[0].get("name", "Unknown"),
             "rating": f"{(game.get('rating', 0) / 20):.1f}" if game.get("rating") else "N/A",
-            "coverImage": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{game['cover']['image_id']}.jpg"
+            "coverImage": f"https://images.igdb.com/igdb/image/upload/t_1080p/{game['cover']['image_id']}.jpg"
             if game.get("cover") else None,
         }
         for game in game_data
@@ -247,7 +245,7 @@ def list_trending_games():
         fields game_id, value, popularity_type;
         where popularity_type = 5;
         sort value desc;
-        limit 7;
+        limit 6;
     """
 
     try:
@@ -265,7 +263,7 @@ def list_trending_games():
 
     # Fetch detailed game info
     game_details_body = f"""
-        fields id, name, cover.image_id, genres.name, rating;
+        fields id, name, cover.url, cover.image_id, genres.name, rating;
         where id = ({",".join(game_ids)});
     """
 
@@ -282,16 +280,16 @@ def list_trending_games():
         popularity_entry = next((p for p in popularity_data if p["game_id"] == game["id"]), None)
         trending_score = round(popularity_entry["value"] * 100) if popularity_entry else 0
 
-        cover_image = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{game['cover']['image_id']}.jpg" \
-            if game.get("cover") else None
-
         trending_games.append({
-            "id": game["id"],
-            "name": game["name"],
-            "genres": [{"name": game.get("genres", [{}])[0].get("name", "Unknown")}],
-            "rating": game.get("rating", 0),
-            "cover": {"url": cover_image} if cover_image else None,
-            "steamPeakPlayers": trending_score,
+        "id": game["id"],
+        "name": game["name"],
+        "genre": game.get("genres", [{}])[0].get("name", "Unknown"),
+        "rating": f"{(game.get('rating', 0) / 20):.1f}" if game.get("rating") else "N/A",
+        "cover": {
+            "url": game.get("cover", {}).get("url", ""),
+            "image_id": game.get("cover", {}).get("image_id", ""),
+        },
+        "steamPeakPlayers": trending_score,
         })
 
     return trending_games
