@@ -10,10 +10,14 @@ async function fetchGames(endpoint) {
     const data = await response.json();
     return data.map((game) => ({
       id: game.id,
-      title: game.name,
+      name: game.name,
       genre: game.genres?.[0]?.name || "Unknown",
       rating: game.rating ? (game.rating / 20).toFixed(1) : "N/A",
-      coverImage: game.cover?.url.replace("t_thumb", "t_cover_big") || "",
+      coverImage: game.cover?.url
+        ? `https:${game.cover.url.replace(/t_thumb|t_cover_big/, "t_1080p")}`
+        : game.cover?.image_id
+        ? `https://images.igdb.com/igdb/image/upload/t_1080p/${game.cover.image_id}.jpg`
+        : "",
       steamPeakPlayers: game.steamPeakPlayers || 0,
     }));
   } catch (error) {
@@ -64,15 +68,15 @@ export const fetchGameDetails = async (gameId) => {
           genre: similarGameData.genres?.[0]?.name || "Unknown",
           rating: similarGameData.rating ? (similarGameData.rating / 20).toFixed(1) : "N/A",
           coverImage: similarGameData.cover?.image_id 
-            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${similarGameData.cover.image_id}.jpg`
+            ? `https://images.igdb.com/igdb/image/upload/t_1080p/${similarGameData.cover.image_id}.jpg`
             : "",
         };
       })
     ) : [];
 
     // Fetch games by the same developer
-    const developerName = data.involved_companies?.[0]?.company?.name || null;
-    const gamesBySameDeveloper = developerName ? await fetchGamesByDeveloper(developerName) : [];
+    const companyId = data.involved_companies?.find(ic => ic.developer)?.company?.id || null;
+    const gamesBySameDeveloper = companyId ? await fetchGamesByDeveloper(companyId) : [];
 
     return {
       id: data.id,
@@ -128,13 +132,20 @@ export const fetchGameTimeToBeat = async (gameId) => {
   }
 };
 
+// Fetch games by developer
 export const fetchGamesByDeveloper = async (developerName) => {
   try {
     const response = await fetch(`${BASE_URL}/games-by-developer/${encodeURIComponent(developerName)}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-    return await response.json();
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+    const data = await response.json();
+    
+    return data.map((game) => ({
+      id: game.id,
+      name: game.title,
+      genre: game.genre || "Unknown",
+      rating: game.rating || "N/A",
+      coverImage: game.coverImage || "",
+    }));
   } catch (error) {
     console.error("Error fetching games by developer:", error);
     return [];
