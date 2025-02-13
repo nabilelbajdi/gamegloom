@@ -6,6 +6,7 @@ import JoinCommunity from "../components/home/JoinCommunity";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import LatestGames from "../components/home/LatestGames";
 import TrendingGames from "../components/home/TrendingGames";
+
 const HomePage = () => {
   return (
     <>
