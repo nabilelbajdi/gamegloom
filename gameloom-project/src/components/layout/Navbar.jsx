@@ -44,12 +44,12 @@ export default function Navbar() {
           <div className="relative w-full">
             <input
               type="text"
-              placeholder="Search for a game"
+              placeholder="Search GameLoom"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="border rounded px-3 py-2 text-xs w-full pr-10"
             />
-            <button type="submit" className="absolute right-2 top-1/2 transform -translate-y-1/2">
+            <button type="submit" className="absolute right-3 top-4 transform -translate-y-1/2">
               <Icon name="search" className="icon" />
             </button>
           </div>
@@ -62,11 +62,13 @@ export default function Navbar() {
           ))}
           {/* To Play Button */}
           <div className="flex items-center space-x-2 cursor-pointer">
-            <Icon name="bookmark" className="icon" />
-            <span className="text-xs">To Play</span>
-            <span className="bg-yellow-500 text-black rounded-full px-2 text-xs font-semibold">
-              {watchlistCount}
-            </span>
+            <div className="flex items-center space-x-1">
+              <Icon name="bookmark-plus" className="icon" />
+              <span className="text-xs">Gamelist</span>
+              <span className="bg-primary text-dark rounded-full px-2 text-xs">
+                {watchlistCount}
+              </span>
+            </div>
           </div>
           <Button to="/signup" label="Sign Up" variant="nav" />
         </div>

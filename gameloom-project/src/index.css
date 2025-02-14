@@ -15,8 +15,8 @@
   --navbar-hover: #C8AA6E;
 
   /* Typography */
-  --font-body: "Poppins", sans-serif;
-  --font-heading: "Poppins", sans-serif;
+  --font-body: "Amazon Ember", sans-serif;
+  --font-heading: "Amazon Ember", sans-serif;
 }
 
 @layer base {
@@ -36,6 +36,7 @@
 
   nav {
     font-family: var(--font-body);
+    font-weight: bold;
   }
 }
 
@@ -80,7 +81,7 @@
     
   /* Navbar */
   .nav-link {
-    @apply relative px-4 py-3 uppercase text-sm transition-all duration-300;
+    @apply relative px-4 py-3 transition-all duration-300;
     color: var(--navbar-text);
   }
   .nav-link:hover {
