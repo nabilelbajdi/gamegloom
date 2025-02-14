@@ -10,9 +10,9 @@ This project follows a structured approach:
 
 ---
 
-## 🚀 Progress & Roadmap
+## Progress & Roadmap
 
-### ✅ Part 1: Static Website (HTML, CSS, Tailwind CSS)
+### Part 1: Static Website (HTML, CSS, Tailwind CSS)
 > **Deadline:** January 31, 2025  
 > **Goal:** Design and implement the initial frontend prototype.
 
@@ -25,19 +25,18 @@ This project follows a structured approach:
 
 ---
 
-### ⏳ Part 2: Prototype (FastAPI & React)
+### Part 2: Prototype (FastAPI & React)
 > **Deadline:** February 12, 2025  
 > **Goal:** Make the website interactive using React and integrate a FastAPI backend.
 
 - [x] Set up React project structure  
-- [ ] Build core React components  
+- [x] Build core React components  
 - [x] Set up FastAPI backend  
-- [x] Connect frontend with API  
-- [ ] Implement game tracking features  
+- [x] Connect frontend with API 
 
 ---
 
-### 🔜 Part 3: Full-Stack Project (FastAPI & React)
+### Part 3: Full-Stack Project (FastAPI & React)
 > **Deadline:** March 21, 2025  
 > **Goal:** Develop a production-ready full-stack application.
 
@@ -49,12 +48,9 @@ This project follows a structured approach:
 
 ---
 
-## 🌟 Future Enhancements
+## Future Enhancements
 - Implementing AI-based game recommendations.
 - Integrating gaming platform APIs for automatic game tracking.
 - Adding community features such as discussions and groups.
 
 ---
-
-## 📚 License
-This project is for educational purposes.
