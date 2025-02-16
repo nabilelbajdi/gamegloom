@@ -37,8 +37,7 @@ const GameSticky = ({ coverImage, name }) => {
 
       {/* Rate Game Section */}
       <div className="mt-4 w-full flex flex-col items-center">
-        <span className="text-gray-400 text-xs">Rate this game</span>
-        <div className="flex items-center mt-1 text-primary text-2xl">
+        <div className="flex items-center mt-1 text-primary text-3xl gap-3">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
               key={star}

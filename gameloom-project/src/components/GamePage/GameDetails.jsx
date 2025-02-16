@@ -62,8 +62,8 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
           <span className="text-sm text-gray-400">/5.0</span>
         </span>
         {game.totalRatingCount > 0 && (
-          <span className="text-sm ml-2 text-gray-400">
-            ({game.totalRatingCount.toLocaleString()} ratings)
+          <span className="text-sm ml-2 mt-1 text-gray-400">
+            ({game.totalRatingCount.toLocaleString()} Ratings)
           </span>
         )}
       </div>
