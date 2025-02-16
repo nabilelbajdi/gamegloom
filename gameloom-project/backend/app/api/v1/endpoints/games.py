@@ -188,7 +188,7 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     """Get anticipated games"""
     # Check database first
     db_games = services.get_anticipated_games(db)
-    if len(db_games) >= 6:  # Only use DB results if we have enough games
+    if len(db_games) >= 6:
         return db_games
 
     # If no games in database, fetch from IGDB
@@ -196,10 +196,14 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
     
     query = f"""
-        fields name, cover.url, cover.image_id, first_release_date, 
-               platforms.name, genres.name, summary, hypes,
-               screenshots.image_id, videos.video_id,
-               involved_companies.company.name, involved_companies.developer;
+        fields name, summary, storyline, first_release_date, 
+               genres.name, platforms.name, cover.image_id, 
+               screenshots.image_id, videos.video_id, rating, 
+               aggregated_rating, total_rating, total_rating_count, hypes,
+               similar_games.name, similar_games.cover.image_id, similar_games.rating,
+               similar_games.total_rating, similar_games.genres.name,
+               involved_companies.company.name, involved_companies.developer, game_modes.name, 
+               player_perspectives.name, themes.name;
         where first_release_date > {current_timestamp} 
         & first_release_date < {one_year_future}
         & hypes > 0 
@@ -209,12 +213,17 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     """
     try:
         igdb_data = fetch_from_igdb(query=query)
+        
         if not igdb_data:  # If no games with hype, try without hype filter
             query = f"""
-                fields name, cover.url, cover.image_id, first_release_date, 
-                       platforms.name, genres.name, summary, hypes,
-                       screenshots.image_id, videos.video_id,
-                       involved_companies.company.name, involved_companies.developer;
+                fields name, summary, storyline, first_release_date, 
+                       genres.name, platforms.name, cover.image_id, 
+                       screenshots.image_id, videos.video_id, rating, 
+                       aggregated_rating, total_rating, total_rating_count, hypes,
+                       similar_games.name, similar_games.cover.image_id, similar_games.rating,
+                       similar_games.total_rating, similar_games.genres.name,
+                       involved_companies.company.name, involved_companies.developer, game_modes.name, 
+                       player_perspectives.name, themes.name;
                 where first_release_date > {current_timestamp} 
                 & first_release_date < {one_year_future}
                 & cover != null;
@@ -222,7 +231,18 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
                 limit 6;
             """
             igdb_data = fetch_from_igdb(query=query)
-        return ensure_games_in_db(db, igdb_data)
+        
+        # Process each game and ensure it's in the database
+        games = []
+        for game_data in igdb_data:
+            try:
+                processed_data = process_igdb_data(game_data)
+                game = services.create_game(db, processed_data)
+                games.append(game)
+            except Exception as e:
+                continue
+        
+        return games
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -231,15 +251,19 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     """Get highly rated games"""
     # Check database first
     db_games = services.get_highly_rated_games(db)
-    if len(db_games) >= 6:  # Only use DB results if we have enough games
+    if len(db_games) >= 6:
         return db_games
 
     # If no games in database, fetch from IGDB
     query = """
-        fields name, cover.url, cover.image_id, first_release_date, 
-               platforms.name, genres.name, summary, total_rating, total_rating_count,
-               screenshots.image_id, videos.video_id, similar_games,
-               involved_companies.company.name, involved_companies.developer;
+        fields name, summary, storyline, first_release_date, 
+               genres.name, platforms.name, cover.image_id, 
+               screenshots.image_id, videos.video_id, rating, 
+               aggregated_rating, total_rating, total_rating_count, hypes,
+               similar_games.name, similar_games.cover.image_id, similar_games.rating,
+               similar_games.total_rating, similar_games.genres.name,
+               involved_companies.company.name, involved_companies.developer, game_modes.name, 
+               player_perspectives.name, themes.name;
         where total_rating != null 
         & total_rating_count > 500
         & total_rating > 85
@@ -249,7 +273,18 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     """
     try:
         igdb_data = fetch_from_igdb(query=query)
-        return ensure_games_in_db(db, igdb_data)
+        
+        # Process each game and ensure it's in the database
+        games = []
+        for game_data in igdb_data:
+            try:
+                processed_data = process_igdb_data(game_data)
+                game = services.create_game(db, processed_data)
+                games.append(game)
+            except Exception as e:
+                continue
+        
+        return games
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -258,7 +293,7 @@ async def get_latest_games(db: Session = Depends(get_db)):
     """Get latest games"""
     # Check database first
     db_games = services.get_latest_games(db)
-    if len(db_games) >= 6:  # Only use DB results if we have enough games
+    if len(db_games) >= 6:
         return db_games
 
     # If no games in database, fetch from IGDB
@@ -266,10 +301,14 @@ async def get_latest_games(db: Session = Depends(get_db)):
     one_month_ago = current_timestamp - (30 * 24 * 60 * 60)  # 30 days ago
     
     query = f"""
-        fields name, cover.url, cover.image_id, first_release_date, 
-               platforms.name, genres.name, summary, rating, total_rating,
-               screenshots.image_id, videos.video_id, similar_games,
-               involved_companies.company.name, involved_companies.developer;
+        fields name, summary, storyline, first_release_date, 
+               genres.name, platforms.name, cover.image_id, 
+               screenshots.image_id, videos.video_id, rating, 
+               aggregated_rating, total_rating, total_rating_count, hypes,
+               similar_games.name, similar_games.cover.image_id, similar_games.rating,
+               similar_games.total_rating, similar_games.genres.name,
+               involved_companies.company.name, involved_companies.developer, game_modes.name, 
+               player_perspectives.name, themes.name;
         where first_release_date >= {one_month_ago}
         & first_release_date <= {current_timestamp}
         & cover != null;
@@ -278,7 +317,18 @@ async def get_latest_games(db: Session = Depends(get_db)):
     """
     try:
         igdb_data = fetch_from_igdb(query=query)
-        return ensure_games_in_db(db, igdb_data)
+        
+        # Process each game and ensure it's in the database
+        games = []
+        for game_data in igdb_data:
+            try:
+                processed_data = process_igdb_data(game_data)
+                game = services.create_game(db, processed_data)
+                games.append(game)
+            except Exception as e:
+                continue
+        
+        return games
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -326,10 +376,8 @@ async def update_similar_games(db: Session = Depends(get_db)):
                 # Commit every 10 games to avoid long transactions
                 if updated_count % 10 == 0:
                     db.commit()
-                    print(f"Updated {updated_count} games so far...")
 
             except Exception as e:
-                print(f"Error updating similar games for {game.name}: {str(e)}")
                 continue
 
         # Final commit for remaining games
