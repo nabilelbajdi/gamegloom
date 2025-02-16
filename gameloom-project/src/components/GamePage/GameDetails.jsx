@@ -179,7 +179,11 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         {game.firstReleaseDate && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Calendar className="w-5 h-5" />
-            <span>Release date: {new Date(game.firstReleaseDate).toLocaleDateString()}</span>
+            <span>Release date: {new Date(game.firstReleaseDate).toLocaleDateString('en-US', { 
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric'
+            })}</span>
           </div>
         )}
 
