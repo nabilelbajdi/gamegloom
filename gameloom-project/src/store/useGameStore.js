@@ -25,7 +25,13 @@ const transformGameData = (game) => {
     firstReleaseDate: game.first_release_date,
     screenshots: game.screenshots,
     videos: game.videos,
-    similarGames: game.similar_games,
+    similarGames: game.similar_games?.map(similar => ({
+      id: similar.id,
+      name: similar.name,
+      coverImage: similar.cover_image,
+      rating: similar.rating ? (similar.rating / 20).toFixed(1) : "N/A",
+      genre: similar.genres
+    })) || [],
     developers: game.developers,
     gameModes: game.game_modes,
     playerPerspectives: game.player_perspectives,
