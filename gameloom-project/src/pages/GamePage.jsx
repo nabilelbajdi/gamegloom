@@ -1,3 +1,4 @@
+// src/pages/GamePage.jsx
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import useGameStore from "../store/useGameStore";

@@ -1,3 +1,4 @@
+// src/components/home/ReviewedGames.jsx
 import React from "react";
 import ReviewCard from "../game/ReviewCard";
 import reviewedGames from "../../constants/reviewedGames";

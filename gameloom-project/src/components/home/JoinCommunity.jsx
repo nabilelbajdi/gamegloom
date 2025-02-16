@@ -1,3 +1,4 @@
+// src/components/home/JoinCommunity.jsx
 import React from "react";
 
 const JoinCommunity = () => {

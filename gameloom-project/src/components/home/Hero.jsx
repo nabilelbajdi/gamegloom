@@ -1,3 +1,4 @@
+// src/components/home/Hero.jsx
 import React from "react";
 import Button from "../UI/Button";
 

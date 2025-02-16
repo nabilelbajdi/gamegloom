@@ -1,3 +1,4 @@
+// src/pages/HomePage.jsx
 import React from "react";
 import Hero from "../components/home/Hero";
 import AnticipatedGames from "../components/home/AnticipatedGames";

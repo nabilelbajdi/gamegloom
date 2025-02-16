@@ -1,3 +1,4 @@
+// api.js
 const BASE_URL = "http://localhost:8000/api/v1"; 
 
 // Fetch list of games

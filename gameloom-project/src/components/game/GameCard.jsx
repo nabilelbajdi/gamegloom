@@ -1,3 +1,4 @@
+// src/components/game/GameCard.jsx
 import { Heart, Play, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 

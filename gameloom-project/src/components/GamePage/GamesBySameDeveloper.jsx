@@ -1,3 +1,4 @@
+// src/components/GamePage/GamesBySameDeveloper.jsx
 import React, { memo } from "react";
 import Slider from "react-slick";
 import GameCard from "../game/GameCard";

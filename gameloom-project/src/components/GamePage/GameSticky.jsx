@@ -1,3 +1,4 @@
+// src/components/GamePage/GameSticky.jsx
 import React, { useState } from "react";
 import { ShoppingCart, PlusCircle } from "lucide-react";
 

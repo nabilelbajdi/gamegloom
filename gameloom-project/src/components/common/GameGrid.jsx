@@ -1,3 +1,4 @@
+// src/components/common/GameGrid.jsx
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import GameCard from "../game/GameCard";

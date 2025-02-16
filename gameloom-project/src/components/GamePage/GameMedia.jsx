@@ -1,3 +1,4 @@
+// src/components/GamePage/GameMedia.jsx
 import React from "react";
 
 const GameMedia = React.memo(({ screenshots, videos }) => {

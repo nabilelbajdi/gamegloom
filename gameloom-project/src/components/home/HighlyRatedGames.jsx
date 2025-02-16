@@ -1,3 +1,4 @@
+// src/components/home/HighlyRatedGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
 import GameGrid from "../common/GameGrid";

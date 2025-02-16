@@ -1,3 +1,4 @@
+// src/store/useGameStore.js
 import { create } from "zustand";
 import { fetchTrendingGames, fetchAnticipatedGames, fetchHighlyRatedGames, fetchLatestGames, fetchGameDetails, fetchGameTimeToBeat } from "../../api";
 

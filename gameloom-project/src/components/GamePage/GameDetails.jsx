@@ -1,3 +1,4 @@
+// src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
 import { Image as ImageIcon, Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
 

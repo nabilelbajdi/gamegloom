@@ -1,3 +1,4 @@
+// src/components/game/ReviewCard.jsx
 import React, { useState } from "react";
 import { ThumbsUp, MessageCircle, Calendar, UserPlus, UserX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
