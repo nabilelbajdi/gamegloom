@@ -11,7 +11,7 @@ const HomePage = () => {
   return (
     <>
       <Hero />
-      <TrendingGames />
+      {/* <TrendingGames /> */}
       <AnticipatedGames />
       <HighlyRatedGames />
       <LatestGames />

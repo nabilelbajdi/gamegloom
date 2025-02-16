@@ -9,49 +9,65 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
   };
 
   // Helper function to generate stars based on decimal rating
-  const getStarRating = (rating, releaseDate) => {
-    const maxStars = 5;
-    const isUnreleased = !releaseDate || new Date(releaseDate) > new Date();
-  
+  const getStarRating = (rating) => {
     if (!rating || rating === "N/A") {
       return (
-        <div className="flex items-center text-gray-500 text-2xl">
-          {[...Array(maxStars)].map((_, i) => (
-            <span key={i}>★</span>
-          ))}
-          <span className="text-base ml-2">
-            {isUnreleased ? "This game has no ratings yet" : "Ratings available after release"}
+        <div className="flex items-center">
+          <div className="text-gray-500 text-2xl flex">
+            {[...Array(5)].map((_, i) => (
+              <span key={i}>★</span>
+            ))}
+          </div>
+          <span className="text-base ml-2 text-gray-500">
+            No ratings yet
           </span>
         </div>
       );
     }
-  
-    const fullStars = Math.floor(rating);
-    const decimalPart = rating - fullStars;
-    const emptyStars = maxStars - Math.ceil(rating);
-  
+
+    const numericRating = parseFloat(rating);
+    const fullStars = Math.floor(numericRating);
+    const decimalPart = numericRating - fullStars;
+    const emptyStars = 5 - Math.ceil(numericRating);
+
     return (
-      <div className="flex items-center text-primary text-2xl">
-        {/* Full Stars */}
-        {[...Array(fullStars)].map((_, i) => <span key={i}>★</span>)}
-  
-        {/* Partial Star */}
-        {decimalPart > 0 && (
-          <span className="relative">
-            <span className="text-gray-500">★</span>
-            <span className="absolute top-0 left-0 overflow-hidden" style={{ width: `${decimalPart * 100}%` }}>
-              ★
+      <div className="flex items-center">
+        <div className="text-2xl flex">
+          {/* Full Stars */}
+          {[...Array(fullStars)].map((_, i) => (
+            <span key={`full-${i}`} className="text-primary">★</span>
+          ))}
+
+          {/* Partial Star */}
+          {decimalPart > 0 && (
+            <span className="relative">
+              <span className="text-gray-500">★</span>
+              <span 
+                className="absolute top-0 left-0 text-primary overflow-hidden"
+                style={{ width: `${decimalPart * 100}%` }}
+              >
+                ★
+              </span>
             </span>
+          )}
+
+          {/* Empty Stars */}
+          {[...Array(emptyStars)].map((_, i) => (
+            <span key={`empty-${i}`} className="text-gray-500">★</span>
+          ))}
+        </div>
+        <span className="text-2xl ml-4">
+          {rating}
+          <span className="text-sm text-gray-400">/5.0</span>
+        </span>
+        {game.totalRatingCount > 0 && (
+          <span className="text-sm ml-2 text-gray-400">
+            ({game.totalRatingCount.toLocaleString()} ratings)
           </span>
         )}
-  
-        {/* Empty Stars */}
-        {[...Array(emptyStars)].map((_, i) => <span key={i} className="text-gray-500">★</span>)}
       </div>
     );
   };
-  
-  
 
   return (
     <div className="py-12">
@@ -64,17 +80,8 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
       </div>
 
       {/* Rating Section */}
-      <div className="text-gray-400 text-md sm:text-base flex items-center gap-4 mt-2">
-        {getStarRating(game.aggregatedRating, game.releaseDate)}
-        <span className="text-2xl">
-          {game.aggregatedRating !== "N/A" ? (
-            <>
-              {game.aggregatedRating}
-              <span className="text-sm">/5.0</span>
-            </>
-          ) : ""}
-        </span>
-        {game.totalRatings > 0 && <span className="text-sm">{game.totalRatings} ratings</span>}
+      <div className="mt-4 mb-6">
+        {getStarRating(game.rating)}
       </div>
 
       {/* Separator */}
@@ -91,7 +98,7 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
           <p className={isExpanded ? "" : "line-clamp-3"}>
             {game.summary}
           </p>
-          {game.summary.length > 300 && (
+          {game.summary?.length > 300 && (
             <button onClick={toggleSummary} className="text-blue-500 text-xs cursor-pointer">
               {isExpanded ? "Show Less" : "Show More"}
             </button>
@@ -134,9 +141,9 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
       </div>
 
       {/* Genres and themes section */}
-      {(game.genres || game.themes) && (
+      {(game.genre || game.themes) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {game.genres && game.genres.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
+          {game.genre && game.genre.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
             <span
               key={`genre-${index}`}
               className="bg-gray-800 text-white text-xs font-semibold px-3 py-1 rounded-full cursor-pointer hover:bg-gray-700"
@@ -168,10 +175,10 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         )}
 
         {/* Release date */}
-        {game.releaseDate && (
+        {game.firstReleaseDate && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Calendar className="w-5 h-5" />
-            <span>Release date: {game.releaseDate}</span>
+            <span>Release date: {new Date(game.firstReleaseDate).toLocaleDateString()}</span>
           </div>
         )}
 
