@@ -29,7 +29,9 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
             fields name, summary, storyline, first_release_date, 
                    genres.name, platforms.name, cover.image_id, 
                    screenshots.image_id, videos.video_id, rating, 
-                   aggregated_rating, total_rating, total_rating_count, hypes, similar_games,
+                   aggregated_rating, total_rating, total_rating_count, hypes,
+                   similar_games.name, similar_games.cover.image_id, similar_games.rating,
+                   similar_games.total_rating, similar_games.genres.name,
                    involved_companies.company.name, involved_companies.developer, game_modes.name, 
                    player_perspectives.name, themes.name;
             where id = {game_id};
@@ -62,23 +64,19 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         for s in igdb_data.get('screenshots', [])
     ]
 
-    # Fetch full details for similar games
+    # Process similar games from expanded data
     similar_games = []
     if igdb_data.get('similar_games'):
-        for similar_id in igdb_data['similar_games']:
-            try:
-                similar_data = fetch_from_igdb(game_id=similar_id)  # Fetch full game data
-                if similar_data:
-                    similar_games.append({
-                        "id": similar_data["id"],
-                        "name": similar_data["name"],
-                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
-                        if similar_data.get("cover") else None,
-                        "rating": similar_data.get("total_rating", similar_data.get("rating")),
-                        "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
-                    })
-            except Exception as e:
-                print(f"Warning: Could not fetch similar game {similar_id} - {e}")
+        for similar_data in igdb_data['similar_games']:
+            if similar_data.get('cover'):  # Only include games with cover images
+                similar_games.append({
+                    "id": similar_data["id"],
+                    "name": similar_data["name"],
+                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                    if similar_data.get("cover") else None,
+                    "rating": similar_data.get("total_rating", similar_data.get("rating")),
+                    "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
+                })
 
     return schemas.GameCreate(
         igdb_id=igdb_data['id'],
@@ -96,7 +94,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         first_release_date=release_date,
         screenshots=screenshots,
         videos=[f"https://www.youtube.com/embed/{v['video_id']}" for v in igdb_data.get('videos', [])],
-        similar_games=similar_games,  # Store full game objects instead of IDs
+        similar_games=similar_games,
         developers=", ".join(c['company']['name'] for c in igdb_data.get('involved_companies', []) if c.get('developer')),
         game_modes=", ".join(m['name'] for m in igdb_data.get('game_modes', [])),
         player_perspectives=", ".join(p['name'] for p in igdb_data.get('player_perspectives', [])),
@@ -296,27 +294,28 @@ async def update_similar_games(db: Session = Depends(get_db)):
             try:
                 # Fetch fresh data from IGDB
                 igdb_data = fetch_from_igdb(game_id=game.igdb_id)
-                if not igdb_data:
+                if not igdb_data or not igdb_data.get('similar_games'):
                     continue
 
-                # Process similar games
+                # Process similar games in a single API call
                 similar_games = []
-                if igdb_data.get('similar_games'):
-                    for similar_id in igdb_data['similar_games']:
-                        try:
-                            similar_data = fetch_from_igdb(game_id=similar_id)
-                            if similar_data:
-                                similar_games.append({
-                                    "id": similar_data["id"],
-                                    "name": similar_data["name"],
-                                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
-                                    if similar_data.get("cover") else None,
-                                    "rating": similar_data.get("total_rating", similar_data.get("rating")),
-                                    "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
-                                })
-                        except Exception as e:
-                            print(f"Warning: Could not fetch similar game {similar_id} for game {game.name} - {e}")
-                            continue
+                similar_ids = ','.join(str(id) for id in igdb_data['similar_games'])
+                query = f"""
+                    fields id, name, cover.image_id, total_rating, rating, genres.name;
+                    where id = ({similar_ids});
+                    limit 10;
+                """
+                similar_games_data = fetch_from_igdb(query=query)
+                
+                for similar_data in similar_games_data:
+                    similar_games.append({
+                        "id": similar_data["id"],
+                        "name": similar_data["name"],
+                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                        if similar_data.get("cover") else None,
+                        "rating": similar_data.get("total_rating", similar_data.get("rating")),
+                        "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
+                    })
 
                 # Update the game with new similar games data
                 game.similar_games = similar_games
