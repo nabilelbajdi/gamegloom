@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..core import services, schemas
+from ..core import services, schemas, models
 from ...db_setup import get_db
 from ...settings import settings
 import requests
@@ -57,13 +57,29 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         cover_image = f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['cover']['image_id']}.jpg"
     
     # Process screenshots
-    screenshots = []
-    if igdb_data.get('screenshots'):
-        screenshots = [
-            f"https://images.igdb.com/igdb/image/upload/t_screenshot_big/{s['image_id']}.jpg"
-            for s in igdb_data['screenshots']
-        ]
-    
+    screenshots = [
+        f"https://images.igdb.com/igdb/image/upload/t_screenshot_big/{s['image_id']}.jpg"
+        for s in igdb_data.get('screenshots', [])
+    ]
+
+    # Fetch full details for similar games
+    similar_games = []
+    if igdb_data.get('similar_games'):
+        for similar_id in igdb_data['similar_games']:
+            try:
+                similar_data = fetch_from_igdb(game_id=similar_id)  # Fetch full game data
+                if similar_data:
+                    similar_games.append({
+                        "id": similar_data["id"],
+                        "name": similar_data["name"],
+                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                        if similar_data.get("cover") else None,
+                        "rating": similar_data.get("total_rating", similar_data.get("rating")),
+                        "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
+                    })
+            except Exception as e:
+                print(f"Warning: Could not fetch similar game {similar_id} - {e}")
+
     return schemas.GameCreate(
         igdb_id=igdb_data['id'],
         name=igdb_data['name'],
@@ -80,7 +96,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         first_release_date=release_date,
         screenshots=screenshots,
         videos=[f"https://www.youtube.com/embed/{v['video_id']}" for v in igdb_data.get('videos', [])],
-        similar_games=igdb_data.get('similar_games', []),
+        similar_games=similar_games,  # Store full game objects instead of IDs
         developers=", ".join(c['company']['name'] for c in igdb_data.get('involved_companies', []) if c.get('developer')),
         game_modes=", ".join(m['name'] for m in igdb_data.get('game_modes', [])),
         player_perspectives=", ".join(p['name'] for p in igdb_data.get('player_perspectives', [])),
@@ -135,11 +151,6 @@ async def get_trending_games(db: Session = Depends(get_db)):
         """
         steam_data = fetch_from_igdb(query=steam_query, endpoint="popularity_primitives")
         
-        # Debug logging
-        print("Steam popularity data:")
-        for item in steam_data:
-            print(f"Game ID: {item['game_id']}, Value: {item['value']}")
-        
         game_ids = [str(item['game_id']) for item in steam_data]
         
         if game_ids:
@@ -148,7 +159,7 @@ async def get_trending_games(db: Session = Depends(get_db)):
                 fields id, name, cover.url, cover.image_id, first_release_date, 
                        platforms.name, genres.name, summary, rating, 
                        aggregated_rating, total_rating, total_rating_count,
-                       screenshots.image_id, videos.video_id,
+                       screenshots.image_id, videos.video_id, similar_games,
                        involved_companies.company.name, involved_companies.developer;
                 where id = ({','.join(game_ids)}) & cover != null;
                 limit 12;
@@ -156,7 +167,6 @@ async def get_trending_games(db: Session = Depends(get_db)):
             igdb_data = fetch_from_igdb(query=games_query)
             
             if not igdb_data:
-                print("No games found with cover images")
                 return []
             
             # Create a mapping of game_id to popularity value
@@ -165,18 +175,11 @@ async def get_trending_games(db: Session = Depends(get_db)):
             # Sort the games based on their popularity value
             igdb_data.sort(key=lambda x: popularity_map.get(str(x['id']), 0), reverse=True)
             
-            # Debug logging
-            print("\nSorted games by popularity:")
-            for game in igdb_data:
-                print(f"Game: {game['name']}, Popularity: {popularity_map.get(str(game['id']), 0)}")
-            
             return ensure_games_in_db(db, igdb_data)
         
-        print("No popularity data found")
         return []
         
     except Exception as e:
-        print(f"Error in trending games: {str(e)}")  # Add logging
         raise HTTPException(
             status_code=500, 
             detail=f"Error fetching trending games: {str(e)}"
@@ -237,7 +240,7 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     query = """
         fields name, cover.url, cover.image_id, first_release_date, 
                platforms.name, genres.name, summary, total_rating, total_rating_count,
-               screenshots.image_id, videos.video_id,
+               screenshots.image_id, videos.video_id, similar_games,
                involved_companies.company.name, involved_companies.developer;
         where total_rating != null 
         & total_rating_count > 500
@@ -267,7 +270,7 @@ async def get_latest_games(db: Session = Depends(get_db)):
     query = f"""
         fields name, cover.url, cover.image_id, first_release_date, 
                platforms.name, genres.name, summary, rating, total_rating,
-               screenshots.image_id, videos.video_id,
+               screenshots.image_id, videos.video_id, similar_games,
                involved_companies.company.name, involved_companies.developer;
         where first_release_date >= {one_month_ago}
         & first_release_date <= {current_timestamp}
@@ -280,3 +283,63 @@ async def get_latest_games(db: Session = Depends(get_db)):
         return ensure_games_in_db(db, igdb_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/update-similar-games")
+async def update_similar_games(db: Session = Depends(get_db)):
+    """Update all existing games with their similar games data"""
+    try:
+        # Get all games from database
+        all_games = db.query(models.Game).all()
+        updated_count = 0
+
+        for game in all_games:
+            try:
+                # Fetch fresh data from IGDB
+                igdb_data = fetch_from_igdb(game_id=game.igdb_id)
+                if not igdb_data:
+                    continue
+
+                # Process similar games
+                similar_games = []
+                if igdb_data.get('similar_games'):
+                    for similar_id in igdb_data['similar_games']:
+                        try:
+                            similar_data = fetch_from_igdb(game_id=similar_id)
+                            if similar_data:
+                                similar_games.append({
+                                    "id": similar_data["id"],
+                                    "name": similar_data["name"],
+                                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                                    if similar_data.get("cover") else None,
+                                    "rating": similar_data.get("total_rating", similar_data.get("rating")),
+                                    "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
+                                })
+                        except Exception as e:
+                            print(f"Warning: Could not fetch similar game {similar_id} for game {game.name} - {e}")
+                            continue
+
+                # Update the game with new similar games data
+                game.similar_games = similar_games
+                game.updated_at = datetime.utcnow()
+                db.add(game)
+                updated_count += 1
+
+                # Commit every 10 games to avoid long transactions
+                if updated_count % 10 == 0:
+                    db.commit()
+                    print(f"Updated {updated_count} games so far...")
+
+            except Exception as e:
+                print(f"Error updating similar games for {game.name}: {str(e)}")
+                continue
+
+        # Final commit for remaining games
+        db.commit()
+        return {"message": f"Successfully updated similar games for {updated_count} games"}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating similar games: {str(e)}"
+        )

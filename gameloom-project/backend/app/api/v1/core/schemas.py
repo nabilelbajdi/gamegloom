@@ -1,7 +1,14 @@
 # schemas.py
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
+
+class SimilarGame(BaseModel):
+    id: int
+    name: str
+    cover_image: Optional[str] = None
+    rating: Optional[float] = None
+    genres: Optional[str] = None
 
 class GameBase(BaseModel):
     igdb_id: int
@@ -19,7 +26,7 @@ class GameBase(BaseModel):
     first_release_date: Optional[datetime] = None
     screenshots: Optional[List[str]] = None
     videos: Optional[List[str]] = None
-    similar_games: Optional[List[int]] = None
+    similar_games: Optional[List[SimilarGame]] = None
     developers: Optional[str] = None
     game_modes: Optional[str] = None
     player_perspectives: Optional[str] = None
