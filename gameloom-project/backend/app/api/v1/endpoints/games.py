@@ -150,7 +150,7 @@ async def get_trending_games(db: Session = Depends(get_db)):
             & hypes > 0
             & cover != null;
             sort hypes desc;
-            limit 20;
+            limit 6;
         """.format(
             time_6_months_ago=int((datetime.now() - timedelta(days=180)).timestamp()),
             time_now=int(datetime.now().timestamp())

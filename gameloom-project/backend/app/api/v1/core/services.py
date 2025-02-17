@@ -169,18 +169,17 @@ def get_trending_games(db: Session, limit: int = 6) -> list[models.Game]:
     return list(db.scalars(
         select(models.Game)
         .where(
-            models.Game.first_release_date >= six_months_ago,
+            # Only get games that are already released and not older than 6 months
+            models.Game.first_release_date.between(six_months_ago, current_time),
             models.Game.cover_image.is_not(None),
-            # Ensure we have some rating data but lower the threshold
-            models.Game.total_rating.is_not(None),
-            models.Game.total_rating_count > 50,
-            # Ensure the game has some hype/popularity
+            # Remove the total_rating requirement as it might be too restrictive
+            # for trending games that are newly released
             models.Game.hypes > 0
         )
         .order_by(
-            # Order by hype first, then rating, then release date
+            # Order by hype first, then rating (if available), then release date
             models.Game.hypes.desc(),
-            models.Game.total_rating.desc(),
+            models.Game.total_rating.desc().nulls_last(),
             models.Game.first_release_date.desc()
         )
         .limit(limit)
