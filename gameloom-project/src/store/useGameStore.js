@@ -41,13 +41,6 @@ const transformGameData = (game) => {
 };
 
 const useGameStore = create((set, get) => ({
-  // games: JSON.parse(localStorage.getItem("games")) || [],
-  // trendingGames: JSON.parse(localStorage.getItem("trendingGames")) || [],
-  // gameDetails: JSON.parse(localStorage.getItem("gameDetails")) || {},
-  // anticipatedGames: JSON.parse(localStorage.getItem("anticipatedGames")) || [],
-  // highlyRatedGames: JSON.parse(localStorage.getItem("highlyRatedGames")) || [],
-  // latestGames: JSON.parse(localStorage.getItem("latestGames")) || [],
-  // gameTimeToBeat: JSON.parse(localStorage.getItem("gameTimeToBeat")) || {},
   games: [],
   trendingGames: [],
   gameDetails: {},
@@ -56,69 +49,61 @@ const useGameStore = create((set, get) => ({
   latestGames: [],
   gameTimeToBeat: {},
 
+  // Fetch Latest Games - Always fetch fresh data
+  fetchLatestGames: async () => {
+    try {
+      const data = await fetchLatestGames();
+      set({ latestGames: data.map(transformGameData) });
+    } catch (error) {
+      console.error("Error fetching latest games:", error);
+      set({ latestGames: [] });
+    }
+  },
 
   // Fetch Trending Games
   fetchTrendingGames: async () => {
-    if (get().trendingGames.length > 0) return;
     try {
       const data = await fetchTrendingGames();
       set({ trendingGames: data.map(transformGameData) }); 
-      // localStorage.setItem("trendingGames", JSON.stringify(data));
     } catch (error) {
       console.error("Error fetching trending games:", error);
     }
   },
-  
 
-    // Fetch Anticipated Games
-    fetchAnticipatedGames: async () => {
-      if (get().anticipatedGames.length > 0) return;
-      try {
-        const data = await fetchAnticipatedGames();
-        set({ anticipatedGames: data.map(transformGameData) });
-        // localStorage.setItem("anticipatedGames", JSON.stringify(data));
-      } catch (error) {
-        console.error("Error fetching anticipated games:", error);
-      }
-    },
-  
-    // Fetch Highly Rated Games
-    fetchHighlyRatedGames: async () => {
-      if (get().highlyRatedGames.length > 0) return;
-      try {
-        const data = await fetchHighlyRatedGames();
-        set({ highlyRatedGames: data.map(transformGameData) });
-        // localStorage.setItem("highlyRatedGames", JSON.stringify(data));
-      } catch (error) {
-        console.error("Error fetching highly rated games:", error);
-      }
-    },
-  
-    // Fetch Latest Games
-    fetchLatestGames: async () => {
-      if (get().latestGames.length > 0) return;
-      try {
-        const data = await fetchLatestGames();
-        set({ latestGames: data.map(transformGameData) });
-        // localStorage.setItem("latestGames", JSON.stringify(data));
-      } catch (error) {
-        console.error("Error fetching latest games:", error);
-      }
-    },
-  
-    // Fetch Game Time to Beat
-    fetchGameTimeToBeat: async (gameId) => {
-      if (get().gameTimeToBeat[gameId]) return;
-      try {
-        const data = await fetchGameTimeToBeat(gameId);
-        set((state) => ({
-          gameTimeToBeat: { ...state.gameTimeToBeat, [gameId]: data },
-        }));
-        // localStorage.setItem("gameTimeToBeat", JSON.stringify(get().gameTimeToBeat));
-      } catch (error) {
-        console.error(`Error fetching time to beat for game ${gameId}:`, error);
-      }
-    },
+  // Fetch Anticipated Games
+  fetchAnticipatedGames: async () => {
+    if (get().anticipatedGames.length > 0) return;
+    try {
+      const data = await fetchAnticipatedGames();
+      set({ anticipatedGames: data.map(transformGameData) });
+    } catch (error) {
+      console.error("Error fetching anticipated games:", error);
+    }
+  },
+
+  // Fetch Highly Rated Games
+  fetchHighlyRatedGames: async () => {
+    if (get().highlyRatedGames.length > 0) return;
+    try {
+      const data = await fetchHighlyRatedGames();
+      set({ highlyRatedGames: data.map(transformGameData) });
+    } catch (error) {
+      console.error("Error fetching highly rated games:", error);
+    }
+  },
+
+  // Fetch Game Time to Beat
+  fetchGameTimeToBeat: async (gameId) => {
+    if (get().gameTimeToBeat[gameId]) return;
+    try {
+      const data = await fetchGameTimeToBeat(gameId);
+      set((state) => ({
+        gameTimeToBeat: { ...state.gameTimeToBeat, [gameId]: data },
+      }));
+    } catch (error) {
+      console.error(`Error fetching time to beat for game ${gameId}:`, error);
+    }
+  },
 
   fetchGameDetails: async (gameId) => {
     if (get().gameDetails[gameId]) return;
