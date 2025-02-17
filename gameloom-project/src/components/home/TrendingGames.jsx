@@ -1,7 +1,7 @@
 // src/components/home/TrendingGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameSection from "./GameSection";
+import GameCarousel from "../common/GameCarousel";
 
 const TrendingGames = () => {
   const { trendingGames, fetchTrendingGames } = useGameStore();
@@ -11,11 +11,12 @@ const TrendingGames = () => {
   }, []);
 
   return (
-    <GameSection
+    <GameCarousel
       title="Trending Games"
       viewAllLink="/discover"
       games={trendingGames}
-      fetchGames={fetchTrendingGames}
+      maxGames={12}
+      slidesToShow={6}
     />
   );
 };

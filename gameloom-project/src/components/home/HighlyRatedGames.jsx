@@ -1,7 +1,7 @@
 // src/components/home/HighlyRatedGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameSection from "./GameSection";
+import GameCarousel from "../common/GameCarousel";
 
 const HighlyRatedGames = () => {
   const { highlyRatedGames, fetchHighlyRatedGames } = useGameStore();
@@ -11,11 +11,12 @@ const HighlyRatedGames = () => {
   }, []);
 
   return (
-    <GameSection
+    <GameCarousel
       title="Highly Rated Games"
       viewAllLink="/discover"
       games={highlyRatedGames}
-      fetchGames={fetchHighlyRatedGames}
+      maxGames={12}
+      slidesToShow={6}
     />
   );
 };

@@ -1,7 +1,7 @@
 // src/components/home/LatestGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameSection from "./GameSection";
+import GameCarousel from "../common/GameCarousel";
 
 const LatestGames = () => {
   const { latestGames, fetchLatestGames } = useGameStore();
@@ -11,11 +11,12 @@ const LatestGames = () => {
   }, []);
 
   return (
-    <GameSection
-      title="Latest Releases"
+    <GameCarousel
+      title="Latest Games"
       viewAllLink="/discover"
       games={latestGames}
-      fetchGames={fetchLatestGames}
+      maxGames={12}
+      slidesToShow={6}
     />
   );
 };
