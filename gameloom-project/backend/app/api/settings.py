@@ -7,7 +7,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:idk135@localhost:5432/gameloom_db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL")
     
     # IGDB settings
     IGDB_CLIENT_ID: str = os.getenv("IGDB_CLIENT_ID", "")
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
         extra = "allow"  # Allow extra fields
 
     def validate(self):
+        if not self.DATABASE_URL:
+            raise ValueError("DATABASE_URL must be set in environment variables")
         if not self.IGDB_CLIENT_ID:
             raise ValueError("IGDB_CLIENT_ID must be set in environment variables")
         if not self.IGDB_ACCESS_TOKEN:
