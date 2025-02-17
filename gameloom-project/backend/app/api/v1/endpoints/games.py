@@ -1,5 +1,5 @@
 # endpoints/games.py
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -125,57 +125,42 @@ async def get_game(igdb_id: int, db: Session = Depends(get_db)):
 
     # If not in database, fetch from IGDB
     try:
-        igdb_data = fetch_from_igdb(game_id=igdb_id)
-        game_data = process_igdb_data(igdb_data)
+        igdb_data = services.fetch_from_igdb(game_id=igdb_id)
+        game_data = services.process_igdb_data(igdb_data)
         return services.create_game(db, game_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/trending-games", response_model=List[schemas.Game])
 async def get_trending_games(db: Session = Depends(get_db)):
-    """Get trending games based on Steam's 24hr peak players"""
-    # Check database first
-    db_games = services.get_trending_games(db)
-    if len(db_games) >= 6:  # Only use DB results if we have enough games
-        return db_games
-
+    """Get trending games based on popularity and ratings"""
     try:
-        # Get games with high Steam 24hr peak players (popularity_type = 5)
-        steam_query = """
-            fields game_id, value;
-            where popularity_type = 5;
-            sort value desc;
-            limit 50;
-        """
-        steam_data = fetch_from_igdb(query=steam_query, endpoint="popularity_primitives")
+        # Get games with high hype/popularity with complete details
+        popularity_query = """
+            fields name, summary, storyline, first_release_date, 
+                   genres.name, platforms.name, cover.image_id, 
+                   screenshots.image_id, videos.video_id, rating, 
+                   aggregated_rating, total_rating, total_rating_count, hypes,
+                   similar_games.name, similar_games.cover.image_id, similar_games.rating,
+                   similar_games.total_rating, similar_games.genres.name,
+                   involved_companies.company.name, involved_companies.developer,
+                   game_modes.name, player_perspectives.name, themes.name;
+            where first_release_date >= {time_6_months_ago} 
+            & first_release_date <= {time_now}
+            & hypes > 0
+            & cover != null;
+            sort hypes desc;
+            limit 20;
+        """.format(
+            time_6_months_ago=int((datetime.now() - timedelta(days=180)).timestamp()),
+            time_now=int(datetime.now().timestamp())
+        )
         
-        game_ids = [str(item['game_id']) for item in steam_data]
+        # Fetch and sync the trending games
+        await services.sync_games_from_igdb(db, popularity_query)
         
-        if game_ids:
-            # First, get games that have cover images
-            games_query = f"""
-                fields id, name, cover.url, cover.image_id, first_release_date, 
-                       platforms.name, genres.name, summary, rating, 
-                       aggregated_rating, total_rating, total_rating_count,
-                       screenshots.image_id, videos.video_id, similar_games,
-                       involved_companies.company.name, involved_companies.developer;
-                where id = ({','.join(game_ids)}) & cover != null;
-                limit 12;
-            """
-            igdb_data = fetch_from_igdb(query=games_query)
-            
-            if not igdb_data:
-                return []
-            
-            # Create a mapping of game_id to popularity value
-            popularity_map = {str(item['game_id']): item['value'] for item in steam_data}
-            
-            # Sort the games based on their popularity value
-            igdb_data.sort(key=lambda x: popularity_map.get(str(x['id']), 0), reverse=True)
-            
-            return ensure_games_in_db(db, igdb_data)
-        
-        return []
+        # Get the trending games from our database
+        return services.get_trending_games(db)
         
     except Exception as e:
         raise HTTPException(
@@ -212,37 +197,8 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
         limit 6;
     """
     try:
-        igdb_data = fetch_from_igdb(query=query)
-        
-        if not igdb_data:  # If no games with hype, try without hype filter
-            query = f"""
-                fields name, summary, storyline, first_release_date, 
-                       genres.name, platforms.name, cover.image_id, 
-                       screenshots.image_id, videos.video_id, rating, 
-                       aggregated_rating, total_rating, total_rating_count, hypes,
-                       similar_games.name, similar_games.cover.image_id, similar_games.rating,
-                       similar_games.total_rating, similar_games.genres.name,
-                       involved_companies.company.name, involved_companies.developer, game_modes.name, 
-                       player_perspectives.name, themes.name;
-                where first_release_date > {current_timestamp} 
-                & first_release_date < {one_year_future}
-                & cover != null;
-                sort first_release_date asc;
-                limit 6;
-            """
-            igdb_data = fetch_from_igdb(query=query)
-        
-        # Process each game and ensure it's in the database
-        games = []
-        for game_data in igdb_data:
-            try:
-                processed_data = process_igdb_data(game_data)
-                game = services.create_game(db, processed_data)
-                games.append(game)
-            except Exception as e:
-                continue
-        
-        return games
+        await services.sync_games_from_igdb(db, query)
+        return services.get_anticipated_games(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -254,7 +210,6 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     if len(db_games) >= 6:
         return db_games
 
-    # If no games in database, fetch from IGDB
     query = """
         fields name, summary, storyline, first_release_date, 
                genres.name, platforms.name, cover.image_id, 
@@ -272,19 +227,8 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
         limit 6;
     """
     try:
-        igdb_data = fetch_from_igdb(query=query)
-        
-        # Process each game and ensure it's in the database
-        games = []
-        for game_data in igdb_data:
-            try:
-                processed_data = process_igdb_data(game_data)
-                game = services.create_game(db, processed_data)
-                games.append(game)
-            except Exception as e:
-                continue
-        
-        return games
+        await services.sync_games_from_igdb(db, query)
+        return services.get_highly_rated_games(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -311,24 +255,14 @@ async def get_latest_games(db: Session = Depends(get_db)):
                player_perspectives.name, themes.name;
         where first_release_date >= {one_month_ago}
         & first_release_date <= {current_timestamp}
+        & first_release_date != null
         & cover != null;
         sort first_release_date desc;
         limit 6;
     """
     try:
-        igdb_data = fetch_from_igdb(query=query)
-        
-        # Process each game and ensure it's in the database
-        games = []
-        for game_data in igdb_data:
-            try:
-                processed_data = process_igdb_data(game_data)
-                game = services.create_game(db, processed_data)
-                games.append(game)
-            except Exception as e:
-                continue
-        
-        return games
+        await services.sync_games_from_igdb(db, query)
+        return services.get_latest_games(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -343,7 +277,7 @@ async def update_similar_games(db: Session = Depends(get_db)):
         for game in all_games:
             try:
                 # Fetch fresh data from IGDB
-                igdb_data = fetch_from_igdb(game_id=game.igdb_id)
+                igdb_data = services.fetch_from_igdb(game_id=game.igdb_id)
                 if not igdb_data or not igdb_data.get('similar_games'):
                     continue
 
@@ -355,7 +289,7 @@ async def update_similar_games(db: Session = Depends(get_db)):
                     where id = ({similar_ids});
                     limit 10;
                 """
-                similar_games_data = fetch_from_igdb(query=query)
+                similar_games_data = services.fetch_from_igdb(query=query)
                 
                 for similar_data in similar_games_data:
                     similar_games.append({
@@ -389,4 +323,31 @@ async def update_similar_games(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail=f"Error updating similar games: {str(e)}"
+        )
+
+# Manual trigger endpoints for testing
+@router.post("/manual/update-latest")
+async def trigger_latest_games_update():
+    """Manually trigger the latest games update task"""
+    try:
+        from ...scheduler import update_latest_games
+        await update_latest_games()
+        return {"message": "Latest games update completed successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating latest games: {str(e)}"
+        )
+
+@router.post("/manual/update-trending")
+async def trigger_trending_games_update():
+    """Manually trigger the trending games update task"""
+    try:
+        from ...scheduler import update_trending_games
+        await update_trending_games()
+        return {"message": "Trending games update completed successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating trending games: {str(e)}"
         )
