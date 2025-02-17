@@ -1,7 +1,7 @@
 // src/components/home/TrendingGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameGrid from "../common/GameGrid";
+import GameSection from "./GameSection";
 
 const TrendingGames = () => {
   const { trendingGames, fetchTrendingGames } = useGameStore();
@@ -11,11 +11,11 @@ const TrendingGames = () => {
   }, []);
 
   return (
-    <GameGrid
+    <GameSection
       title="Trending Games"
       viewAllLink="/discover"
       games={trendingGames}
-      loading={trendingGames.length === 0}
+      fetchGames={fetchTrendingGames}
     />
   );
 };

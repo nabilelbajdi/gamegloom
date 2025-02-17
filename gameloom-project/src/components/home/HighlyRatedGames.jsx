@@ -1,7 +1,7 @@
 // src/components/home/HighlyRatedGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameGrid from "../common/GameGrid";
+import GameSection from "./GameSection";
 
 const HighlyRatedGames = () => {
   const { highlyRatedGames, fetchHighlyRatedGames } = useGameStore();
@@ -11,11 +11,11 @@ const HighlyRatedGames = () => {
   }, []);
 
   return (
-    <GameGrid
+    <GameSection
       title="Highly Rated Games"
       viewAllLink="/discover"
       games={highlyRatedGames}
-      loading={highlyRatedGames.length === 0}
+      fetchGames={fetchHighlyRatedGames}
     />
   );
 };

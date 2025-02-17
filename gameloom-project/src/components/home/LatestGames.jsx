@@ -1,7 +1,7 @@
 // src/components/home/LatestGames.jsx
 import React, { useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
-import GameGrid from "../common/GameGrid";
+import GameSection from "./GameSection";
 
 const LatestGames = () => {
   const { latestGames, fetchLatestGames } = useGameStore();
@@ -11,11 +11,11 @@ const LatestGames = () => {
   }, []);
 
   return (
-    <GameGrid
+    <GameSection
       title="Latest Releases"
       viewAllLink="/discover"
       games={latestGames}
-      loading={latestGames.length === 0}
+      fetchGames={fetchLatestGames}
     />
   );
 };
