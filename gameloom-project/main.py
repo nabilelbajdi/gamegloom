@@ -5,15 +5,32 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from backend.app.api.db_setup import init_db
 from backend.app.api.v1.endpoints.games import router
+from backend.app.api.scheduler import init_scheduler
+import logging
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Startup and shutdown events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize the database on startup
     init_db()
+    
+    # Initialize the scheduler
+    try:
+        init_scheduler()
+        logger.info("Scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {str(e)}")
+    
     yield
+    
+    # Cleanup (if needed)
+    # Note: APScheduler will automatically shut down with the application
 
 app = FastAPI(
     title="GameLoom API",
