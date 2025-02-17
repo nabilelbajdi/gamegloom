@@ -150,7 +150,7 @@ async def get_trending_games(db: Session = Depends(get_db)):
             & hypes > 0
             & cover != null;
             sort hypes desc;
-            limit 6;
+            limit 12;
         """.format(
             time_6_months_ago=int((datetime.now() - timedelta(days=180)).timestamp()),
             time_now=int(datetime.now().timestamp())
@@ -173,7 +173,7 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     """Get anticipated games"""
     # Check database first
     db_games = services.get_anticipated_games(db)
-    if len(db_games) >= 6:
+    if len(db_games) >= 12:
         return db_games
 
     # If no games in database, fetch from IGDB
@@ -194,7 +194,7 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
         & hypes > 0 
         & cover != null;
         sort hypes desc;
-        limit 6;
+        limit 12;
     """
     try:
         await services.sync_games_from_igdb(db, query)
@@ -207,7 +207,7 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     """Get highly rated games"""
     # Check database first
     db_games = services.get_highly_rated_games(db)
-    if len(db_games) >= 6:
+    if len(db_games) >= 12:
         return db_games
 
     query = """
@@ -224,7 +224,7 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
         & total_rating > 85
         & cover != null;
         sort total_rating desc;
-        limit 6;
+        limit 12;
     """
     try:
         await services.sync_games_from_igdb(db, query)
@@ -237,7 +237,7 @@ async def get_latest_games(db: Session = Depends(get_db)):
     """Get latest games"""
     # Check database first
     db_games = services.get_latest_games(db)
-    if len(db_games) >= 6:
+    if len(db_games) >= 12:
         return db_games
 
     # If no games in database, fetch from IGDB
@@ -258,7 +258,7 @@ async def get_latest_games(db: Session = Depends(get_db)):
         & first_release_date != null
         & cover != null;
         sort first_release_date desc;
-        limit 6;
+        limit 12;
     """
     try:
         await services.sync_games_from_igdb(db, query)

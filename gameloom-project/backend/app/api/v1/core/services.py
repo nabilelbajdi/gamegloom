@@ -160,7 +160,7 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> models.G
     db.refresh(db_game)
     return db_game
 
-def get_trending_games(db: Session, limit: int = 6) -> list[models.Game]:
+def get_trending_games(db: Session, limit: int = 12) -> list[models.Game]:
     """Get trending games from the database"""
     current_time = datetime.utcnow()
     # Look at games from the past 6 months instead of a year to focus on more recent trends
@@ -185,7 +185,7 @@ def get_trending_games(db: Session, limit: int = 6) -> list[models.Game]:
         .limit(limit)
     ))
 
-def get_anticipated_games(db: Session, limit: int = 6) -> list[models.Game]:
+def get_anticipated_games(db: Session, limit: int = 12) -> list[models.Game]:
     """Get anticipated games from the database"""
     current_time = datetime.utcnow()
     one_year_future = current_time + timedelta(days=365)
@@ -200,7 +200,7 @@ def get_anticipated_games(db: Session, limit: int = 6) -> list[models.Game]:
         .limit(limit)
     ))
 
-def get_highly_rated_games(db: Session, limit: int = 6) -> list[models.Game]:
+def get_highly_rated_games(db: Session, limit: int = 12) -> list[models.Game]:
     """Get highly rated games from the database"""
     return list(db.scalars(
         select(models.Game)
@@ -214,7 +214,7 @@ def get_highly_rated_games(db: Session, limit: int = 6) -> list[models.Game]:
         .limit(limit)
     ))
 
-def get_latest_games(db: Session, limit: int = 6) -> list[models.Game]:
+def get_latest_games(db: Session, limit: int = 12) -> list[models.Game]:
     """Get latest released games from the database"""
     current_time = datetime.utcnow()
     one_month_ago = current_time - timedelta(days=30)
