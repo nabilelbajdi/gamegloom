@@ -1,73 +1,13 @@
 // src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
 import { Image as ImageIcon, Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
+import StarRating from "../UI/StarRating";
 
 const GameDetails = ({ game, trailer, timeToBeat }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSummary = () => {
     setIsExpanded(!isExpanded);
-  };
-
-  // Helper function to generate stars based on decimal rating
-  const getStarRating = (rating) => {
-    if (!rating || rating === "N/A") {
-      return (
-        <div className="flex items-center">
-          <div className="text-gray-500 text-2xl flex">
-            {[...Array(5)].map((_, i) => (
-              <span key={i}>★</span>
-            ))}
-          </div>
-          <span className="text-base ml-2 text-gray-500">
-            No ratings yet
-          </span>
-        </div>
-      );
-    }
-
-    const numericRating = parseFloat(rating);
-    const fullStars = Math.floor(numericRating);
-    const decimalPart = numericRating - fullStars;
-    const emptyStars = 5 - Math.ceil(numericRating);
-
-    return (
-      <div className="flex items-center">
-        <div className="text-2xl flex">
-          {/* Full Stars */}
-          {[...Array(fullStars)].map((_, i) => (
-            <span key={`full-${i}`} className="text-primary">★</span>
-          ))}
-
-          {/* Partial Star */}
-          {decimalPart > 0 && (
-            <span className="relative">
-              <span className="text-gray-500">★</span>
-              <span 
-                className="absolute top-0 left-0 text-primary overflow-hidden"
-                style={{ width: `${decimalPart * 100}%` }}
-              >
-                ★
-              </span>
-            </span>
-          )}
-
-          {/* Empty Stars */}
-          {[...Array(emptyStars)].map((_, i) => (
-            <span key={`empty-${i}`} className="text-gray-500">★</span>
-          ))}
-        </div>
-        <span className="text-2xl ml-4">
-          {rating}
-          <span className="text-sm text-gray-400">/5.0</span>
-        </span>
-        {game.totalRatingCount > 0 && (
-          <span className="text-sm ml-2 mt-1 text-gray-400">
-            ({game.totalRatingCount.toLocaleString()} Ratings)
-          </span>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -82,7 +22,7 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
 
       {/* Rating Section */}
       <div className="mt-4 mb-6">
-        {getStarRating(game.rating)}
+        <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} />
       </div>
 
       {/* Separator */}
