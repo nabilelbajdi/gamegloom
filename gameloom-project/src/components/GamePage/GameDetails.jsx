@@ -1,7 +1,8 @@
 // src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
-import { Image as ImageIcon, Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
+import { Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
 import StarRating from "../UI/StarRating";
+import GameMediaPreview from "./GameMediaPreview";
 
 const GameDetails = ({ game, trailer, timeToBeat }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -47,39 +48,11 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         </div>
       </div>
 
-      {/* Game Trailer and Screenshots */}
-      <div className="flex flex-col md:flex-row gap-4 mt-6 items-start">
-        {trailer && (
-          <div className="flex-shrink-0 w-full md:w-1/2">
-            <iframe
-              width="100%"
-              height="200"
-              src={trailer}
-              title="Game Trailer"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="rounded-lg shadow-md"
-            ></iframe>
-          </div>
-        )}
-        {game.screenshots && game.screenshots.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 w-full md:w-1/2">
-            {game.screenshots.slice(0, 3).map((screenshot, index) => (
-              <img key={index} src={screenshot} alt={`Screenshot ${index + 1}`} className="w-full h-auto object-cover rounded-lg shadow-md" loading="lazy" />
-            ))}
-            {game.screenshots.length > 3 && (
-              <div className="relative w-full h-auto rounded-lg shadow-md overflow-hidden">
-                <img src={game.screenshots[3]} alt="Screenshot 4" className="w-full h-full object-cover filter blur-sm" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ImageIcon className="text-white mr-2" />
-                  <span className="text-white text-sm cursor-pointer">View More</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Media Preview Section */}
+      <GameMediaPreview 
+        screenshots={game.screenshots} 
+        trailer={game.videos?.[0]} // Use the first video as the trailer
+      />
 
       {/* Genres and themes section */}
       {(game.genre || game.themes) && (
