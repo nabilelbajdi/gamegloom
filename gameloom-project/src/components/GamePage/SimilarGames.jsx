@@ -4,7 +4,7 @@ import Slider from "react-slick";
 import GameCard from "../game/GameCard";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
-import { getSliderSettings } from "../../../utils/sliderConfig";
+import { getSliderSettings } from "../../utils/sliderConfig";
 
 const SimilarGames = memo(({ games }) => {
   if (!games || games.length === 0) {
