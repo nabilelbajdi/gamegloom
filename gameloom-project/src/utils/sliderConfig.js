@@ -1,10 +1,18 @@
-export const getSliderSettings = (itemCount) => ({
+export const getSliderSettings = (itemCount, slidesToShow = 4) => ({
   dots: true,
-  infinite: itemCount > 4,
+  infinite: itemCount > slidesToShow,
   speed: 500,
-  slidesToShow: Math.min(4, itemCount),
-  slidesToScroll: Math.min(4, itemCount),
+  slidesToShow: Math.min(slidesToShow, itemCount),
+  slidesToScroll: Math.min(slidesToShow, itemCount),
   responsive: [
+    {
+      breakpoint: 1280,
+      settings: {
+        slidesToShow: Math.min(4, itemCount),
+        slidesToScroll: Math.min(4, itemCount),
+        infinite: itemCount > 4,
+      }
+    },
     {
       breakpoint: 1024,
       settings: {
