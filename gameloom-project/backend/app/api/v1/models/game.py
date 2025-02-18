@@ -1,4 +1,4 @@
-# models.py
+# models/game.py
 from datetime import datetime
 from sqlalchemy import Integer, String, Float, JSON, DateTime
 from sqlalchemy.orm import Mapped, mapped_column

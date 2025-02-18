@@ -1,7 +1,40 @@
 # schemas.py
 from datetime import datetime
 from typing import Optional, List, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
+
+# Authentication schemas
+class Token(BaseModel):
+    """Schema for access token response."""
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    """Schema for token payload."""
+    username: Optional[str] = None
+
+class UserBase(BaseModel):
+    """Base schema for user data."""
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    
+class UserCreate(UserBase):
+    """Schema for user registration."""
+    password: str = Field(..., min_length=8)
+
+class UserResponse(UserBase):
+    """Schema for user data in responses."""
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    """Schema for login data."""
+    username: str
+    password: str
 
 class SimilarGame(BaseModel):
     """Schema for similar games linked to a main game."""

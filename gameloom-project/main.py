@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from backend.app.api.db_setup import init_db
-from backend.app.api.v1.endpoints.games import router
+from backend.app.api.v1.routers.games import router as games_router
+from backend.app.api.v1.routers.auth import router as auth_router
+from backend.app.api.v1.routers.library import router as library_router
 from backend.app.api.scheduler import init_scheduler
 import logging
 
@@ -50,5 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the router
-app.include_router(router, prefix="/api/v1") 
+# Include the routers
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(games_router, prefix="/api/v1")
+app.include_router(library_router, prefix="/api/v1") 

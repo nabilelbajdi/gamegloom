@@ -2,7 +2,9 @@
 from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from . import models, schemas
+
+from ..models import game
+from . import schemas
 from ...settings import settings
 import requests
 import logging
@@ -129,23 +131,23 @@ async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
         logger.error(f"Error syncing games from IGDB: {str(e)}")
         return 0, 0
 
-def get_game_by_id(db: Session, game_id: int) -> models.Game | None:
+def get_game_by_id(db: Session, game_id: int) -> game.Game | None:
     """Fetch a game from the database by ID"""
-    return db.scalar(select(models.Game).where(models.Game.id == game_id))
+    return db.scalar(select(game.Game).where(game.Game.id == game_id))
 
-def get_game_by_igdb_id(db: Session, igdb_id: int) -> models.Game | None:
+def get_game_by_igdb_id(db: Session, igdb_id: int) -> game.Game | None:
     """Fetch a game from the database by IGDB ID"""
-    return db.scalar(select(models.Game).where(models.Game.igdb_id == igdb_id))
+    return db.scalar(select(game.Game).where(game.Game.igdb_id == igdb_id))
 
-def create_game(db: Session, game: schemas.GameCreate) -> models.Game:
+def create_game(db: Session, game: schemas.GameCreate) -> game.Game:
     """Create a new game in the database"""
-    db_game = models.Game(**game.model_dump())
+    db_game = game.Game(**game.model_dump())
     db.add(db_game)
     db.commit()
     db.refresh(db_game)
     return db_game
 
-def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> models.Game | None:
+def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> game.Game | None:
     """Update an existing game in the database"""
     db_game = get_game_by_id(db, game_id)
     if not db_game:
@@ -160,67 +162,67 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> models.G
     db.refresh(db_game)
     return db_game
 
-def get_trending_games(db: Session, limit: int = 12) -> list[models.Game]:
+def get_trending_games(db: Session, limit: int = 12) -> list[game.Game]:
     """Get trending games from the database"""
     current_time = datetime.utcnow()
     six_months_ago = current_time - timedelta(days=180)
     
     return list(db.scalars(
-        select(models.Game)
+        select(game.Game)
         .where(
-            models.Game.first_release_date.between(six_months_ago, current_time),
-            models.Game.cover_image.is_not(None),
-            models.Game.hypes > 0
+            game.Game.first_release_date.between(six_months_ago, current_time),
+            game.Game.cover_image.is_not(None),
+            game.Game.hypes > 0
         )
         .order_by(
-            models.Game.hypes.desc(),
-            models.Game.total_rating.desc().nulls_last(),
-            models.Game.first_release_date.desc()
+            game.Game.hypes.desc(),
+            game.Game.total_rating.desc().nulls_last(),
+            game.Game.first_release_date.desc()
         )
         .limit(limit)
     ))
 
-def get_anticipated_games(db: Session, limit: int = 12) -> list[models.Game]:
+def get_anticipated_games(db: Session, limit: int = 12) -> list[game.Game]:
     """Get anticipated games from the database"""
     current_time = datetime.utcnow()
     one_year_future = current_time + timedelta(days=365)
     
     return list(db.scalars(
-        select(models.Game)
+        select(game.Game)
         .where(
-            models.Game.first_release_date.between(current_time, one_year_future),
-            models.Game.cover_image.is_not(None)
+            game.Game.first_release_date.between(current_time, one_year_future),
+            game.Game.cover_image.is_not(None)
         )
-        .order_by(models.Game.hypes.desc().nulls_last(), models.Game.first_release_date.asc())
+        .order_by(game.Game.hypes.desc().nulls_last(), game.Game.first_release_date.asc())
         .limit(limit)
     ))
 
-def get_highly_rated_games(db: Session, limit: int = 12) -> list[models.Game]:
+def get_highly_rated_games(db: Session, limit: int = 12) -> list[game.Game]:
     """Get highly rated games from the database"""
     return list(db.scalars(
-        select(models.Game)
+        select(game.Game)
         .where(
-            models.Game.total_rating.is_not(None),
-            models.Game.total_rating > 85,
-            models.Game.total_rating_count > 500,
-            models.Game.cover_image.is_not(None)
+            game.Game.total_rating.is_not(None),
+            game.Game.total_rating > 85,
+            game.Game.total_rating_count > 500,
+            game.Game.cover_image.is_not(None)
         )
-        .order_by(models.Game.total_rating.desc())
+        .order_by(game.Game.total_rating.desc())
         .limit(limit)
     ))
 
-def get_latest_games(db: Session, limit: int = 12) -> list[models.Game]:
+def get_latest_games(db: Session, limit: int = 12) -> list[game.Game]:
     """Get latest released games from the database"""
     current_time = datetime.utcnow()
     one_month_ago = current_time - timedelta(days=30)
     
     return list(db.scalars(
-        select(models.Game)
+        select(game.Game)
         .where(
-            models.Game.first_release_date.between(one_month_ago, current_time),
-            models.Game.first_release_date.is_not(None),
-            models.Game.cover_image.is_not(None)
+            game.Game.first_release_date.between(one_month_ago, current_time),
+            game.Game.first_release_date.is_not(None),
+            game.Game.cover_image.is_not(None)
         )
-        .order_by(models.Game.first_release_date.desc())
+        .order_by(game.Game.first_release_date.desc())
         .limit(limit)
     ))

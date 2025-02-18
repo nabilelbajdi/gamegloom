@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..core import services, schemas, models
+
+from ..models import game
+from ..core import services, schemas
 from ...db_setup import get_db
 from ...settings import settings
 import requests
@@ -271,7 +273,7 @@ async def update_similar_games(db: Session = Depends(get_db)):
     """Update all existing games with their similar games data"""
     try:
         # Get all games from database
-        all_games = db.query(models.Game).all()
+        all_games = db.query(game.Game).all()
         updated_count = 0
 
         for game in all_games:
