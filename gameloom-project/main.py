@@ -28,9 +28,6 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to start scheduler: {str(e)}")
     
     yield
-    
-    # Cleanup (if needed)
-    # Note: APScheduler will automatically shut down with the application
 
 app = FastAPI(
     title="GameLoom API",

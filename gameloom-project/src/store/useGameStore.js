@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { 
   fetchTrendingGames, fetchAnticipatedGames, fetchHighlyRatedGames, 
   fetchLatestGames, fetchGameDetails, fetchGameTimeToBeat 
-} from "../../api";
+} from "../api";
 import { transformGameData } from "../utils/transformGameData";
 
 const useGameStore = create((set, get) => ({
