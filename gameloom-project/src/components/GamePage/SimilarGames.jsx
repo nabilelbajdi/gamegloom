@@ -16,7 +16,7 @@ const SimilarGames = memo(({ games }) => {
 
   return (
     <section className="mt-12">
-      <h2 className="text-2xl font-bold text-light mb-4">Discover Similar Games</h2>
+      <h2 className="text-2xl font-bold text-light mb-4">More like this</h2>
       <Slider {...settings}>
         {displayedGames.map((game) => (
           <div key={game.id} className="px-2">

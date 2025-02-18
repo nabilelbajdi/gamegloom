@@ -4,10 +4,10 @@ import useGameStore from "../../store/useGameStore";
 import GameCarousel from "../common/GameCarousel";
 
 const HighlyRatedGames = () => {
-  const { highlyRatedGames, fetchHighlyRatedGames } = useGameStore();
+  const { highlyRatedGames, fetchGames } = useGameStore();
 
   useEffect(() => {
-    fetchHighlyRatedGames();
+    fetchGames("highlyRated");
   }, []);
 
   return (

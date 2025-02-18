@@ -4,10 +4,10 @@ import useGameStore from "../../store/useGameStore";
 import GameCarousel from "../common/GameCarousel";
 
 const AnticipatedGames = () => {
-  const { anticipatedGames, fetchAnticipatedGames } = useGameStore();
+  const { anticipatedGames, fetchGames } = useGameStore(); // ✅ Use new fetch function
 
   useEffect(() => {
-    fetchAnticipatedGames();
+    fetchGames("anticipated"); // ✅ Updated function call
   }, []);
 
   return (

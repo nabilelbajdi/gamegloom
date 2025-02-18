@@ -4,10 +4,10 @@ import useGameStore from "../../store/useGameStore";
 import GameCarousel from "../common/GameCarousel";
 
 const TrendingGames = () => {
-  const { trendingGames, fetchTrendingGames } = useGameStore();
+  const { trendingGames, fetchGames } = useGameStore();
 
   useEffect(() => {
-    fetchTrendingGames();
+    fetchGames("trending");
   }, []);
 
   return (
