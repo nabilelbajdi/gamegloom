@@ -60,7 +60,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
                 similar_games.append({
                     "id": similar_data["id"],
                     "name": similar_data["name"],
-                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
                     if similar_data.get("cover") else None,
                     "rating": similar_data.get("total_rating", similar_data.get("rating")),
                     "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
@@ -163,21 +163,16 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> models.G
 def get_trending_games(db: Session, limit: int = 12) -> list[models.Game]:
     """Get trending games from the database"""
     current_time = datetime.utcnow()
-    # Look at games from the past 6 months instead of a year to focus on more recent trends
     six_months_ago = current_time - timedelta(days=180)
     
     return list(db.scalars(
         select(models.Game)
         .where(
-            # Only get games that are already released and not older than 6 months
             models.Game.first_release_date.between(six_months_ago, current_time),
             models.Game.cover_image.is_not(None),
-            # Remove the total_rating requirement as it might be too restrictive
-            # for trending games that are newly released
             models.Game.hypes > 0
         )
         .order_by(
-            # Order by hype first, then rating (if available), then release date
             models.Game.hypes.desc(),
             models.Game.total_rating.desc().nulls_last(),
             models.Game.first_release_date.desc()

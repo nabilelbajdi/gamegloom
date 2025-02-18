@@ -68,11 +68,11 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
     similar_games = []
     if igdb_data.get('similar_games'):
         for similar_data in igdb_data['similar_games']:
-            if similar_data.get('cover'):  # Only include games with cover images
+            if similar_data.get('cover'):
                 similar_games.append({
                     "id": similar_data["id"],
                     "name": similar_data["name"],
-                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
                     if similar_data.get("cover") else None,
                     "rating": similar_data.get("total_rating", similar_data.get("rating")),
                     "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
@@ -295,7 +295,7 @@ async def update_similar_games(db: Session = Depends(get_db)):
                     similar_games.append({
                         "id": similar_data["id"],
                         "name": similar_data["name"],
-                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{similar_data['cover']['image_id']}.jpg"
+                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
                         if similar_data.get("cover") else None,
                         "rating": similar_data.get("total_rating", similar_data.get("rating")),
                         "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
