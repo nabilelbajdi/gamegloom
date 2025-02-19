@@ -139,9 +139,9 @@ def get_game_by_igdb_id(db: Session, igdb_id: int) -> game.Game | None:
     """Fetch a game from the database by IGDB ID"""
     return db.scalar(select(game.Game).where(game.Game.igdb_id == igdb_id))
 
-def create_game(db: Session, game: schemas.GameCreate) -> game.Game:
+def create_game(db: Session, game_data: schemas.GameCreate) -> game.Game:
     """Create a new game in the database"""
-    db_game = game.Game(**game.model_dump())
+    db_game = game.Game(**game_data.model_dump())
     db.add(db_game)
     db.commit()
     db.refresh(db_game)
