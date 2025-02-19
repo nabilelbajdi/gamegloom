@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from backend.app.api.db_setup import init_db
 from backend.app.api.v1.routers.games import router as games_router
+from backend.app.api.v1.routers.auth import router as auth_router
 from backend.app.api.scheduler import init_scheduler
 import logging
 
@@ -51,4 +52,5 @@ app.add_middleware(
 )
 
 # Include the routers
-app.include_router(games_router, prefix="/api/v1") 
+app.include_router(games_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1") 
