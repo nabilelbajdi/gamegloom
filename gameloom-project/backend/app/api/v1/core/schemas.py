@@ -21,6 +21,20 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+class TokenResponse(BaseModel):
+    """Schema for token response to client."""
+    token: str
+    expires_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class TokenCreate(BaseModel):
+    """Schema for creating a new token."""
+    token: str
+    user_id: int
+    expires_at: datetime
+
 class SimilarGame(BaseModel):
     """Schema for similar games linked to a main game."""
     id: int
