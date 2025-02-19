@@ -3,16 +3,6 @@ from datetime import datetime
 from typing import Optional, List, Dict
 from pydantic import BaseModel, Field, EmailStr
 
-# Authentication schemas
-class Token(BaseModel):
-    """Schema for access token response."""
-    access_token: str
-    token_type: str = "bearer"
-
-class TokenData(BaseModel):
-    """Schema for token payload."""
-    username: Optional[str] = None
-
 class UserBase(BaseModel):
     """Base schema for user data."""
     username: str = Field(..., min_length=3, max_length=50)
@@ -30,11 +20,6 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
-
-class UserLogin(BaseModel):
-    """Schema for login data."""
-    username: str
-    password: str
 
 class SimilarGame(BaseModel):
     """Schema for similar games linked to a main game."""
