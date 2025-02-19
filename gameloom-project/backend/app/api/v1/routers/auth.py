@@ -31,10 +31,10 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
         )
 
 @router.post("/login", response_model=schemas.TokenResponse)
-async def login(username: str, password: str, db: Session = Depends(get_db)):
+async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     """Login and get an access token."""
     # Find user
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == credentials.username).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,7 +42,7 @@ async def login(username: str, password: str, db: Session = Depends(get_db)):
         )
     
     # Verify password
-    if not auth.verify_password(password, user.hashed_password):
+    if not auth.verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"

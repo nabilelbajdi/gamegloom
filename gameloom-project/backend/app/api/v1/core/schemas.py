@@ -12,6 +12,11 @@ class UserCreate(UserBase):
     """Schema for user registration."""
     password: str = Field(..., min_length=8)
 
+class UserLogin(BaseModel):
+    """Schema for login credentials."""
+    username: str
+    password: str
+
 class UserResponse(UserBase):
     """Schema for user data in responses."""
     id: int
