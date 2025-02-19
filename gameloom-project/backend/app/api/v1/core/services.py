@@ -11,6 +11,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# IGDB Constants
+IGDB_GAME_FIELDS = """
+    fields name, summary, storyline, first_release_date, 
+           genres.name, platforms.name, cover.image_id, 
+           screenshots.image_id, videos.video_id, rating, 
+           aggregated_rating, total_rating, total_rating_count, hypes,
+           similar_games.name, similar_games.cover.image_id, similar_games.rating,
+           similar_games.total_rating, similar_games.genres.name,
+           involved_companies.company.name, involved_companies.developer, game_modes.name, 
+           player_perspectives.name, themes.name;
+"""
+
+IGDB_SIMILAR_GAME_FIELDS = "fields id, name, cover.image_id, total_rating, rating, genres.name;"
+
 # IGDB Service Functions
 def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "games") -> dict | list:
     """Fetch data from IGDB API"""
@@ -21,17 +35,7 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
     }
 
     if game_id:
-        body = f"""
-            fields name, summary, storyline, first_release_date, 
-                   genres.name, platforms.name, cover.image_id, 
-                   screenshots.image_id, videos.video_id, rating, 
-                   aggregated_rating, total_rating, total_rating_count, hypes,
-                   similar_games.name, similar_games.cover.image_id, similar_games.rating,
-                   similar_games.total_rating, similar_games.genres.name,
-                   involved_companies.company.name, involved_companies.developer, game_modes.name, 
-                   player_perspectives.name, themes.name;
-            where id = {game_id};
-        """
+        body = f"{IGDB_GAME_FIELDS} where id = {game_id};"
     else:
         body = query
 
@@ -41,6 +45,21 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
     data = response.json()
 
     return data[0] if game_id else data
+
+def process_similar_games(similar_games_data: list) -> list:
+    """Process similar games data into our format"""
+    similar_games = []
+    for similar_data in similar_games_data:
+        if similar_data.get('cover'):
+            similar_games.append({
+                "id": similar_data["id"],
+                "name": similar_data["name"],
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
+                if similar_data.get("cover") else None,
+                "rating": similar_data.get("total_rating", similar_data.get("rating")),
+                "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
+            })
+    return similar_games
 
 def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
     """Process IGDB data into our schema format"""
@@ -55,18 +74,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         for s in igdb_data.get('screenshots', [])
     ]
 
-    similar_games = []
-    if igdb_data.get('similar_games'):
-        for similar_data in igdb_data['similar_games']:
-            if similar_data.get('cover'):
-                similar_games.append({
-                    "id": similar_data["id"],
-                    "name": similar_data["name"],
-                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
-                    if similar_data.get("cover") else None,
-                    "rating": similar_data.get("total_rating", similar_data.get("rating")),
-                    "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
-                })
+    similar_games = process_similar_games(igdb_data.get('similar_games', []))
 
     return schemas.GameCreate(
         igdb_id=igdb_data['id'],

@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from ..models import game
 from ..core import services, schemas
 from ...db_setup import get_db
-from ...settings import settings
 
 router = APIRouter(tags=["games"])
 
@@ -32,25 +31,10 @@ async def get_trending_games(db: Session = Depends(get_db)):
     """Get trending games based on popularity and ratings"""
     try:
         # Get games with high hype/popularity with complete details
-        popularity_query = """
-            fields name, summary, storyline, first_release_date, 
-                   genres.name, platforms.name, cover.image_id, 
-                   screenshots.image_id, videos.video_id, rating, 
-                   aggregated_rating, total_rating, total_rating_count, hypes,
-                   similar_games.name, similar_games.cover.image_id, similar_games.rating,
-                   similar_games.total_rating, similar_games.genres.name,
-                   involved_companies.company.name, involved_companies.developer,
-                   game_modes.name, player_perspectives.name, themes.name;
-            where first_release_date >= {time_6_months_ago} 
-            & first_release_date <= {time_now}
-            & hypes > 0
-            & cover != null;
-            sort hypes desc;
-            limit 12;
-        """.format(
-            time_6_months_ago=int((datetime.now() - timedelta(days=180)).timestamp()),
-            time_now=int(datetime.now().timestamp())
-        )
+        time_6_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
+        time_now = int(datetime.now().timestamp())
+        
+        popularity_query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_6_months_ago} & first_release_date <= {time_now} & hypes > 0 & cover != null; sort hypes desc; limit 12;"
         
         # Fetch and sync the trending games
         await services.sync_games_from_igdb(db, popularity_query)
@@ -76,22 +60,8 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     current_timestamp = int(datetime.now().timestamp())
     one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
     
-    query = f"""
-        fields name, summary, storyline, first_release_date, 
-               genres.name, platforms.name, cover.image_id, 
-               screenshots.image_id, videos.video_id, rating, 
-               aggregated_rating, total_rating, total_rating_count, hypes,
-               similar_games.name, similar_games.cover.image_id, similar_games.rating,
-               similar_games.total_rating, similar_games.genres.name,
-               involved_companies.company.name, involved_companies.developer, game_modes.name, 
-               player_perspectives.name, themes.name;
-        where first_release_date > {current_timestamp} 
-        & first_release_date < {one_year_future}
-        & hypes > 0 
-        & cover != null;
-        sort hypes desc;
-        limit 12;
-    """
+    query = f"{services.IGDB_GAME_FIELDS} where first_release_date > {current_timestamp} & first_release_date < {one_year_future} & hypes > 0 & cover != null; sort hypes desc; limit 12;"
+    
     try:
         await services.sync_games_from_igdb(db, query)
         return services.get_anticipated_games(db)
@@ -106,22 +76,8 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     if len(db_games) >= 12:
         return db_games
 
-    query = """
-        fields name, summary, storyline, first_release_date, 
-               genres.name, platforms.name, cover.image_id, 
-               screenshots.image_id, videos.video_id, rating, 
-               aggregated_rating, total_rating, total_rating_count, hypes,
-               similar_games.name, similar_games.cover.image_id, similar_games.rating,
-               similar_games.total_rating, similar_games.genres.name,
-               involved_companies.company.name, involved_companies.developer, game_modes.name, 
-               player_perspectives.name, themes.name;
-        where total_rating != null 
-        & total_rating_count > 500
-        & total_rating > 85
-        & cover != null;
-        sort total_rating desc;
-        limit 12;
-    """
+    query = f"{services.IGDB_GAME_FIELDS} where total_rating != null & total_rating_count > 500 & total_rating > 85 & cover != null; sort total_rating desc; limit 12;"
+    
     try:
         await services.sync_games_from_igdb(db, query)
         return services.get_highly_rated_games(db)
@@ -140,22 +96,8 @@ async def get_latest_games(db: Session = Depends(get_db)):
     current_timestamp = int(datetime.now().timestamp())
     one_month_ago = current_timestamp - (30 * 24 * 60 * 60)  # 30 days ago
     
-    query = f"""
-        fields name, summary, storyline, first_release_date, 
-               genres.name, platforms.name, cover.image_id, 
-               screenshots.image_id, videos.video_id, rating, 
-               aggregated_rating, total_rating, total_rating_count, hypes,
-               similar_games.name, similar_games.cover.image_id, similar_games.rating,
-               similar_games.total_rating, similar_games.genres.name,
-               involved_companies.company.name, involved_companies.developer, game_modes.name, 
-               player_perspectives.name, themes.name;
-        where first_release_date >= {one_month_ago}
-        & first_release_date <= {current_timestamp}
-        & first_release_date != null
-        & cover != null;
-        sort first_release_date desc;
-        limit 12;
-    """
+    query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {one_month_ago} & first_release_date <= {current_timestamp} & first_release_date != null & cover != null; sort first_release_date desc; limit 12;"
+    
     try:
         await services.sync_games_from_igdb(db, query)
         return services.get_latest_games(db)
@@ -170,44 +112,32 @@ async def update_similar_games(db: Session = Depends(get_db)):
         all_games = db.query(game.Game).all()
         updated_count = 0
 
-        for game in all_games:
+        for db_game in all_games:
             try:
                 # Fetch fresh data from IGDB
-                igdb_data = services.fetch_from_igdb(game_id=game.igdb_id)
+                igdb_data = services.fetch_from_igdb(game_id=db_game.igdb_id)
                 if not igdb_data or not igdb_data.get('similar_games'):
                     continue
 
                 # Process similar games in a single API call
-                similar_games = []
                 similar_ids = ','.join(str(id) for id in igdb_data['similar_games'])
-                query = f"""
-                    fields id, name, cover.image_id, total_rating, rating, genres.name;
-                    where id = ({similar_ids});
-                    limit 10;
-                """
+                query = f"{services.IGDB_SIMILAR_GAME_FIELDS} where id = ({similar_ids}); limit 10;"
                 similar_games_data = services.fetch_from_igdb(query=query)
                 
-                for similar_data in similar_games_data:
-                    similar_games.append({
-                        "id": similar_data["id"],
-                        "name": similar_data["name"],
-                        "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
-                        if similar_data.get("cover") else None,
-                        "rating": similar_data.get("total_rating", similar_data.get("rating")),
-                        "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
-                    })
+                # Process similar games using the service function
+                similar_games = services.process_similar_games(similar_games_data)
 
                 # Update the game with new similar games data
-                game.similar_games = similar_games
-                game.updated_at = datetime.utcnow()
-                db.add(game)
+                db_game.similar_games = similar_games
+                db_game.updated_at = datetime.utcnow()
+                db.add(db_game)
                 updated_count += 1
 
                 # Commit every 10 games to avoid long transactions
                 if updated_count % 10 == 0:
                     db.commit()
 
-            except Exception as e:
+            except Exception:
                 continue
 
         # Final commit for remaining games
