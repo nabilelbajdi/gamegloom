@@ -7,6 +7,7 @@ from alembic import context
 from app.api.settings import settings
 from app.api.v1.models.game import Base
 from app.api.v1.models.user import User
+from app.api.v1.models.token import Token
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
