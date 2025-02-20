@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useLoadingBar } from "../../App";
 import Icon from "../UI/Icon";
 
 const NAV_ITEMS = [
@@ -27,9 +28,9 @@ const LoadingSkeleton = () => (
 
       <form className="flex items-center flex-grow max-w-md px-2">
         <div className="relative flex items-center w-full bg-white rounded overflow-hidden">
-          <div className="w-16 h-8 bg-gray-100 animate-pulse"></div>
-          <div className="flex-1 h-8 bg-gray-50 animate-pulse"></div>
-          <div className="w-10 h-8 bg-gray-100 animate-pulse"></div>
+          <div className="w-16 h-8 bg-gray-300 animate-pulse"></div>
+          <div className="flex-1 h-8 bg-gray-300 animate-pulse"></div>
+          <div className="w-10 h-8 bg-gray-300 animate-pulse"></div>
         </div>
       </form>
 
@@ -51,11 +52,14 @@ export default function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
+  const loadingBar = useLoadingBar();
 
   const handleLogout = () => {
+    loadingBar.start();
     logout();
     setShowUserMenu(false);
     navigate("/");
+    loadingBar.complete();
   };
 
   const handleSearch = (e) => {
@@ -106,9 +110,6 @@ export default function Navbar() {
         </form>
 
         <div className="hidden md:flex items-center space-x-2">
-          {/* Notification bell - Maybe show this only */}
-          {/* <Icon name="bell" className="icon text-gray-300 hover:text-white transition-colors duration-200" /> */}
-          
           <Link 
             to="/library" 
             className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
@@ -161,14 +162,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <>
-              <Link 
-                to="/login" 
-                className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
-              >
-                Sign In
-              </Link>
-            </>
+            <Link 
+              to="/login" 
+              className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
+            >
+              Sign In
+            </Link>
           )}
         </div>
 
@@ -199,11 +198,9 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <>
-              <Link to="/login" className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
-                Login
-              </Link>
-            </>
+            <Link to="/login" className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
+              Login
+            </Link>
           )}
         </div>
       </div>

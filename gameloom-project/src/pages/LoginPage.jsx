@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLoadingBar } from "../App";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+  const loadingBar = useLoadingBar();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,6 +24,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    loadingBar.start();
 
     try {
       const response = await fetch("http://localhost:8000/api/v1/login", {
@@ -37,12 +40,12 @@ const LoginPage = () => {
       }
 
       const data = await response.json();
-      
-      // Complete login process before navigation
       await login(data.token, data);
+      loadingBar.complete();
       navigate("/");
     } catch (err) {
       setError(err.message);
+      loadingBar.complete();
     }
   };
 
