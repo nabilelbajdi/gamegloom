@@ -21,7 +21,7 @@ const Hero = () => {
         className="absolute inset-0 w-full h-full object-cover opacity-80 blur-[3px]"
         aria-label="Background Video"
       >
-        <source src="/videos/hero-video-dark.mp4" type="video/mp4" />
+        <source src="/videos/hero-video-light.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
