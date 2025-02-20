@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -8,6 +9,7 @@ const LoginPage = () => {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,9 +37,9 @@ const LoginPage = () => {
       }
 
       const data = await response.json();
-      // Store the token
-      localStorage.setItem("token", data.token);
-      // Redirect to home page
+      
+      // Complete login process before navigation
+      await login(data.token, data);
       navigate("/");
     } catch (err) {
       setError(err.message);

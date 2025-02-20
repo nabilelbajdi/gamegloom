@@ -1,4 +1,4 @@
-import { Search, Bell, User, Menu, X, BookmarkPlus } from "lucide-react";
+import { Search, Bell, User, Menu, X, BookmarkPlus, ChevronDown } from "lucide-react";
 
 const icons = {
   search: Search,
@@ -7,6 +7,7 @@ const icons = {
   menu: Menu,
   close: X,
   "bookmark-plus": BookmarkPlus,
+  "chevron-down": ChevronDown,
 };
 
 export default function Icon({ name, className }) {
