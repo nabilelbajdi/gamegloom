@@ -116,7 +116,7 @@ export default function Navbar() {
           >
             <div className="flex items-center space-x-2">
               <Icon name="bookmark-plus" className="icon pointer-events-none" />
-              <span>Gamelist</span>
+              <span>Collection</span>
               <span className="bg-primary text-dark rounded-full px-2">
                 0
               </span>
