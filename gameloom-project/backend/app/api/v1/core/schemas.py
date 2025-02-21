@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict
 from pydantic import BaseModel, Field, EmailStr
+from ..models.user_game import GameStatus
 
 class UserBase(BaseModel):
     """Base schema for user data."""
@@ -88,6 +89,52 @@ class Game(GameBase):
     """Schema for reading game data, including timestamps."""
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class UserGameBase(BaseModel):
+    """Base schema for user-game relationships."""
+    game_id: int
+    status: GameStatus
+
+class UserGameCreate(UserGameBase):
+    """Schema for creating a new user-game relationship."""
+    pass
+
+class UserGame(UserGameBase):
+    """Schema for reading user-game data."""
+    id: int
+    user_id: int
+    added_at: datetime
+    updated_at: datetime
+    game: Optional[Game] = None  # For when we want to include game details
+
+    class Config:
+        from_attributes = True
+
+class UserGameUpdate(BaseModel):
+    """Schema for updating a user-game relationship."""
+    status: GameStatus
+
+class GameBasicInfo(BaseModel):
+    """Simplified game info for collection views."""
+    id: int
+    igdb_id: int
+    name: str
+    cover_image: Optional[str] = None
+    genres: Optional[str] = None
+    rating: Optional[float] = None
+    first_release_date: Optional[datetime] = None
+    added_at: datetime  # When the game was added to collection
+    updated_at: datetime  # When the game's status was last updated
+    status: GameStatus  # Current status in collection
+
+class UserGameResponse(BaseModel):
+    """Schema for user game collection response."""
+    want_to_play: List[GameBasicInfo] = []
+    playing: List[GameBasicInfo] = []
+    played: List[GameBasicInfo] = []
 
     class Config:
         from_attributes = True
