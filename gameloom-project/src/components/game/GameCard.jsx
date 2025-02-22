@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const GameCard = ({ game }) => {
   return (
     <Link 
-      to={`/game/${game.id}`} 
+      to={`/game/${game.igdb_id}`}
       className="block group relative overflow-hidden rounded-lg bg-surface transition-all hover:bg-surface-hover"
     >
       {/* Game Cover */}
@@ -23,7 +23,7 @@ const GameCard = ({ game }) => {
           {game.name}
         </h3>
         <p className="text-xs text-muted truncate">
-          {game.genre || "Unknown Genre"}
+          {game.genres || "Unknown Genre"}
         </p>
 
         {/* Rating & Actions */}
