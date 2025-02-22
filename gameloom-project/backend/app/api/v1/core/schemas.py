@@ -122,13 +122,17 @@ class GameBasicInfo(BaseModel):
     id: int
     igdb_id: int
     name: str
-    cover_image: Optional[str] = None
-    genres: Optional[str] = None
-    rating: Optional[float] = None
-    first_release_date: Optional[datetime] = None
-    added_at: datetime  # When the game was added to collection
-    updated_at: datetime  # When the game's status was last updated
-    status: GameStatus  # Current status in collection
+    coverImage: str | None = None
+    genres: str | None = None
+    rating: str | None = None
+    first_release_date: datetime | None = None
+    added_at: datetime
+    updated_at: datetime
+    status: GameStatus
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
 
 class UserGameResponse(BaseModel):
     """Schema for user game collection response."""
