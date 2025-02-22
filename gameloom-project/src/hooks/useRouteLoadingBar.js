@@ -9,9 +9,7 @@ export function useRouteLoadingBar() {
   useEffect(() => {
     loadingBar.start();
     
-    // Wait for the next frame to ensure route change has started
     const frame = requestAnimationFrame(() => {
-      // Wait for any images and fonts to load
       Promise.all([
         document.fonts.ready,
         new Promise(resolve => {
