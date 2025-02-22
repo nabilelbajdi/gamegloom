@@ -39,32 +39,33 @@ const useGameStore = create((set, get) => ({
   },
 
   // Fetch Single Game Details
-  fetchGameDetails: async (gameId) => {
-    if (get().gameDetails[gameId]) return;
+  fetchGameDetails: async (igdbId) => {
+    if (get().gameDetails[igdbId]) return;
 
     try {
-      const data = await fetchGameDetails(gameId);
+      const data = await fetchGameDetails(igdbId);
       if (data) {
+        const transformedData = transformGameData(data);
         set((state) => ({
-          gameDetails: { ...state.gameDetails, [gameId]: transformGameData(data) },
+          gameDetails: { ...state.gameDetails, [igdbId]: transformedData },
         }));
       }
     } catch (error) {
-      console.error(`Error fetching game ${gameId} details:`, error);
+      console.error(`Error fetching game ${igdbId} details:`, error);
     }
   },
 
   // Fetch Game Time to Beat
-  fetchGameTimeToBeat: async (gameId) => {
-    if (get().gameTimeToBeat[gameId]) return;
+  fetchGameTimeToBeat: async (igdbId) => {
+    if (get().gameTimeToBeat[igdbId]) return;
 
     try {
-      const data = await fetchGameTimeToBeat(gameId);
+      const data = await fetchGameTimeToBeat(igdbId);
       set((state) => ({
-        gameTimeToBeat: { ...state.gameTimeToBeat, [gameId]: data },
+        gameTimeToBeat: { ...state.gameTimeToBeat, [igdbId]: data },
       }));
     } catch (error) {
-      console.error(`Error fetching time to beat for game ${gameId}:`, error);
+      console.error(`Error fetching time to beat for game ${igdbId}:`, error);
     }
   },
 }));

@@ -9,8 +9,9 @@ export const transformGameData = (game) => {
   
     return {
       id: game.igdb_id,
+      igdb_id: game.igdb_id,
       name: game.name,
-      genre: game.genres,
+      genres: game.genres,
       rating,
       coverImage: game.cover_image,
       summary: game.summary,
@@ -21,10 +22,11 @@ export const transformGameData = (game) => {
       videos: game.videos,
       similarGames: game.similar_games?.map(similar => ({
         id: similar.id,
+        igdb_id: similar.id,
         name: similar.name,
         coverImage: similar.cover_image,
         rating: similar.rating ? (similar.rating / 20).toFixed(1) : "N/A",
-        genre: similar.genres
+        genres: similar.genres
       })) || [],
       developers: game.developers,
       gameModes: game.game_modes,
