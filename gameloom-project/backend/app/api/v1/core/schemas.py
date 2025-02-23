@@ -142,3 +142,61 @@ class UserGameResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Review Schemas
+class ReviewBase(BaseModel):
+    """Base schema for reviews."""
+    rating: float = Field(..., ge=1, le=5)
+    content: Optional[str] = Field(None, max_length=2000)
+
+class ReviewCreate(ReviewBase):
+    """Schema for creating a new review."""
+    game_id: int
+
+class ReviewUpdate(ReviewBase):
+    """Schema for updating a review."""
+    pass
+
+class Review(ReviewBase):
+    """Schema for reading review data."""
+    id: int
+    user_id: int
+    game_id: int
+    likes_count: int
+    comments_count: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Review Comment Schemas
+class ReviewCommentBase(BaseModel):
+    """Base schema for review comments."""
+    content: str = Field(..., min_length=1, max_length=500)
+
+class ReviewCommentCreate(ReviewCommentBase):
+    """Schema for creating a new review comment."""
+    pass
+
+class ReviewComment(ReviewCommentBase):
+    """Schema for reading review comment data."""
+    id: int
+    user_id: int
+    review_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Review Like Schema
+class ReviewLike(BaseModel):
+    """Schema for review likes."""
+    id: int
+    user_id: int
+    review_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
