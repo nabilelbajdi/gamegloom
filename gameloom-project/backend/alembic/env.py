@@ -5,10 +5,12 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.api.settings import settings
-from app.api.v1.models.game import Base
+from app.api.db_setup import Base
 from app.api.v1.models.user import User
 from app.api.v1.models.token import Token
 from app.api.v1.models.user_game import UserGame
+from app.api.v1.models.review import Review, ReviewLike, ReviewComment
+from app.api.v1.models.game import Game
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
