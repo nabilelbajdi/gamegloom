@@ -150,3 +150,25 @@ async def update_similar_games(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Error updating similar games: {str(e)}"
         )
+
+@router.get("/search")
+async def search_games(query: str, db: Session = Depends(get_db)):
+    """Search for games using IGDB API"""
+    # First check if we have matching games in our database
+    db_games = services.search_games_in_db(db, query)
+    if len(db_games) >= 6:
+        return db_games[:6]
+
+    # If not enough results in database, search IGDB
+    search_query = f"""
+        {services.IGDB_GAME_FIELDS}
+        search "{query}";
+        where version_parent = null & cover != null;
+        limit 6;
+    """
+    
+    try:
+        await services.sync_games_from_igdb(db, search_query)
+        return services.search_games_in_db(db, query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

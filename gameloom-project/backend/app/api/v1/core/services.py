@@ -234,3 +234,14 @@ def get_latest_games(db: Session, limit: int = 12) -> list[game.Game]:
         .order_by(game.Game.first_release_date.desc())
         .limit(limit)
     ))
+
+def search_games_in_db(db: Session, query: str, limit: int = 6) -> list[game.Game]:
+    """Search for games in database matching the query"""
+    return list(db.scalars(
+        select(game.Game)
+        .where(
+            game.Game.name.ilike(f"%{query}%")
+        )
+        .order_by(game.Game.total_rating.desc().nulls_last())
+        .limit(limit)
+    ))
