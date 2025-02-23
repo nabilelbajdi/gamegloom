@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLoadingBar } from "../../App";
 import Icon from "../UI/Icon";
+import SearchResults from "../search/SearchResults";
+import debounce from "lodash/debounce";
 
 const NAV_ITEMS = [
   { name: "My Library", path: "/library" },
@@ -49,10 +51,63 @@ const LoadingSkeleton = () => (
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchContainerRef = useRef(null);
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (query) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:8000/api/v1/search?query=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        setSearchResults(data);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+    []
+  );
+
+  // Handle search input
+  const handleSearchInput = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    setIsSearching(true);
+    debouncedSearch(query);
+  };
+
+  // Handle search result selection
+  const handleSearchSelect = (game) => {
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  // Handle click outside of search container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     loadingBar.start();
@@ -60,11 +115,6 @@ export default function Navbar() {
     setShowUserMenu(false);
     navigate("/");
     loadingBar.complete();
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
   };
 
   if (loading) return <LoadingSkeleton />;
@@ -88,24 +138,40 @@ export default function Navbar() {
           ))}
         </div>
 
-        <form onSubmit={handleSearch} className="flex items-center flex-grow max-w-md px-2">
-          <div className="relative flex items-center w-full bg-white rounded overflow-hidden">
-            <div className="flex items-center border-r border-gray-300 h-8">
-              <button type="button" className="flex items-center px-3 hover:bg-gray-100 h-full">
-                <span className="text-xs text-gray-700">All</span>
-                <Icon name="chevron-down" className="icon ml-1.5 w-3 h-3 text-gray-600" />
+        <form onSubmit={(e) => e.preventDefault()} className="flex items-center flex-grow max-w-md px-2">
+          <div className="relative w-full" ref={searchContainerRef}>
+            <div className="flex items-center w-full bg-white rounded-xl overflow-hidden shadow-sm">
+              <div className="flex items-center border-r border-gray-300 h-8">
+                <button type="button" className="flex items-center px-3 hover:bg-gray-100 h-full">
+                  <span className="text-xs text-gray-700">All</span>
+                  <Icon name="chevron-down" className="icon ml-1.5 w-3 h-3 text-gray-600" />
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Search GameLoom..."
+                value={searchQuery}
+                onChange={handleSearchInput}
+                className="w-full h-8 px-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
+              />
+              <button type="submit" className="px-3 h-8 hover:bg-gray-100 flex items-center">
+                {isSearching ? (
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin"></div>
+                ) : (
+                  <Icon name="search" className="icon w-4 h-4 text-gray-700" />
+                )}
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="Search GameLoom..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 px-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
-            />
-            <button type="submit" className="px-3 h-8 hover:bg-gray-100 flex items-center">
-              <Icon name="search" className="icon w-4 h-4 text-gray-700" />
-            </button>
+
+            {/* Search Results Dropdown */}
+            <div className="absolute left-0 right-0 top-full mt-2">
+              {searchResults.length > 0 && (
+                <SearchResults
+                  results={searchResults}
+                  onSelect={handleSearchSelect}
+                />
+              )}
+            </div>
           </div>
         </form>
 
