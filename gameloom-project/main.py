@@ -7,6 +7,7 @@ from backend.app.api.db_setup import init_db
 from backend.app.api.v1.routers.games import router as games_router
 from backend.app.api.v1.routers.auth import router as auth_router
 from backend.app.api.v1.routers.user_games import router as user_games_router
+from backend.app.api.v1.routers.reviews import router as reviews_router
 from backend.app.api.scheduler import init_scheduler
 import logging
 
@@ -55,4 +56,5 @@ app.add_middleware(
 # Include the routers
 app.include_router(games_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(user_games_router, prefix="/api/v1") 
+app.include_router(user_games_router, prefix="/api/v1")
+app.include_router(reviews_router, prefix="/api/v1") 

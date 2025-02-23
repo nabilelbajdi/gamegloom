@@ -5,6 +5,7 @@ import { useLoadingBar } from "../../App";
 import Icon from "../UI/Icon";
 import SearchResults from "../search/SearchResults";
 import debounce from "lodash/debounce";
+import useUserGameStore from "../../store/useUserGameStore";
 
 const NAV_ITEMS = [
   { name: "My Library", path: "/library" },
@@ -58,6 +59,14 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
+  const { collection, fetchCollection } = useUserGameStore();
+
+  // Fetch collection when user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchCollection();
+    }
+  }, [user]);
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -183,9 +192,11 @@ export default function Navbar() {
             <div className="flex items-center space-x-2">
               <Icon name="bookmark-plus" className="icon pointer-events-none" />
               <span>Collection</span>
-              <span className="bg-primary text-dark rounded-full px-2">
-                0
-              </span>
+              {user && collection.want_to_play.length > 0 && (
+                <span className="bg-primary text-dark rounded-full px-2">
+                  {collection.want_to_play.length}
+                </span>
+              )}
             </div>
           </Link>
 
