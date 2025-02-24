@@ -6,6 +6,7 @@ import Icon from "../UI/Icon";
 import SearchResults from "../search/SearchResults";
 import debounce from "lodash/debounce";
 import useUserGameStore from "../../store/useUserGameStore";
+import { LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: "My Library", path: "/library" },
@@ -53,7 +54,6 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -121,7 +121,6 @@ export default function Navbar() {
   const handleLogout = () => {
     loadingBar.start();
     logout();
-    setShowUserMenu(false);
     navigate("/");
     loadingBar.complete();
   };
@@ -201,42 +200,42 @@ export default function Navbar() {
           </Link>
 
           {user ? (
-            <div className="relative">
+            <div className="relative group">
               <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
                 className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center space-x-2 focus:outline-none cursor-pointer"
               >
                 <Icon name="user" className="icon pointer-events-none" />
                 <span>{user.username}</span>
               </button>
 
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-gray-800">
-                  <div className="py-1" role="menu">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700"
-                      role="menuitem"
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      to="/settings"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700"
-                      role="menuitem"
-                    >
-                      Settings
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700"
-                      role="menuitem"
-                    >
+              <div className="absolute right-0 mt-1 w-48 rounded-lg shadow-lg bg-[#1a1b1e] border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible">
+                <div className="py-1" role="menu">
+                  <Link
+                    to="/profile"
+                    className="block px-3 py-1.5 text-sm text-gray-100 hover:bg-gray-800/50 transition-colors duration-200"
+                    role="menuitem"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/settings"
+                    className="block px-3 py-1.5 text-sm text-gray-100 hover:bg-gray-800/50 transition-colors duration-200"
+                    role="menuitem"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-3 py-1.5 text-sm text-red-700 hover:bg-gray-800/50 transition-colors duration-200"
+                    role="menuitem"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LogOut className="w-3.5 h-3.5" />
                       Logout
-                    </button>
-                  </div>
+                    </div>
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <Link 

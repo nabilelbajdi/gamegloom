@@ -7,6 +7,7 @@ import GameSticky from "../components/GamePage/GameSticky";
 import GameDetails from "../components/GamePage/GameDetails";
 import GameMedia from "../components/GamePage/GameMedia";
 import SimilarGames from "../components/GamePage/SimilarGames";
+import ReviewList from "../components/reviews/ReviewList";
 
 const GamePage = () => {
   const { gameId } = useParams();
@@ -46,6 +47,8 @@ const GamePage = () => {
         {/* Game Details Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} timeToBeat={gameTimeToBeat[gameId]} trailer={game.videos?.[0]} />
+          <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+          <ReviewList gameId={game.igdb_id} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
           <SimilarGames games={game.similarGames} />
           <GameMedia screenshots={game.screenshots} videos={game.videos} />

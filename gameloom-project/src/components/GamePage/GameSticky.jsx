@@ -1,6 +1,6 @@
 // src/components/GamePage/GameSticky.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { PlusCircle, Check, ChevronDown } from "lucide-react";
+import { PlusCircle, Check, ChevronDown, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 import { Link } from "react-router-dom";
@@ -80,27 +80,24 @@ const GameSticky = ({ game }) => {
             <button 
               onClick={() => setShowStatusMenu(!showStatusMenu)}
               className={`
-                w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-md
+                w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg
                 text-sm font-medium transition-all duration-200
-                ${gameStatus 
-                  ? 'bg-primary text-dark hover:bg-primary/90' 
-                  : 'bg-surface text-light hover:bg-surface-hover'
-                }
+                bg-[#1a1b1e] text-gray-100 hover:bg-gray-800/50
+                border border-gray-800/50
               `}
             >
-              {gameStatus ? <Check className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
+              {gameStatus ? <Check className="w-3.5 h-3.5" /> : <PlusCircle className="w-3.5 h-3.5" />}
               {getStatusLabel()}
-              <ChevronDown className={`w-4 h-4 ml-1 transition-transform duration-200 ${showStatusMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform duration-200 ${showStatusMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showStatusMenu && (
               <div 
                 className="
-                  absolute top-full left-0 w-full mt-2
-                  bg-surface-hover rounded-md shadow-xl
-                  border border-surface-border
-                  backdrop-blur-sm backdrop-filter
-                  divide-y divide-surface-border
+                  absolute top-full left-0 w-full mt-1
+                  bg-[#1a1b1e] rounded-lg shadow-lg
+                  border border-gray-800/50
+                  overflow-hidden
                 "
               >
                 {["want_to_play", "playing", "played"].map((status) => (
@@ -109,17 +106,16 @@ const GameSticky = ({ game }) => {
                     onClick={() => handleStatusClick(status)}
                     className={`
                       w-full flex items-center justify-between
-                      px-4 py-2.5 text-sm font-medium
-                      transition-colors duration-150
+                      px-3 py-1.5 text-sm font-medium
+                      transition-colors duration-200
                       ${gameStatus === status 
-                        ? 'text-primary bg-surface/50' 
-                        : 'text-light hover:bg-surface/50'
+                        ? 'text-primary bg-gray-800/50' 
+                        : 'text-gray-100 hover:bg-gray-800/50'
                       }
-                      first:rounded-t-md
                     `}
                   >
                     <span className="capitalize">{status.replace(/_/g, " ")}</span>
-                    {gameStatus === status && <Check className="w-4 h-4" />}
+                    {gameStatus === status && <Check className="w-3.5 h-3.5" />}
                   </button>
                 ))}
                 
@@ -127,12 +123,13 @@ const GameSticky = ({ game }) => {
                   <button
                     onClick={() => handleStatusClick(gameStatus)}
                     className="
-                      w-full flex items-center px-4 py-2.5
-                      text-sm font-medium text-red-500
-                      transition-colors duration-150
-                      hover:bg-surface/50 rounded-b-md
+                      w-full flex items-center gap-2 px-3 py-1.5
+                      text-sm font-medium text-red-600
+                      transition-colors duration-200
+                      hover:bg-gray-800/50
                     "
                   >
+                    <Trash2 className="w-3.5 h-3.5" />
                     Remove from Library
                   </button>
                 )}
