@@ -111,3 +111,161 @@ export const removeGameFromCollection = async (gameId) => {
 
   return await response.json();
 };
+
+// Review API Functions
+export const createReview = async (gameId, rating, content) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      game_id: gameId,
+      rating,
+      content
+    })
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || "Failed to create review");
+  }
+
+  return data;
+};
+
+export const updateReview = async (reviewId, rating, content) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ rating, content })
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || "Failed to update review");
+  }
+
+  return data;
+};
+
+export const deleteReview = async (reviewId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.detail || "Failed to delete review");
+  }
+};
+
+export const getGameReviews = async (gameId) => {
+  const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch reviews");
+  }
+  return await response.json();
+};
+
+export const toggleReviewLike = async (reviewId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/like`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to toggle review like");
+  }
+
+  return await response.json();
+};
+
+export const addReviewComment = async (reviewId, content) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ content })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to add comment");
+  }
+
+  return await response.json();
+};
+
+export const updateComment = async (reviewId, commentId, content) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments/${commentId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ content })
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.detail || "Failed to update comment");
+  }
+
+  return await response.json();
+};
+
+export const deleteComment = async (reviewId, commentId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments/${commentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.detail || "Failed to delete comment");
+  }
+};
+
+export const getReviewComments = async (reviewId) => {
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch comments");
+  }
+  return await response.json();
+};
