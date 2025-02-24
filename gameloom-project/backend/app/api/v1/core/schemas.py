@@ -166,6 +166,7 @@ class Review(ReviewBase):
     comments_count: int
     created_at: datetime
     updated_at: datetime
+    user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True
@@ -186,6 +187,7 @@ class ReviewComment(ReviewCommentBase):
     review_id: int
     created_at: datetime
     updated_at: datetime
+    user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True

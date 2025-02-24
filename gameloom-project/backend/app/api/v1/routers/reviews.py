@@ -22,40 +22,48 @@ async def create_review(
     db: Session = Depends(get_db)
 ):
     """Create a new review for a game."""
-    # Find game by IGDB ID
-    game = db.query(Game).filter(Game.igdb_id == review_data.game_id).first()
-    if not game:
+    try:
+        # Find game by IGDB ID
+        game = db.query(Game).filter(Game.igdb_id == review_data.game_id).first()
+        if not game:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Game with IGDB ID {review_data.game_id} not found"
+            )
+        
+        # Check if user already reviewed this game
+        existing = db.query(Review).filter(
+            and_(
+                Review.user_id == current_user.id,
+                Review.game_id == game.id
+            )
+        ).first()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You have already reviewed this game"
+            )
+        
+        # Create new review
+        db_review = Review(
+            user_id=current_user.id,
+            game_id=game.id,
+            rating=review_data.rating,
+            content=review_data.content
+        )
+        
+        db.add(db_review)
+        db.commit()
+        db.refresh(db_review)
+        return db_review
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Game not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while creating the review: {str(e)}"
         )
-    
-    # Check if user already reviewed this game
-    existing = db.query(Review).filter(
-        and_(
-            Review.user_id == current_user.id,
-            Review.game_id == game.id
-        )
-    ).first()
-    
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You have already reviewed this game"
-        )
-    
-    # Create new review
-    db_review = Review(
-        user_id=current_user.id,
-        game_id=game.id,
-        rating=review_data.rating,
-        content=review_data.content
-    )
-    
-    db.add(db_review)
-    db.commit()
-    db.refresh(db_review)
-    return db_review
 
 @router.get("/game/{igdb_id}", response_model=List[schemas.Review])
 async def get_game_reviews(
@@ -70,7 +78,7 @@ async def get_game_reviews(
             detail="Game not found"
         )
     
-    reviews = db.query(Review).filter(Review.game_id == game.id).all()
+    reviews = db.query(Review).join(User).filter(Review.game_id == game.id).all()
     return reviews
 
 @router.get("/{review_id}", response_model=schemas.Review)
@@ -215,5 +223,61 @@ async def get_review_comments(
             detail="Review not found"
         )
     
-    comments = db.query(ReviewComment).filter(ReviewComment.review_id == review_id).all()
-    return comments 
+    comments = db.query(ReviewComment).join(User).filter(ReviewComment.review_id == review_id).all()
+    return comments
+
+@router.delete("/{review_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_comment(
+    review_id: int,
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a comment."""
+    comment = db.query(ReviewComment).filter(ReviewComment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    if comment.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this comment"
+        )
+    
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if review:
+        review.comments_count -= 1
+    
+    db.delete(comment)
+    db.commit()
+    return None
+
+@router.put("/{review_id}/comments/{comment_id}", response_model=schemas.ReviewComment)
+async def update_comment(
+    review_id: int,
+    comment_id: int,
+    comment_data: schemas.ReviewCommentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a comment."""
+    comment = db.query(ReviewComment).filter(ReviewComment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    if comment.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this comment"
+        )
+    
+    comment.content = comment_data.content
+    db.commit()
+    db.refresh(comment)
+    return comment 
