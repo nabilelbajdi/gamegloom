@@ -8,18 +8,25 @@ export const transformGameData = (game) => {
     if (game.total_rating) rating = (game.total_rating / 20).toFixed(1);
   
     return {
+      // Basic Info
       id: game.igdb_id,
       igdb_id: game.igdb_id,
       name: game.name,
+
+      // Media
+      coverImage: game.cover_image,
+      screenshots: game.screenshots,
+      videos: game.videos,
+
+      // Game Details
       genres: game.genres,
       rating,
-      coverImage: game.cover_image,
       summary: game.summary,
       storyline: game.storyline,
       platforms: game.platforms,
       firstReleaseDate: game.first_release_date,
-      screenshots: game.screenshots,
-      videos: game.videos,
+
+      // Similar Games (nested transformation)
       similarGames: game.similar_games?.map(similar => ({
         id: similar.id,
         igdb_id: similar.id,
@@ -28,6 +35,8 @@ export const transformGameData = (game) => {
         rating: similar.rating ? (similar.rating / 20).toFixed(1) : "N/A",
         genres: similar.genres
       })) || [],
+
+      // Additional Details
       developers: game.developers,
       gameModes: game.game_modes,
       playerPerspectives: game.player_perspectives,
