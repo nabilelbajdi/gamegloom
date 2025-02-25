@@ -77,12 +77,14 @@ export default function Navbar() {
       }
 
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/search?query=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Search failed');
+        const response = await fetch(
+          `http://localhost:8000/api/v1/search?query=${encodeURIComponent(query)}`
+        );
+        if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
         setSearchResults(data);
       } catch (error) {
-        console.error('Search error:', error);
+        console.error("Search error:", error);
         setSearchResults([]);
       } finally {
         setIsSearching(false);

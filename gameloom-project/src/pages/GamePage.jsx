@@ -32,7 +32,7 @@ const GamePage = () => {
       <div className="fixed inset-0 -z-10">
         <div 
           className="absolute inset-0 bg-cover bg-center brightness-[0.6] blur-xs"
-          style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}
+          style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none" }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
       </div>
@@ -48,7 +48,7 @@ const GamePage = () => {
         <div className="w-full max-w-3xl">
           <GameDetails game={game} timeToBeat={gameTimeToBeat[gameId]} trailer={game.videos?.[0]} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-          <ReviewList gameId={game.igdb_id} />
+          <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
           <SimilarGames games={game.similarGames} />
           <GameMedia screenshots={game.screenshots} videos={game.videos} />

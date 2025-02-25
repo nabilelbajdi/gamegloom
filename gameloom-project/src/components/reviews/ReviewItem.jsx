@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import useReviewStore from '../../store/useReviewStore';
-import { Heart, MessageCircle, ChevronDown, ChevronUp, Pencil, Trash2, X } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import useReviewStore from "../../store/useReviewStore";
+import { Heart, MessageCircle, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 const ReviewItem = ({ review, gameId }) => {
   const [isCommenting, setIsCommenting] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(review.content);
   const [editedRating, setEditedRating] = useState(review.rating);
   const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editedCommentText, setEditedCommentText] = useState('');
+  const [editedCommentText, setEditedCommentText] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
   const { user } = useAuth();
@@ -24,7 +24,7 @@ const ReviewItem = ({ review, gameId }) => {
     try {
       await toggleLike(review.id, gameId);
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error("Error toggling like:", error);
     }
   };
 
@@ -34,11 +34,11 @@ const ReviewItem = ({ review, gameId }) => {
 
     try {
       await addComment(review.id, gameId, commentText);
-      setCommentText('');
+      setCommentText("");
       setIsCommenting(false);
       await fetchReviewComments(review.id, gameId);
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error("Error adding comment:", error);
     }
   };
 
@@ -48,7 +48,7 @@ const ReviewItem = ({ review, gameId }) => {
       await updateReview(review.id, gameId, editedRating, editedContent);
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating review:', error);
+      console.error("Error updating review:", error);
     }
   };
 
@@ -56,7 +56,7 @@ const ReviewItem = ({ review, gameId }) => {
     try {
       await deleteReview(review.id, gameId);
     } catch (error) {
-      console.error('Error deleting review:', error);
+      console.error("Error deleting review:", error);
     }
   };
 
@@ -64,7 +64,7 @@ const ReviewItem = ({ review, gameId }) => {
     try {
       await deleteComment(review.id, commentId, gameId);
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      console.error("Error deleting comment:", error);
     }
   };
 
@@ -72,9 +72,9 @@ const ReviewItem = ({ review, gameId }) => {
     try {
       await updateComment(review.id, commentId, editedCommentText, gameId);
       setEditingCommentId(null);
-      setEditedCommentText('');
+      setEditedCommentText("");
     } catch (error) {
-      console.error('Error updating comment:', error);
+      console.error("Error updating comment:", error);
     }
   };
 
@@ -83,7 +83,7 @@ const ReviewItem = ({ review, gameId }) => {
       try {
         await fetchReviewComments(review.id, gameId);
       } catch (error) {
-        console.error('Error fetching comments:', error);
+        console.error("Error fetching comments:", error);
       }
     }
     setShowComments(!showComments);
@@ -96,11 +96,11 @@ const ReviewItem = ({ review, gameId }) => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
             <span className="text-lg font-medium text-white">
-              {review.user?.username?.[0]?.toUpperCase() || '?'}
+              {review.user?.username?.[0]?.toUpperCase() || "?"}
             </span>
           </div>
           <div>
-            <h3 className="font-medium">{review.user?.username || 'Anonymous'}</h3>
+            <h3 className="font-medium">{review.user?.username || "Anonymous"}</h3>
             <div className="flex items-center gap-2">
               {!isEditing ? (
                 <>
@@ -109,7 +109,7 @@ const ReviewItem = ({ review, gameId }) => {
                       <span
                         key={star}
                         className={`text-sm ${
-                          star <= review.rating ? 'text-primary' : 'text-gray-600'
+                          star <= review.rating ? "text-primary" : "text-gray-600"
                         }`}
                       >
                         ★
@@ -130,7 +130,7 @@ const ReviewItem = ({ review, gameId }) => {
                       key={star}
                       onClick={() => setEditedRating(star)}
                       className={`text-sm cursor-pointer ${
-                        star <= editedRating ? 'text-primary' : 'text-gray-600'
+                        star <= editedRating ? "text-primary" : "text-gray-600"
                       }`}
                     >
                       ★
@@ -219,7 +219,7 @@ const ReviewItem = ({ review, gameId }) => {
         <button
           onClick={handleLike}
           className={`flex items-center gap-1.5 text-sm cursor-pointer ${
-            review.user_liked ? 'text-red-700' : 'text-gray-400 hover:text-red-700'
+            review.user_liked ? "text-red-700" : "text-gray-400 hover:text-red-700"
           } transition-colors`}
         >
           <Heart className="w-4 h-4" fill={review.user_liked ? "currentColor" : "none"} />
@@ -246,7 +246,7 @@ const ReviewItem = ({ review, gameId }) => {
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
                     <span className="text-xs font-medium text-white">
-                      {comment.user?.username?.[0]?.toUpperCase() || '?'}
+                      {comment.user?.username?.[0]?.toUpperCase() || "?"}
                     </span>
                   </div>
                   <span className="text-sm font-medium">{comment.user?.username}</span>
@@ -314,7 +314,7 @@ const ReviewItem = ({ review, gameId }) => {
                       type="button"
                       onClick={() => {
                         setEditingCommentId(null);
-                        setEditedCommentText('');
+                        setEditedCommentText("");
                       }}
                       className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
                     >

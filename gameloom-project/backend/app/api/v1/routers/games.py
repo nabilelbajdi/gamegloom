@@ -116,11 +116,11 @@ async def update_similar_games(db: Session = Depends(get_db)):
             try:
                 # Fetch fresh data from IGDB
                 igdb_data = services.fetch_from_igdb(game_id=db_game.igdb_id)
-                if not igdb_data or not igdb_data.get('similar_games'):
+                if not igdb_data or not igdb_data.get("similar_games"):
                     continue
 
                 # Process similar games in a single API call
-                similar_ids = ','.join(str(id) for id in igdb_data['similar_games'])
+                similar_ids = ",".join(str(id) for id in igdb_data["similar_games"])
                 query = f"{services.IGDB_SIMILAR_GAME_FIELDS} where id = ({similar_ids}); limit 10;"
                 similar_games_data = services.fetch_from_igdb(query=query)
                 

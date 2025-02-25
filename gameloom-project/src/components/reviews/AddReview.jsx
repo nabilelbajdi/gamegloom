@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import useReviewStore from '../../store/useReviewStore';
+import React, { useState } from "react";
+import useReviewStore from "../../store/useReviewStore";
 
 const AddReview = ({ gameId }) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const { addReview } = useReviewStore();
@@ -18,10 +18,10 @@ const AddReview = ({ gameId }) => {
       setIsSubmitting(true);
       await addReview(gameId, rating, content);
       setRating(0);
-      setContent('');
+      setContent("");
     } catch (error) {
       setError(error.message);
-      console.error('Error submitting review:', error);
+      console.error("Error submitting review:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -30,7 +30,7 @@ const AddReview = ({ gameId }) => {
   return (
     <form onSubmit={handleSubmit} className="bg-surface p-4 rounded-lg space-y-4">
       {error && (
-        <div className="p-3 bg-red-500/10 text-red-500 rounded-lg text-sm">
+        <div className="p-3 bg-red-500/10 text-red-700 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -51,8 +51,8 @@ const AddReview = ({ gameId }) => {
               <span
                 className={`${
                   star <= (hoverRating || rating)
-                    ? 'text-primary'
-                    : 'text-gray-600'
+                    ? "text-primary"
+                    : "text-gray-600"
                 }`}
               >
                 ★
@@ -61,7 +61,7 @@ const AddReview = ({ gameId }) => {
           ))}
           {rating > 0 && (
             <span className="ml-2 text-sm text-gray-400">
-              {rating} star{rating !== 1 && 's'}
+              {rating} star{rating !== 1 && "s"}
             </span>
           )}
         </div>
@@ -76,7 +76,7 @@ const AddReview = ({ gameId }) => {
           id="review-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What did you think about this game? (optional)"
+          placeholder="What did you think about this game? (Optional)"
           rows={4}
           className="w-full px-3 py-2 text-sm bg-surface-hover rounded-lg border border-surface-border focus:outline-none focus:border-primary resize-none"
         />
@@ -95,7 +95,7 @@ const AddReview = ({ gameId }) => {
               Submitting...
             </div>
           ) : (
-            'Submit Review'
+            "Submit Review"
           )}
         </button>
       </div>

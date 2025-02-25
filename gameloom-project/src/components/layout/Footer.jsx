@@ -59,7 +59,7 @@ const Footer = () => {
               placeholder="Your email..."
               className="w-full px-3 py-2 bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none"
             />
-            <Button to="#" label="Subscribe" variant="subscribe" onClick={() => alert('Subscribed!')} />
+            <Button to="#" label="Subscribe" variant="subscribe" onClick={() => alert("Subscribed!")} />
           </form>
         </div>
       </div>

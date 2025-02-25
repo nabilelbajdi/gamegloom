@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useLoadingBar } from '../App';
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useLoadingBar } from "../App";
 
 export function useRouteLoadingBar() {
   const location = useLocation();
@@ -12,13 +12,13 @@ export function useRouteLoadingBar() {
     const frame = requestAnimationFrame(() => {
       Promise.all([
         document.fonts.ready,
-        new Promise(resolve => {
-          if (document.readyState === 'complete') {
+        new Promise((resolve) => {
+          if (document.readyState === "complete") {
             resolve();
           } else {
-            window.addEventListener('load', resolve, { once: true });
+            window.addEventListener("load", resolve, { once: true });
           }
-        })
+        }),
       ]).then(() => {
         loadingBar.complete();
       });

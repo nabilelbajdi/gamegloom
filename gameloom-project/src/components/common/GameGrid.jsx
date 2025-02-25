@@ -17,7 +17,7 @@ const GameGrid = ({ title, viewAllLink, games, loading, emptyContent }) => (
     {loading ? (
       <p className="text-center text-gray-400">Loading games...</p>
     ) : (
-      <div className={`grid ${games.length > 0 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6' : 'grid-cols-1'} gap-4 ${!games.length && 'place-items-center'}`}>
+      <div className={`grid ${games.length > 0 ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6" : "grid-cols-1"} gap-4 ${!games.length && "place-items-center"}`}>
         {games.length > 0 ? (
           games.map((game) => (
             <GameCard key={game.id} game={game} />

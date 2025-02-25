@@ -68,7 +68,7 @@ async def update_trending_games():
                 logger.warning("No trending games data received from IGDB")
                 return
                 
-            game_ids = [str(item['game_id']) for item in steam_data]
+            game_ids = [str(item["game_id"]) for item in steam_data]
             
             # Fetch full game details
             games_query = f"""
@@ -80,7 +80,7 @@ async def update_trending_games():
                        similar_games.total_rating, similar_games.genres.name,
                        involved_companies.company.name, involved_companies.developer, game_modes.name, 
                        player_perspectives.name, themes.name;
-                where id = ({','.join(game_ids)}) & cover != null;
+                where id = ({",".join(game_ids)}) & cover != null;
             """
             
             new_count, update_count = await services.sync_games_from_igdb(db, games_query)

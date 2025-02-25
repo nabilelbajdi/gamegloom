@@ -8,7 +8,7 @@ class Review(Base):
     """Model for game reviews."""
     __tablename__ = "reviews"
     __table_args__ = (
-        UniqueConstraint('user_id', 'game_id', name='unique_user_game_review'),
+        UniqueConstraint("user_id", "game_id", name="unique_user_game_review"),
     )
 
     # Primary key and foreign keys
@@ -43,7 +43,7 @@ class ReviewLike(Base):
     __tablename__ = "review_likes"
     __table_args__ = (
         # Ensure one like per user per review
-        UniqueConstraint('user_id', 'review_id', name='unique_user_review_like'),
+        UniqueConstraint("user_id", "review_id", name="unique_user_review_like"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

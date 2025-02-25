@@ -1,6 +1,6 @@
 // src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
-import { Menu, Clock, Calendar, Gamepad2 } from 'lucide-react';
+import { Menu, Clock, Calendar, Gamepad2 } from "lucide-react";
 import StarRating from "../UI/StarRating";
 import GameMediaPreview from "./GameMediaPreview";
 
@@ -92,10 +92,10 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         {game.firstReleaseDate && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Calendar className="w-5 h-5" />
-            <span>Release date: {new Date(game.firstReleaseDate).toLocaleDateString('en-US', { 
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric'
+            <span>Release date: {new Date(game.firstReleaseDate).toLocaleDateString("en-US", { 
+              month: "long",
+              day: "numeric",
+              year: "numeric",
             })}</span>
           </div>
         )}

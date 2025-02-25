@@ -77,7 +77,7 @@ async def get_user_collection(
             name=game.name,
             coverImage=game.cover_image,
             genres=game.genres,
-            rating=format(float(game.total_rating) / 20, '.1f') if game.total_rating else None,
+            rating=format(float(game.total_rating) / 20, ".1f") if game.total_rating else None,
             first_release_date=game.first_release_date,
             added_at=user_game.added_at,
             updated_at=user_game.updated_at,

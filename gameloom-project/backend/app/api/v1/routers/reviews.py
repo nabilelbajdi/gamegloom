@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List
+from datetime import datetime, UTC
 
 from ..core import schemas
 from ..models.review import Review, ReviewLike, ReviewComment
@@ -30,6 +31,16 @@ async def create_review(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Game with IGDB ID {review_data.game_id} not found"
             )
+        
+        # Check if game is released
+        current_time = datetime.now(UTC)
+        if game.first_release_date:
+            game_release_date = game.first_release_date.replace(tzinfo=UTC)
+            if game_release_date > current_time:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot review unreleased games"
+                )
         
         # Check if user already reviewed this game
         existing = db.query(Review).filter(

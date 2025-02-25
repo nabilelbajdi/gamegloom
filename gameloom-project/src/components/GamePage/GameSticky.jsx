@@ -83,12 +83,12 @@ const GameSticky = ({ game }) => {
                 w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg
                 text-sm font-medium transition-all duration-200
                 bg-[#1a1b1e] text-gray-100 hover:bg-gray-800/50
-                border border-gray-800/50
+                border border-gray-800/50 cursor-pointer
               `}
             >
               {gameStatus ? <Check className="w-3.5 h-3.5" /> : <PlusCircle className="w-3.5 h-3.5" />}
               {getStatusLabel()}
-              <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform duration-200 ${showStatusMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform duration-200 ${showStatusMenu ? "rotate-180" : ""}`} />
             </button>
 
             {showStatusMenu && (
@@ -107,10 +107,10 @@ const GameSticky = ({ game }) => {
                     className={`
                       w-full flex items-center justify-between
                       px-3 py-1.5 text-sm font-medium
-                      transition-colors duration-200
+                      transition-colors duration-200 cursor-pointer
                       ${gameStatus === status 
-                        ? 'text-primary bg-gray-800/50' 
-                        : 'text-gray-100 hover:bg-gray-800/50'
+                        ? "text-primary bg-gray-800/50"
+                        : "text-gray-100 hover:bg-gray-800/50"
                       }
                     `}
                   >
@@ -125,7 +125,7 @@ const GameSticky = ({ game }) => {
                     className="
                       w-full flex items-center gap-2 px-3 py-1.5
                       text-sm font-medium text-red-600
-                      transition-colors duration-200
+                      transition-colors duration-200 cursor-pointer
                       hover:bg-gray-800/50
                     "
                   >
