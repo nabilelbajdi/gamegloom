@@ -40,10 +40,10 @@ This project follows a structured approach:
 > **Deadline:** March 21, 2025  
 > **Goal:** Develop a production-ready full-stack application.
 
-- [ ] Expand React frontend  
-- [ ] Implement CRUD operations  
-- [ ] Database setup & API integration  
-- [ ] Authentication & user management 
+- [x] Expand React frontend  
+- [x] Implement CRUD operations  
+- [x] Database setup & API integration  
+- [x] Authentication & user management 
 - [ ] Implement advanced features (VG level)
 
 ---
