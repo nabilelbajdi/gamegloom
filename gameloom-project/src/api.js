@@ -186,6 +186,32 @@ export const getGameReviews = async (gameId) => {
   return await response.json();
 };
 
+export const getUserReviewForGame = async (gameId) => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const response = await fetch(`${BASE_URL}/reviews/user/game/${gameId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    if (response.status === 404) {
+      return null;
+    }
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch user review");
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching user review:", error);
+    return null;
+  }
+};
+
 export const toggleReviewLike = async (reviewId) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");

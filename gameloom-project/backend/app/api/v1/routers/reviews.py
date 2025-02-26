@@ -237,6 +237,35 @@ async def get_review_comments(
     comments = db.query(ReviewComment).join(User).filter(ReviewComment.review_id == review_id).all()
     return comments
 
+@router.get("/user/game/{igdb_id}", response_model=schemas.Review)
+async def get_user_review_for_game(
+    igdb_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the current user's review for a specific game."""
+    game = db.query(Game).filter(Game.igdb_id == igdb_id).first()
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found"
+        )
+    
+    review = db.query(Review).filter(
+        and_(
+            Review.game_id == game.id,
+            Review.user_id == current_user.id
+        )
+    ).first()
+    
+    if not review:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review not found"
+        )
+        
+    return review
+
 @router.delete("/{review_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
     review_id: int,
