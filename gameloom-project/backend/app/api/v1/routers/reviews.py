@@ -65,6 +65,21 @@ async def create_review(
         )
         
         db.add(db_review)
+        
+        user_rating_converted = (review_data.rating / 5) * 100
+        
+        if game.total_rating is not None and game.total_rating_count is not None:
+            current_total = game.total_rating * game.total_rating_count
+            new_total = current_total + user_rating_converted
+            new_count = game.total_rating_count + 1
+            new_rating = new_total / new_count
+            
+            game.total_rating = new_rating
+            game.total_rating_count = new_count
+        else:
+            game.total_rating = user_rating_converted
+            game.total_rating_count = 1
+        
         db.commit()
         db.refresh(db_review)
         return db_review
@@ -127,6 +142,24 @@ async def update_review(
             detail="Not authorized to update this review"
         )
     
+    game = db.query(Game).filter(Game.id == review.game_id).first()
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found"
+        )
+    
+    if "rating" in review_data.model_dump(exclude_unset=True) and review_data.rating != review.rating:
+        old_rating_converted = (review.rating / 5) * 100
+        new_rating_converted = (review_data.rating / 5) * 100
+        
+        if game.total_rating is not None and game.total_rating_count is not None:
+            current_total = game.total_rating * game.total_rating_count
+            adjusted_total = current_total - old_rating_converted + new_rating_converted
+            new_rating = adjusted_total / game.total_rating_count
+            
+            game.total_rating = new_rating
+    
     for key, value in review_data.model_dump(exclude_unset=True).items():
         setattr(review, key, value)
     
@@ -153,6 +186,21 @@ async def delete_review(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this review"
         )
+
+    game = db.query(Game).filter(Game.id == review.game_id).first()
+    if game and game.total_rating is not None and game.total_rating_count is not None and game.total_rating_count > 0:
+        user_rating_converted = (review.rating / 5) * 100
+        current_total = game.total_rating * game.total_rating_count
+        new_count = game.total_rating_count - 1
+        
+        if new_count > 0:
+            new_total = current_total - user_rating_converted
+            new_rating = new_total / new_count
+            game.total_rating = new_rating
+            game.total_rating_count = new_count
+        else:
+            game.total_rating = None
+            game.total_rating_count = 0
     
     db.delete(review)
     db.commit()
