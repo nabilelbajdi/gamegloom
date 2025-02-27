@@ -7,11 +7,9 @@ const GameCard = ({ game }) => {
   const [wantToPlay, setWantToPlay] = useState(false);
   
   const handleWantToPlayClick = (e) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault(); 
+    e.stopPropagation(); 
     setWantToPlay(!wantToPlay);
-    // Here you would also call your API to update the user's library
-    // Something like: updateUserLibrary(game.id, !wantToPlay);
   };
 
   return (
@@ -27,7 +25,7 @@ const GameCard = ({ game }) => {
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90"
         />
         
-        {/* Want to Play Ribbon (IMDb style) */}
+        {/* Want to Play Ribbon */}
         <div 
           className="absolute top-0 left-0 z-10 cursor-pointer"
           onClick={handleWantToPlayClick}
