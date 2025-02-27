@@ -23,8 +23,8 @@ const ReviewCard = ({
   const navigate = useNavigate();
 
   return (
-    <article className="flex flex-col sm:flex-row gap-6 p-6 border-l-2 sm:border-l-6 border-gray-700 bg-gray-800 rounded-lg shadow-lg max-w-full overflow-hidden">
-      {/* Left Section: User Info */}
+    <article className="flex flex-col sm:flex-row gap-6 p-6 border-l-2 sm:border-l-6 border-gray-700 bg-surface-dark rounded-lg shadow-lg max-w-full overflow-hidden">
+      {/* User Info */}
       <div className="w-24 sm:w-32 flex-shrink-0 flex flex-col items-center">
         <img src={userAvatar} alt={`${user} avatar`} className="w-20 h-20 sm:w-24 sm:h-24 mb-2 rounded-full object-cover ring-2 ring-gray-700 hover:ring-secondary transition-all duration-300 cursor-pointer" />
         <div className="mt-2 text-sm font-bold text-light cursor-pointer">{user}</div>
@@ -50,7 +50,7 @@ const ReviewCard = ({
         </div>
       </div>
 
-      {/* Cover Art Section */}
+      {/* Cover Art */}
       <div className="max-w-[8rem] sm:max-w-[9rem] flex-shrink-0">
         <img 
           src={coverImage} 
@@ -62,7 +62,7 @@ const ReviewCard = ({
 
       {/* Review Content */}
       <div className="flex-1 flex flex-col">
-        {/* Title & Review Text */}
+        {/* Title & Text */}
         <div className="flex-1 mt-2">
           <h4 className="text-lg font-semibold text-light hover:text-primary transition-colors">{gameTitle}</h4>
           <p className="text-sm text-gray-500 mt-1">{platform}</p>
@@ -74,14 +74,13 @@ const ReviewCard = ({
           )}
         </div>
 
-        {/* Full-width Bottom Section */}
+        {/* Bottom Section */}
         <div className="mt-4 pt-2 border-t border-gray-700 flex justify-between items-center w-full text-sm">
-          {/* Date on the Bottom Left */}
           <span className="text-gray-500 flex items-center"><Calendar className="w-4 h-4 mr-1" /> {date}</span>
 
-          {/* Right Section: Rating & Review Actions */}
+          {/* Rating & Actions */}
           <div className="flex items-center gap-4 sm:gap-6">
-            {/* Star Rating */}
+            {/* Rating */}
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <span key={i} className={`w-4 h-4 ${i < rating ? "text-primary" : "text-gray-500"}`}>★</span>

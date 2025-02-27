@@ -59,8 +59,8 @@ const ReviewList = ({ gameId, releaseDate }) => {
   if (isLoading) {
     return (
       <div className="mt-8 space-y-4">
-        <div className="h-32 bg-surface animate-pulse rounded-lg"></div>
-        <div className="h-32 bg-surface animate-pulse rounded-lg"></div>
+        <div className="h-32 bg-surface-dark animate-pulse rounded-lg"></div>
+        <div className="h-32 bg-surface-dark animate-pulse rounded-lg"></div>
       </div>
     );
   }
@@ -69,7 +69,7 @@ const ReviewList = ({ gameId, releaseDate }) => {
   
   return (
     <div className="mt-8 space-y-8">
-      {/* Reviews Header */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
           Reviews {sortedReviews.length > 0 && `(${sortedReviews.length})`}
@@ -80,16 +80,14 @@ const ReviewList = ({ gameId, releaseDate }) => {
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setShowSortMenu(!showSortMenu)}
-              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 bg-[#1a1b1e] text-gray-100 hover:bg-gray-800/50 border border-gray-800/50 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-sm font-medium transition-all duration-200 bg-surface-dark text-gray-100 hover:bg-gray-800/50 border border-gray-800/50 cursor-pointer"
             >
               {getCurrentSortLabel()}
               <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform duration-200 ${showSortMenu ? "rotate-180" : ""}`} />
             </button>
 
             {showSortMenu && (
-              <div 
-                className="absolute top-full right-0 w-full mt-1 bg-[#1a1b1e] rounded-lg shadow-lg border border-gray-800/50 overflow-hidden z-50"
-              >
+              <div className="absolute right-0 top-full mt-1 w-36 py-1 bg-surface-dark rounded-lg shadow-lg border border-gray-800/50 z-10">
                 {SORT_OPTIONS.map((option) => (
                   <button
                     key={option.value}
@@ -97,9 +95,9 @@ const ReviewList = ({ gameId, releaseDate }) => {
                       setSortBy(option.value);
                       setShowSortMenu(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                    className={`w-full text-left px-3 py-1.5 text-sm transition-colors duration-200 ${
                       sortBy === option.value 
-                        ? "text-primary bg-gray-800/50"
+                        ? "text-primary bg-gray-800/50" 
                         : "text-gray-100 hover:bg-gray-800/50"
                     }`}
                   >
@@ -119,16 +117,15 @@ const ReviewList = ({ gameId, releaseDate }) => {
         </div>
       )}
 
-      {/* Reviews Section */}
+      {/* Reviews Content */}
       {!isReleased ? (
-        <div className="p-4 bg-surface rounded-lg text-center">
+        <div className="p-4 bg-surface-dark rounded-lg text-center">
           <p className="text-gray-400">
             This game hasn't been released yet. Reviews will be enabled upon release.
           </p>
         </div>
       ) : (
         <>
-          {/* Reviews List */}
           <div className="space-y-4">
             {sortedReviews.length > 0 ? (
               sortedReviews.map(review => (
@@ -139,7 +136,7 @@ const ReviewList = ({ gameId, releaseDate }) => {
                 />
               ))
             ) : (
-              <div className="p-4 bg-surface rounded-lg text-center">
+              <div className="p-4 bg-surface-dark rounded-lg text-center">
                 <p className="text-gray-400">
                   No reviews yet. Be the first to review!
                 </p>

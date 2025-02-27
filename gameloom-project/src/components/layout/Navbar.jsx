@@ -210,7 +210,7 @@ export default function Navbar() {
                 <span>{user.username}</span>
               </button>
 
-              <div className="absolute right-0 mt-1 w-48 rounded-lg shadow-lg bg-[#1a1b1e] border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible">
+              <div className="absolute right-0 mt-1 w-48 rounded-lg shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible">
                 <div className="py-1" role="menu">
                   <Link
                     to="/profile"

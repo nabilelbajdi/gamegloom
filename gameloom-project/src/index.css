@@ -1,22 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colors */
+  /* Typography */
+  --font-body: "Amazon Ember", sans-serif;
+  --font-heading: "Amazon Ember", sans-serif;
+  
+  /* Dark Mode */
   --color-primary: #C8AA6E; /* Gold */
-  --color-secondary: #7A5C95; /* Soft Purple */
-  --color-dark: #0A0E17;
-  --color-light: #E2E8F0;
+  --color-secondary: #7A5C95; /* Purple */
+  --color-dark: #0A0E17; /* Dark background */
+  --color-light: #E2E8F0; /* Light text color */
+  --color-surface-dark: #1A1A1C; /* Dark component background */
   --text-gradient: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
   
-  /* Navbar */ 
+  /* Light Mode */
+  --color-dark-light-mode: #E2E8F0; /* Main background in light mode */
+  --color-light-dark-mode: #0A0E17; /* Main text color in light mode */
+  --color-surface-light: #F5F5F7; /* Light component background */
+  
+  /* Navbar - Dark Mode */ 
   --navbar-bg: rgba(10, 14, 23, 0.8);
   --navbar-border: #C8AA6E;
   --navbar-text: #E2E8F0;
   --navbar-hover: #C8AA6E;
-
-  /* Typography */
-  --font-body: "Amazon Ember", sans-serif;
-  --font-heading: "Amazon Ember", sans-serif;
+  
+  /* Navbar - Light Mode */
+  --navbar-bg-light: rgba(229, 231, 235, 0.8);
+  --navbar-border-light: #C8AA6E;
+  --navbar-text-light: #0A0E17;
+  --navbar-hover-light: #C8AA6E;
+  
+  /* Effects & Animations */
+  --card-hover-transform: scale(1.02);
+  --button-hover-transform: scale(1.05);
+  --transition-speed: 0.3s;
 }
 
 @layer base {

@@ -218,7 +218,7 @@ const GameSticky = ({ game }) => {
               className={`
                 w-full flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg
                 text-sm font-bold transition-all duration-200
-                bg-[#1a1b1e] text-gray-100 hover:bg-gray-800/50
+                bg-surface-dark text-gray-100 hover:bg-gray-800/50
                 border border-gray-800/50 cursor-pointer
               `}
             >
@@ -231,7 +231,7 @@ const GameSticky = ({ game }) => {
               <div 
                 className="
                   absolute top-full left-0 w-full mt-1.5
-                  bg-[#1a1b1e] rounded-lg shadow-lg
+                  bg-surface-dark rounded-lg shadow-lg
                   border border-gray-800/50
                   overflow-hidden
                   z-20
@@ -354,7 +354,7 @@ const GameSticky = ({ game }) => {
       {/* Review Modal */}
       {showReviewModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1b1e] p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-2xl w-full mx-4 relative">
+          <div className="bg-surface-dark p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-2xl w-full mx-4 relative">
             <button
               onClick={() => {
                 setShowReviewModal(false);
@@ -445,7 +445,7 @@ const GameSticky = ({ game }) => {
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1b1e] p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-sm w-full mx-4 relative">
+          <div className="bg-surface-dark p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-sm w-full mx-4 relative">
             <button
               onClick={() => setShowDeleteConfirm(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
