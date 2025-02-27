@@ -15,8 +15,8 @@ const AnticipatedGames = () => {
       title="Most Anticipated Games"
       viewAllLink="/discover"
       games={anticipatedGames}
-      maxGames={12}
-      slidesToShow={6}
+      maxGames={10}
+      slidesToShow={5}
     />
   );
 };
