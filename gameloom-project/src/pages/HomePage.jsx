@@ -37,10 +37,12 @@ const HomePage = () => {
   return (
     <>
       <Hero />
-      <TrendingGames />
-      <AnticipatedGames />
-      <HighlyRatedGames />
-      <LatestGames />
+      <div className="bg-dark py-8">
+        <TrendingGames />
+        <AnticipatedGames />
+        <HighlyRatedGames />
+        <LatestGames />
+      </div>
       <ReviewedGames />
       <JoinCommunity />
     </>
