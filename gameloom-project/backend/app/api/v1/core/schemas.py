@@ -74,6 +74,7 @@ class GameBase(BaseModel):
     first_release_date: Optional[datetime] = None
     
     screenshots: Optional[List[str]] = None
+    artworks: Optional[List[str]] = None
     videos: Optional[List[str]] = None
     similar_games: Optional[List[SimilarGame]] = None
 

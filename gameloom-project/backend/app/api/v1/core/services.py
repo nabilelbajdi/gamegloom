@@ -20,7 +20,7 @@ IGDB_GAME_FIELDS = """
            similar_games.name, similar_games.cover.image_id, similar_games.rating,
            similar_games.total_rating, similar_games.genres.name,
            involved_companies.company.name, involved_companies.developer, game_modes.name, 
-           player_perspectives.name, themes.name;
+           player_perspectives.name, themes.name, artworks.image_id;
 """
 
 IGDB_SIMILAR_GAME_FIELDS = "fields id, name, cover.image_id, total_rating, rating, genres.name;"
@@ -35,6 +35,7 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
     }
 
     if game_id:
+        # Make sure to explicitly request artworks for individual game fetches
         body = f"{IGDB_GAME_FIELDS} where id = {game_id};"
     else:
         body = query
@@ -73,6 +74,12 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         f"https://images.igdb.com/igdb/image/upload/t_screenshot_big/{s['image_id']}.jpg"
         for s in igdb_data.get('screenshots', [])
     ]
+    
+    # Process artworks
+    artworks = [
+        f"https://images.igdb.com/igdb/image/upload/t_1080p/{a['image_id']}.jpg"
+        for a in igdb_data.get('artworks', [])
+    ]
 
     similar_games = process_similar_games(igdb_data.get('similar_games', []))
 
@@ -91,6 +98,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         platforms=", ".join(p['name'] for p in igdb_data.get('platforms', [])),
         first_release_date=release_date,
         screenshots=screenshots,
+        artworks=artworks,
         videos=[f"https://www.youtube.com/embed/{v['video_id']}" for v in igdb_data.get('videos', [])],
         similar_games=similar_games,
         developers=", ".join(c['company']['name'] for c in igdb_data.get('involved_companies', []) if c.get('developer')),

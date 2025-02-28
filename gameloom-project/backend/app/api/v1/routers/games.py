@@ -15,14 +15,18 @@ async def get_game(igdb_id: int, db: Session = Depends(get_db)):
     """Get game details, first checking database then IGDB"""
     # Try to get from database first
     db_game = services.get_game_by_igdb_id(db, igdb_id)
+
     if db_game:
         return db_game
 
-    # If not in database, fetch from IGDB
     try:
         igdb_data = services.fetch_from_igdb(game_id=igdb_id)
         game_data = services.process_igdb_data(igdb_data)
+        
+        if db_game:
+            return services.update_game(db, db_game.id, game_data)
         return services.create_game(db, game_data)
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
