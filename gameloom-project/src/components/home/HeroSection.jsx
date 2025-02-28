@@ -55,9 +55,9 @@ const HeroSection = () => {
   };
 
   const scrollToContent = () => {
-    const featuredSection = document.querySelector('#trending-games');
-    if (featuredSection) {
-      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    const contentSection = document.querySelector(".bg-dark");
+    if (contentSection) {
+      contentSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -145,11 +145,7 @@ const HeroSection = () => {
 
           {/* Right Side - Game of the Week */}
           <div className="relative hidden md:block">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-primary font-semibold text-sm bg-dark/80 px-3 py-1 rounded-full backdrop-blur-sm border border-primary/20 z-10">
-              Game of the Week
-            </div>
-            
-            <div className="w-full max-w-xs mx-auto mt-3">
+            <div className="w-full max-w-sm mx-auto px-4">
               {gameOfTheWeek ? (
                 <GameCardSimple game={gameOfTheWeek} />
               ) : (
@@ -164,7 +160,7 @@ const HeroSection = () => {
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce">
         <button
           onClick={scrollToContent}
-          className="text-light hover:text-primary hover:bg-dark/50 rounded-full p-1.5 transition-colors"
+          className="text-light hover:text-primary hover:bg-dark/50 rounded-full p-1.5 transition-colors cursor-pointer"
         >
           <ChevronDown className="h-6 w-6" />
         </button>
