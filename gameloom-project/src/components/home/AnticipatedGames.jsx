@@ -15,7 +15,7 @@ const AnticipatedGames = () => {
       title="Most Anticipated Games"
       viewAllLink="/discover"
       games={anticipatedGames}
-      maxGames={10}
+      maxGames={20}
       slidesToShow={5}
     />
   );

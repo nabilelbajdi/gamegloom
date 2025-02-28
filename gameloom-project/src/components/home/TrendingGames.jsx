@@ -15,7 +15,7 @@ const TrendingGames = () => {
       title="Trending Games"
       viewAllLink="/discover"
       games={trendingGames}
-      maxGames={10}
+      maxGames={20}
       slidesToShow={5}
     />
   );

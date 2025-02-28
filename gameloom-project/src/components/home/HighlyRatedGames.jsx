@@ -15,7 +15,7 @@ const HighlyRatedGames = () => {
       title="Highly Rated Games"
       viewAllLink="/discover"
       games={highlyRatedGames}
-      maxGames={10}
+      maxGames={20}
       slidesToShow={5}
     />
   );
