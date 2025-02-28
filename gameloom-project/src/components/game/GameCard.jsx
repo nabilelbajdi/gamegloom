@@ -19,8 +19,10 @@ const GameCard = ({ game }) => {
   };
   
   const handleStatusClick = async (e, status = null) => {
-    e.preventDefault(); 
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault(); 
+      e.stopPropagation();
+    }
 
     if (!user) return;
     
@@ -50,7 +52,7 @@ const GameCard = ({ game }) => {
     switch(gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-success';
+      case 'played': return 'fill-gray-300';
       default: return 'fill-black/70';
     }
   };
@@ -61,7 +63,7 @@ const GameCard = ({ game }) => {
     switch(gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-success';
+      case 'played': return 'fill-gray-300';
       default: return 'fill-primary/60';
     }
   };
@@ -154,7 +156,7 @@ const GameCard = ({ game }) => {
                       }
                       ${status === 'want_to_play' ? 'text-primary' : 
                         status === 'playing' ? 'text-secondary' : 
-                        status === 'played' ? 'text-success' : 'text-white'}
+                        status === 'played' ? 'text-white' : 'text-white'}
                     `}
                   >
                     {getStatusIcon(status)}
@@ -206,7 +208,7 @@ const GameCard = ({ game }) => {
             <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-secondary transition-colors cursor-pointer">
               <Play className="h-3 w-3" />
             </button>
-            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-success transition-colors cursor-pointer">
+            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-white transition-colors cursor-pointer">
               <Check className="h-3 w-3" />
             </button>
           </div>

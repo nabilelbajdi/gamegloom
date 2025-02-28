@@ -189,8 +189,10 @@ const GameSticky = ({ game }) => {
   };
   
   const handleRibbonStatusClick = async (e, status = null) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     if (!user) return;
     
@@ -241,7 +243,7 @@ const GameSticky = ({ game }) => {
     switch(gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-success';
+      case 'played': return 'fill-gray-300';
       default: return 'fill-black/70';
     }
   };
@@ -252,7 +254,7 @@ const GameSticky = ({ game }) => {
     switch(gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-success';
+      case 'played': return 'fill-gray-300';
       default: return 'fill-primary/60';
     }
   };
@@ -336,7 +338,7 @@ const GameSticky = ({ game }) => {
                       }
                       ${status === 'want_to_play' ? 'text-primary' : 
                         status === 'playing' ? 'text-secondary' : 
-                        status === 'played' ? 'text-success' : 'text-white'}
+                        status === 'played' ? 'text-white' : 'text-white'}
                     `}
                   >
                     {getStatusIcon(status)}
@@ -395,7 +397,7 @@ const GameSticky = ({ game }) => {
                 {["want_to_play", "playing", "played"].map((status) => (
                   <button
                     key={status}
-                    onClick={() => handleRibbonStatusClick(null, status)}
+                    onClick={(e) => handleRibbonStatusClick(e, status)}
                     className={`
                       w-full flex items-center justify-between
                       px-3.5 py-2 text-sm font-semibold
@@ -413,7 +415,7 @@ const GameSticky = ({ game }) => {
                 
                 {gameStatus && (
                   <button
-                    onClick={() => handleRibbonStatusClick(null, gameStatus)}
+                    onClick={(e) => handleRibbonStatusClick(e, gameStatus)}
                     className="
                       w-full flex items-center gap-2 px-3.5 py-2
                       text-sm font-bold text-red-700
