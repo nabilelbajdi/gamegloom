@@ -188,7 +188,21 @@ const GameCard = ({ game }) => {
           {game.name}
         </h3>
         <p className="text-xs text-muted truncate">
-          {game.genres || "Unknown Genre"}
+          {game.genres ? 
+            (() => {
+              let genreArray = Array.isArray(game.genres) 
+                ? game.genres 
+                : game.genres.split(',');
+              
+              genreArray = genreArray.map(genre => {
+                const trimmed = genre.trim();
+                return trimmed === "Role-playing (RPG)" ? "RPG" : trimmed;
+              });
+              
+              return genreArray.slice(0, 3).join(', ');
+            })() 
+            : "Unknown Genre"
+          }
         </p>
 
         {/* Rating & Actions */}
@@ -198,19 +212,6 @@ const GameCard = ({ game }) => {
             <span className="text-xs text-muted">
               {game.rating !== "N/A" ? game.rating : "N/A"}
             </span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
-            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-primary transition-colors cursor-pointer">
-              <Heart className="h-3 w-3" />
-            </button>
-            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-secondary transition-colors cursor-pointer">
-              <Play className="h-3 w-3" />
-            </button>
-            <button className="rounded-full p-1.5 text-muted hover:bg-surface hover:text-white transition-colors cursor-pointer">
-              <Check className="h-3 w-3" />
-            </button>
           </div>
         </div>
       </div>
