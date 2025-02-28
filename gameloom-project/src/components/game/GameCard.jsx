@@ -58,13 +58,13 @@ const GameCard = ({ game }) => {
   };
   
   const getHoverColor = () => {
-    if (!gameStatus) return 'fill-primary/60';
+    if (!gameStatus) return 'fill-white/20';
     
     switch(gameStatus) {
-      case 'want_to_play': return 'fill-primary';
-      case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-gray-300';
-      default: return 'fill-primary/60';
+      case 'want_to_play': return 'fill-primary/30';
+      case 'playing': return 'fill-secondary/30';
+      case 'played': return 'fill-gray-300/30';
+      default: return 'fill-white/20';
     }
   };
   
@@ -112,7 +112,7 @@ const GameCard = ({ game }) => {
                 />
                 {/* Hover Effect */}
                 <polygon 
-                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100` : getHoverColor()} transition-all duration-300`} 
+                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
                   points="30 0 0 0 0 44 15 37 30 44"
                 />
                 {/* Shadow */}

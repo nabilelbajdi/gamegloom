@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Check, Star, Eye, Trash2 } from "lucide-react";
+import { Plus, Check, Star, Eye, Trash2, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
@@ -57,13 +57,13 @@ const GameCardSimple = ({ game }) => {
   };
   
   const getHoverColor = () => {
-    if (!gameStatus) return 'fill-primary/60';
+    if (!gameStatus) return 'fill-white/20';
     
     switch(gameStatus) {
-      case 'want_to_play': return 'fill-primary';
-      case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-gray-300';
-      default: return 'fill-primary/60';
+      case 'want_to_play': return 'fill-primary/30';
+      case 'playing': return 'fill-secondary/30';
+      case 'played': return 'fill-gray-300/30';
+      default: return 'fill-white/20';
     }
   };
   
@@ -103,7 +103,7 @@ const GameCardSimple = ({ game }) => {
               role="button"
               tabIndex="0"
             >
-              <svg width="36px" height="54px" viewBox="0 0 36 54" xmlns="http://www.w3.org/2000/svg" role="presentation">
+              <svg width="42px" height="63px" viewBox="0 0 36 54" xmlns="http://www.w3.org/2000/svg" role="presentation">
                 {/* Ribbon Background */}
                 <polygon 
                   className={`${getRibbonColor()} transition-colors duration-300`} 
@@ -111,7 +111,7 @@ const GameCardSimple = ({ game }) => {
                 />
                 {/* Hover Effect */}
                 <polygon 
-                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100` : getHoverColor()} transition-all duration-300`} 
+                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
                   points="36 0 0 0 0 50 18 42 36 50"
                 />
                 {/* Shadow */}
@@ -124,13 +124,13 @@ const GameCardSimple = ({ game }) => {
               {/* Icon */}
               <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: "8px" }}>
                 {(() => {
-                  if (!gameStatus) return <Plus className="h-6 w-6" />;
+                  if (!gameStatus) return <Plus className="h-7 w-7" />;
                   
                   switch(gameStatus) {
-                    case 'want_to_play': return <Check className="h-6 w-6 stroke-white" />;
-                    case 'playing': return <span className="text-xl">▶</span>;
-                    case 'played': return <span className="text-xl">🏆</span>;
-                    default: return <Plus className="h-6 w-6" />;
+                    case 'want_to_play': return <Check className="h-7 w-7 stroke-white" />;
+                    case 'playing': return <span className="text-2xl">▶</span>;
+                    case 'played': return <span className="text-2xl">🏆</span>;
+                    default: return <Plus className="h-7 w-7" />;
                   }
                 })()}
               </div>
@@ -181,9 +181,9 @@ const GameCardSimple = ({ game }) => {
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {/* View Game Button */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="px-3 py-1.5 bg-primary/90 rounded-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-              <Eye className="h-3.5 w-3.5 text-dark" />
-              <span className="text-xs font-medium text-dark">View Game</span>
+            <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              <span className="text-xs font-semibold text-white">View Game</span>
+              <ExternalLink className="h-3 w-3 text-white stroke-3" />
             </div>
           </div>
           
