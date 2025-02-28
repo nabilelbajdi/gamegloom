@@ -31,6 +31,7 @@ class Game(Base):
     first_release_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     
     screenshots: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    artworks: Mapped[list | None] = mapped_column(JSON, nullable=True)
     videos: Mapped[list | None] = mapped_column(JSON, nullable=True)
     similar_games: Mapped[list | None] = mapped_column(
         JSON, nullable=True, comment="List of similar games with details (id, name, cover_image, rating, genres)"
