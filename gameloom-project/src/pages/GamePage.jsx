@@ -24,17 +24,38 @@ const GamePage = () => {
   const game = Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId));
   if (!game) return <div className="flex-center h-screen">Loading...</div>;
 
-  const backgroundImage = game.screenshots?.[0] || game.coverImage || "/public/images/fallback.jpg";
+  // Function to convert screenshot URLs to high resolution (1080p)
+  const getHighResImage = (url) => {
+    if (!url || !url.includes('/t_')) return url;
+    return url.replace(/\/t_[^/]+\//, '/t_1080p/');
+  };
+
+  // OPTION 1: Use the first screenshot available
+  // const backgroundImage = game.screenshots?.length > 0 
+  //   ? getHighResImage(game.screenshots[0])
+  //   : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg");
+
+  // OPTION 2: Use a random screenshot
+  // const backgroundImage = game.screenshots?.length > 0 
+  //   ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
+  //   : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg");
+
+  // OPTION 3: Use the first artwork available
+  const backgroundImage = game.artworks?.length > 0
+    ? getHighResImage(game.artworks[0])
+    : (game.screenshots?.length > 0
+        ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
+        : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
 
   return (
     <div className="relative w-full">
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <div 
-          className="absolute inset-0 bg-cover bg-center brightness-[0.6] blur-xs"
+          className="absolute inset-0 bg-cover bg-center blur-xs brightness-[0.85]"
           style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none" }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/30"></div>
       </div>
 
       {/* Content */}
@@ -51,7 +72,7 @@ const GamePage = () => {
           <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
           <SimilarGames games={game.similarGames} />
-          <GameMedia screenshots={game.screenshots} videos={game.videos} />
+          <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />
         </div>
       </div>
     </div>

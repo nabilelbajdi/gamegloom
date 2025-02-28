@@ -1,13 +1,13 @@
 // src/components/GamePage/GameMedia.jsx
 import React from "react";
 
-const GameMedia = React.memo(({ screenshots, videos }) => {
+const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
   return (
     <div className="mt-8">
       <h2 className="text-2xl font-bold mb-4">Media</h2>
       
       {/* Videos Section */}
-      {videos.length > 0 && (
+      {videos && videos.length > 0 && (
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-2">Videos</h3>
           <div className="flex gap-4 overflow-x-auto">
@@ -28,8 +28,25 @@ const GameMedia = React.memo(({ screenshots, videos }) => {
         </div>
       )}
 
+      {/* Artworks Section */}
+      {artworks && artworks.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-md font-semibold mb-2">Artworks</h3>
+          <div className="flex gap-4 overflow-x-auto">
+            {artworks.map((artwork, index) => (
+              <img
+                key={index}
+                src={artwork}
+                alt={`Artwork ${index + 1}`}
+                className="w-64 h-36 object-cover rounded-lg shadow-md"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Screenshots Section */}
-      {screenshots.length > 0 && (
+      {screenshots && screenshots.length > 0 && (
         <div>
           <h3 className="text-md font-semibold mb-2">Screenshots</h3>
           <div className="flex gap-4 overflow-x-auto">
