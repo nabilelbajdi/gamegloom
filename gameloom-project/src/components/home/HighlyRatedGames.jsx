@@ -15,8 +15,8 @@ const HighlyRatedGames = () => {
       title="Highly Rated Games"
       viewAllLink="/discover"
       games={highlyRatedGames}
-      maxGames={12}
-      slidesToShow={6}
+      maxGames={10}
+      slidesToShow={5}
     />
   );
 };
