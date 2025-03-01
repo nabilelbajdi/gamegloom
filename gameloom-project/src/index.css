@@ -34,6 +34,16 @@
   --card-hover-transform: scale(1.02);
   --button-hover-transform: scale(1.05);
   --transition-speed: 0.3s;
+  
+  /* Animations */
+  --animation-duration-normal: 500ms;
+  --animation-duration-slow: 1000ms;
+  --animation-duration-very-slow: 5000ms;
+  --animation-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --animation-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --animation-linear: linear;
+  --carousel-duration: 5000ms;
 }
 
 @layer base {
@@ -278,4 +288,24 @@
 .slick-slider .slick-dots li.slick-active button:before {
   color: var(--color-light);
   margin: 0 4px;
+}
+
+/* Progress bar animation for hero carousel */
+@keyframes progress {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+.animate-progress {
+  animation-name: progress;
+  animation-timing-function: var(--animation-linear);
+  animation-fill-mode: forwards;
+}
+
+.animate-progress-running {
+  animation-play-state: running;
+}
+
+.animate-progress-paused {
+  animation-play-state: paused;
 }
