@@ -213,9 +213,9 @@ const GameCardSimple = ({ game }) => {
         </div>
         
         {/* Rating Badge */}
-        <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded-md">
-          <Star className="h-4 w-4 text-primary fill-primary" />
-          <span className="text-sm font-medium text-light">
+        <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md">
+          <Star className="h-5 w-5 text-primary fill-primary" />
+          <span className="text-base font-medium text-light">
             {game.rating !== undefined && game.rating !== null && game.rating !== "N/A" 
               ? Math.round(game.rating * 10) / 10 
               : "N/A"}
