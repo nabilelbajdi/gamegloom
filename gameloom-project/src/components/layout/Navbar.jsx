@@ -97,6 +97,13 @@ export default function Navbar() {
   const handleSearchInput = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setIsSearching(false);
+      setSearchResults([]);
+      return;
+    }
+    
     setIsSearching(true);
     debouncedSearch(query);
   };
@@ -157,20 +164,38 @@ export default function Navbar() {
                   <Icon name="chevron-down" className="icon ml-1.5 w-3 h-3 text-gray-600" />
                 </button>
               </div>
-              <input
-                type="text"
-                placeholder="Search GameLoom..."
-                value={searchQuery}
-                onChange={handleSearchInput}
-                className="w-full h-8 px-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
-              />
-              <button type="submit" className="px-3 h-8 hover:bg-gray-100 flex items-center">
-                {isSearching ? (
-                  <div className="w-4 h-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin"></div>
-                ) : (
-                  <Icon name="search" className="icon w-4 h-4 text-gray-700" />
-                )}
-              </button>
+              <div className="relative flex-grow flex items-center">
+                <div className="absolute left-3 flex items-center justify-center h-full">
+                  {isSearching ? (
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin"></div>
+                  ) : (
+                    <Icon name="search" className="icon w-4 h-4 text-gray-500 cursor-default pointer-events-none" />
+                  )}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search game..."
+                  value={searchQuery}
+                  onChange={handleSearchInput}
+                  className="w-full h-8 pl-10 pr-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
+                />
+              </div>
+              {searchQuery && (
+                <button 
+                  type="button" 
+                  className="px-3 h-8 hover:bg-gray-100 flex items-center cursor-pointer"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    setIsSearching(false);
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Search Results Dropdown */}

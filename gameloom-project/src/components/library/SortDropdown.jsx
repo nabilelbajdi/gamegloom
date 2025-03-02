@@ -13,7 +13,7 @@ export const SORT_OPTIONS = {
   ],
   DATE: [
     { value: "release_new", icon: CalendarDays, label: "Newest Releases" },
-    { value: "release_old", icon: (props) => <CalendarDays {...props} className="transform rotate-180" />, label: "Oldest Releases" }
+    { value: "release_old", icon: (props) => <CalendarDays {...props} className="w-4 h-4 transform rotate-180" />, label: "Oldest Releases" }
   ]
 };
 

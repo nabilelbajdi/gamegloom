@@ -61,7 +61,7 @@ const FilterDropdown = ({ activeFilters, onFilterChange }) => {
 
   // Filter category component for dropdown
   const FilterCategory = ({ title, items, category, icon: Icon }) => (
-    <div className="mb-2">
+    <div className="mb-4">
       <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-1 font-medium">
         <Icon className="w-3 h-3" />
         <label>{title}</label>
