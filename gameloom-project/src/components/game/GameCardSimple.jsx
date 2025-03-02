@@ -95,9 +95,9 @@ const GameCardSimple = ({ game }) => {
         
         {/* Status Ribbon */}
         {user && (
-          <div className="absolute top-0 left-0 z-10">
+          <div className="absolute top-0 left-0 z-10 transition-opacity duration-300">
             <div 
-              className="cursor-pointer"
+              className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
               onClick={(e) => handleStatusClick(e)}
               aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
               role="button"

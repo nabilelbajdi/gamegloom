@@ -1,11 +1,10 @@
-// src/components/game/GameCard.jsx
 import { useState, useRef } from "react";
-import { Heart, Play, Check, Plus, Bookmark, Trophy, Trash2 } from "lucide-react";
+import { Plus, Check, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 
-const GameCard = ({ game }) => {
+const GridGameCard = ({ game }) => {
   const { user } = useAuth();
   const { addGame, removeGame, getGameStatus, updateStatus } = useUserGameStore();
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -80,23 +79,22 @@ const GameCard = ({ game }) => {
   return (
     <Link 
       to={`/game/${game.igdb_id}`}
-      className="block group relative overflow-hidden rounded-lg bg-surface transition-all duration-300 hover:bg-surface-hover"
+      className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface transition-all duration-300 hover:shadow-xl"
     >
       {/* Game Cover */}
-      <div 
-        className="aspect-[3/4] overflow-hidden rounded-md relative"
-        ref={coverImageRef}
-        onMouseLeave={handleCoverMouseLeave}
-      >
-        <img
-          src={game.coverImage} 
-          alt={game.name}
+      <div className="h-full">
+        <img 
+          src={game.coverImage || game.cover_image} 
+          alt={game.name} 
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90"
         />
         
+        {/* Hover gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
         {/* Status Ribbon */}
         {user && (
-          <div className="absolute top-0 left-0 z-10">
+          <div className="absolute top-0 left-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div 
               className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
               onClick={(e) => handleStatusClick(e)}
@@ -177,41 +175,29 @@ const GameCard = ({ game }) => {
             )}
           </div>
         )}
-        
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      </div>
 
-      {/* Game Info */}
-      <div className="p-3 bg-surface-dark transition-colors duration-300 group-hover:bg-surface-dark/90">
-        <h3 className="text-sm font-semibold text-heading truncate">
-          {game.name}
-        </h3>
-        <p className="text-xs text-muted truncate">
-          {game.genres ? 
-            (() => {
-              let genreArray = Array.isArray(game.genres) 
-                ? game.genres 
-                : game.genres.split(',');
-              
-              genreArray = genreArray.map(genre => {
-                const trimmed = genre.trim();
-                return trimmed === "Role-playing (RPG)" ? "RPG" : trimmed;
-              });
-              
-              return genreArray.slice(0, 3).join(', ');
-            })() 
-            : "Unknown Genre"
-          }
-        </p>
-
-        {/* Rating & Actions */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-primary text-xs">★</span>
-            <span className="text-xs text-muted">
-              {game.rating !== "N/A" ? game.rating : "N/A"}
+        {/* Game information overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          <h3 className="text-sm font-semibold text-white truncate">{game.name}</h3>
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs text-gray-300">
+              {game.genres ? 
+                (() => {
+                  let genreArray = Array.isArray(game.genres) 
+                    ? game.genres 
+                    : game.genres.split(',');
+                  
+                  return genreArray[0];
+                })() 
+                : "Unknown"
+              }
             </span>
+            {game.rating !== "N/A" && (
+              <div className="flex items-center">
+                <span className="text-primary">★</span>
+                <span className="text-xs text-gray-300 ml-1">{game.rating}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -219,4 +205,4 @@ const GameCard = ({ game }) => {
   );
 };
 
-export default GameCard;
+export default GridGameCard; 
