@@ -91,9 +91,26 @@ async def create_review(
             detail=f"An error occurred while creating the review: {str(e)}"
         )
 
+@router.get("/recent", response_model=List[schemas.Review])
+async def get_recent_reviews(
+    limit: int = 4,
+    db: Session = Depends(get_db)
+):
+    """Get the most recent reviews with their associated game and user data."""
+    reviews = (
+        db.query(Review)
+        .join(User)
+        .join(Game)
+        .order_by(Review.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return reviews
+
 @router.get("/game/{igdb_id}", response_model=List[schemas.Review])
 async def get_game_reviews(
     igdb_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get all reviews for a specific game."""
@@ -105,6 +122,16 @@ async def get_game_reviews(
         )
     
     reviews = db.query(Review).join(User).filter(Review.game_id == game.id).all()
+    
+    if current_user:
+        for review in reviews:
+            review.user_liked = db.query(ReviewLike).filter(
+                and_(
+                    ReviewLike.user_id == current_user.id,
+                    ReviewLike.review_id == review.id
+                )
+            ).first() is not None
+    
     return reviews
 
 @router.get("/{review_id}", response_model=schemas.Review)
