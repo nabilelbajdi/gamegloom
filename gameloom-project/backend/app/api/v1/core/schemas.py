@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     """Base schema for user data."""
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
+    avatar: str = Field(default="/images/default-avatar.svg")
     
 class UserCreate(UserBase):
     """Schema for user registration."""
@@ -167,7 +168,9 @@ class Review(ReviewBase):
     comments_count: int
     created_at: datetime
     updated_at: datetime
+    user_liked: bool = False
     user: Optional[UserResponse] = None
+    game: Optional[Game] = None  # Add game relationship
 
     class Config:
         from_attributes = True
