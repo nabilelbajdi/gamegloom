@@ -179,7 +179,13 @@ export const deleteReview = async (reviewId) => {
 };
 
 export const getGameReviews = async (gameId) => {
-  const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`);
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`, {
+    headers
+  });
+  
   if (!response.ok) {
     throw new Error("Failed to fetch reviews");
   }
@@ -294,4 +300,17 @@ export const getReviewComments = async (reviewId) => {
     throw new Error("Failed to fetch comments");
   }
   return await response.json();
+};
+
+export const getRecentReviews = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/reviews/recent`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch recent reviews");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching recent reviews:", error);
+    return [];
+  }
 };
