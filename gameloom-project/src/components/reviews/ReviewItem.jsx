@@ -134,10 +134,21 @@ const ReviewItem = ({ review, gameId }) => {
       {/* Review Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-            <span className="text-xl font-medium text-white">
-              {review.user?.username?.[0]?.toUpperCase() || "?"}
-            </span>
+          <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+            {review.user?.avatar ? (
+              <img 
+                src={review.user.avatar} 
+                alt={`${review.user?.username}'s avatar`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = "/images/default-avatar.svg";
+                }}
+              />
+            ) : (
+              <span className="text-xl font-medium text-white">
+                {review.user?.username?.[0]?.toUpperCase() || "?"}
+              </span>
+            )}
           </div>
           <div>
             <h3 className="font-medium">{review.user?.username || "Anonymous"}</h3>
@@ -330,10 +341,21 @@ const ReviewItem = ({ review, gameId }) => {
             <div key={comment.id} className="group space-y-1 p-3 bg-surface/50 hover:bg-surface-hover rounded-lg transition-colors duration-200">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
-                    <span className="text-xs font-medium text-white">
-                      {comment.user?.username?.[0]?.toUpperCase() || "?"}
-                    </span>
+                  <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                    {comment.user?.avatar ? (
+                      <img 
+                        src={comment.user.avatar} 
+                        alt={`${comment.user?.username}'s avatar`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "/images/default-avatar.svg";
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {comment.user?.username?.[0]?.toUpperCase() || "?"}
+                      </span>
+                    )}
                   </div>
                   <span className="text-sm font-medium">{comment.user?.username}</span>
                   <span className="text-xs text-gray-400">
