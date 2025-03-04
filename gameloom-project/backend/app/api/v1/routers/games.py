@@ -38,7 +38,7 @@ async def get_trending_games(db: Session = Depends(get_db)):
         time_6_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
         time_now = int(datetime.now().timestamp())
         
-        popularity_query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_6_months_ago} & first_release_date <= {time_now} & hypes > 0 & cover != null; sort hypes desc; limit 20;"
+        popularity_query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_6_months_ago} & first_release_date <= {time_now} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
         
         # Fetch and sync the trending games
         await services.sync_games_from_igdb(db, popularity_query)
@@ -57,14 +57,14 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
     """Get anticipated games"""
     # Check database first
     db_games = services.get_anticipated_games(db)
-    if len(db_games) >= 20:
+    if len(db_games) >= 100:
         return db_games
 
     # If no games in database, fetch from IGDB
     current_timestamp = int(datetime.now().timestamp())
     one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
     
-    query = f"{services.IGDB_GAME_FIELDS} where first_release_date > {current_timestamp} & first_release_date < {one_year_future} & hypes > 0 & cover != null; sort hypes desc; limit 20;"
+    query = f"{services.IGDB_GAME_FIELDS} where first_release_date > {current_timestamp} & first_release_date < {one_year_future} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
     
     try:
         await services.sync_games_from_igdb(db, query)

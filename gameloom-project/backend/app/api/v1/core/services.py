@@ -178,7 +178,7 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> game.Gam
     db.refresh(db_game)
     return db_game
 
-def get_trending_games(db: Session, limit: int = 20) -> list[game.Game]:
+def get_trending_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get trending games from the database"""
     current_time = datetime.utcnow()
     six_months_ago = current_time - timedelta(days=180)
@@ -198,7 +198,7 @@ def get_trending_games(db: Session, limit: int = 20) -> list[game.Game]:
         .limit(limit)
     ))
 
-def get_anticipated_games(db: Session, limit: int = 20) -> list[game.Game]:
+def get_anticipated_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get anticipated games from the database"""
     current_time = datetime.utcnow()
     one_year_future = current_time + timedelta(days=365)
