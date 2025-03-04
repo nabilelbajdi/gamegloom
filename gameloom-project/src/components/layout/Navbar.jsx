@@ -10,7 +10,19 @@ import { LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: "My Library", path: "/library" },
-  { name: "Discover", path: "/discover" },
+  { 
+    name: "Discover", 
+    path: "/discover",
+    dropdown: [
+      { name: "Trending Now", path: "/discover/trending" },
+      { name: "Anticipated Games", path: "/discover/anticipated" },
+      { name: "Latest Releases", path: "/discover/latest" },
+      { name: "Popular Games", path: "/discover/top-100" },
+      { name: "Browse by Genre", path: "/discover/genres" },
+      { name: "Community Lists", path: "/discover/community-lists" },
+      { name: "Recommendations", path: "/discover/recommendations" },
+    ]
+  },
   { name: "Community", path: "/community" },
   { name: "Articles", path: "/articles" }
 ];
@@ -145,13 +157,39 @@ export default function Navbar() {
 
         <div className="hidden md:flex pl-10 space-x-2">
           {NAV_ITEMS.map((item, index) => (
-            <Link 
-              key={index} 
-              to={item.path} 
-              className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
-            >
-              {item.name}
-            </Link>
+            item.dropdown ? (
+              <div key={index} className="relative group">
+                <Link 
+                  to={item.path} 
+                  className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center"
+                >
+                  {item.name}
+                  <Icon name="chevron-down" className="icon ml-1.5 w-3 h-3" />
+                </Link>
+                <div className="absolute left-0 mt-0.5 w-48 rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible z-50">
+                  <div className="py-1.5" role="menu">
+                    {item.dropdown.map((dropdownItem, dropdownIndex) => (
+                      <Link
+                        key={dropdownIndex}
+                        to={dropdownItem.path}
+                        className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
+                        role="menuitem"
+                      >
+                        {dropdownItem.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link 
+                key={index} 
+                to={item.path} 
+                className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
+              >
+                {item.name}
+              </Link>
+            )
           ))}
         </div>
 
@@ -287,9 +325,38 @@ export default function Navbar() {
       <div className={`md:hidden bg-navbar-bg border-t border-navbar-border transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 hidden"}`}>
         <div className="flex flex-col space-y-4 p-4">
           {NAV_ITEMS.map((item, index) => (
-            <Link key={index} to={item.path} className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
-              {item.name}
-            </Link>
+            item.dropdown ? (
+              <div key={index} className="space-y-1">
+                <Link 
+                  to={item.path} 
+                  className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5 flex items-center justify-between"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span>{item.name}</span>
+                </Link>
+                <div className="ml-4 pl-2 border-l border-gray-700 space-y-1.5">
+                  {item.dropdown.map((dropdownItem, dropdownIndex) => (
+                    <Link
+                      key={dropdownIndex}
+                      to={dropdownItem.path}
+                      className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5 block text-gray-300 hover:text-white"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {dropdownItem.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link 
+                key={index} 
+                to={item.path} 
+                className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" 
+                onClick={() => setIsOpen(false)}
+              >
+                {item.name}
+              </Link>
+            )
           ))}
           {user ? (
             <>

@@ -12,8 +12,8 @@ const AnticipatedGames = () => {
 
   return (
     <GameCarousel
-      title="Most Anticipated Games"
-      viewAllLink="/discover"
+      title="Anticipated Games"
+      viewAllLink="/discover/anticipated"
       games={anticipatedGames}
       maxGames={20}
       slidesToShow={5}

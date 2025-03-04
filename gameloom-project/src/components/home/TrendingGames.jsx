@@ -13,7 +13,7 @@ const TrendingGames = () => {
   return (
     <GameCarousel
       title="Trending Games"
-      viewAllLink="/discover"
+      viewAllLink="/discover/trending"
       games={trendingGames}
       maxGames={20}
       slidesToShow={5}

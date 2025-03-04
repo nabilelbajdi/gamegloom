@@ -15,6 +15,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ArticlesPage from "./pages/ArticlesPage";
 import SignUpPage from "./pages/SignUpPage";
 import GamePage from "./pages/GamePage";
+import TrendingGamesPage from "./pages/discover/TrendingGamesPage";
+import AnticipatedGamesPage from "./pages/discover/AnticipatedGamesPage";
 
 const LoadingBarContext = createContext(null);
 
@@ -36,6 +38,8 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/library" element={<MyLibraryPage />} />
         <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/discover/trending" element={<TrendingGamesPage />} />
+        <Route path="/discover/anticipated" element={<AnticipatedGamesPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/login" element={<LoginPage />} />
