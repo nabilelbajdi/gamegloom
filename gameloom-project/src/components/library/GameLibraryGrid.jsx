@@ -110,7 +110,7 @@ const GameLibraryGrid = ({
           )}
           <button 
             onClick={resetFilters}
-            className="inline-flex items-center gap-1.5 hover:border-primary hover:text-primary px-2.5 py-1 rounded-full text-xs font-semibold text-gray-400 hover:text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 hover:border-primary hover:text-primary px-2.5 py-1 rounded-full text-xs font-semibold text-gray-400 transition-colors"
           >
             Clear All
           </button>
