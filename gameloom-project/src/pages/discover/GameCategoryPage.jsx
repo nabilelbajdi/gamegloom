@@ -53,16 +53,22 @@ const GameCategoryPage = ({
 
   const games = getGamesForCategory();
   
+  // Preserve default ordering
+  const gamesWithIndex = games.map((game, index) => ({
+    ...game,
+    originalIndex: index
+  }));
+  
   // Extract all unique genres and themes from games
   const extractGenresAndThemes = () => {
-    const allGenres = [...new Set(games
+    const allGenres = [...new Set(gamesWithIndex
       .filter(game => game.genres)
       .flatMap(game => typeof game.genres === 'string' 
         ? game.genres.split(',').map(g => g.trim())
         : game.genres)
     )].sort();
     
-    const allThemes = [...new Set(games
+    const allThemes = [...new Set(gamesWithIndex
       .filter(game => game.themes)
       .flatMap(game => typeof game.themes === 'string' 
         ? game.themes.split(',').map(t => t.trim())
@@ -76,7 +82,7 @@ const GameCategoryPage = ({
 
   // Filter games based on search query, genres, themes, and minimum rating
   const filterGames = () => {
-    return games.filter(game => {
+    return gamesWithIndex.filter(game => {
       // Search filter
       const matchesSearch = !searchQuery || 
         game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -169,78 +175,92 @@ const GameCategoryPage = ({
   const sortedGames = sortGames(filteredGames);
 
   return (
-    <div className="min-h-screen bg-dark">
+    <div className="min-h-screen bg-dark flex flex-col">
       {/* Header Section */}
       <CategoryHeader 
         title={title} 
         description={description}
       />
       
-      <div className="container mx-auto px-4 py-6">
-        {/* Controls Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          {/* Games Count */}
-          <div className="text-light/70 text-sm order-1 sm:order-none">
-            <span className="font-medium text-light">{sortedGames.length}</span> Games
+      {/* Main Content Area */}
+      <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
+        <div className="container mx-auto px-4 -mt-8">
+          {/* Card Container */}
+          <div className="bg-surface-dark/90 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800/30 overflow-hidden">
+            <div className="p-4 border-b border-gray-800/30">
+              {/* Controls Section */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                {/* Games Count and Search Input */}
+                <div className="flex items-center gap-3 order-1 sm:order-none">
+                  <div className="text-light/70 text-sm">
+                    <span className="font-semibold text-light">{sortedGames.length}</span> Games
+                  </div>
+                  
+                  {/* Search Input */}
+                  <SearchInput 
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 order-0 sm:order-none">
+                  {/* Filter Dropdown */}
+                  <FilterDropdown
+                    allGenres={allGenres}
+                    allThemes={allThemes}
+                    activeGenres={genreFilters}
+                    activeThemes={themeFilters}
+                    minRating={minRatingFilter}
+                    onFilterChange={handleFilterChange}
+                  />
+
+                  {/* Sort Dropdown */}
+                  <SortDropdown
+                    sortOption={sortOption}
+                    onSortChange={setSortOption}
+                  />
+
+                  {/* View Toggle */}
+                  <ViewToggle
+                    viewMode={viewMode}
+                    onViewChange={setViewMode}
+                  />
+                </div>
+              </div>
+              
+              {/* Active Filters Display */}
+              <ActiveFilters
+                genreFilters={genreFilters}
+                themeFilters={themeFilters}
+                minRating={minRatingFilter}
+                onRemoveGenre={handleRemoveGenre}
+                onRemoveTheme={handleRemoveTheme}
+                onRemoveRating={handleRemoveRating}
+                onClearAll={handleClearAllFilters}
+              />
+            </div>
+            
+            {/* Games Display */}
+            <div className="p-5">
+              {viewMode === "grid" ? (
+                <GamesGrid
+                  games={sortedGames}
+                  loading={loading}
+                />
+              ) : (
+                <GamesList
+                  games={sortedGames}
+                  loading={loading}
+                />
+              )}
+            </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 order-0 sm:order-none">
-            {/* Search Input */}
-            <SearchInput 
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-
-            {/* Filter Dropdown */}
-            <FilterDropdown
-              allGenres={allGenres}
-              allThemes={allThemes}
-              activeGenres={genreFilters}
-              activeThemes={themeFilters}
-              minRating={minRatingFilter}
-              onFilterChange={handleFilterChange}
-            />
-
-            {/* Sort Dropdown */}
-            <SortDropdown
-              sortOption={sortOption}
-              onSortChange={setSortOption}
-            />
-
-            {/* View Toggle */}
-            <ViewToggle
-              viewMode={viewMode}
-              onViewChange={setViewMode}
-            />
+          
+          <div className="flex justify-center mt-8">
+            <ScrollToTop />
           </div>
         </div>
-        
-        {/* Active Filters Display */}
-        <ActiveFilters
-          genreFilters={genreFilters}
-          themeFilters={themeFilters}
-          minRating={minRatingFilter}
-          onRemoveGenre={handleRemoveGenre}
-          onRemoveTheme={handleRemoveTheme}
-          onRemoveRating={handleRemoveRating}
-          onClearAll={handleClearAllFilters}
-        />
-        
-        {/* Games Display */}
-        {viewMode === "grid" ? (
-          <GamesGrid
-            games={sortedGames}
-            loading={loading}
-          />
-        ) : (
-          <GamesList
-            games={sortedGames}
-            loading={loading}
-          />
-        )}
-        
-        <ScrollToTop />
       </div>
     </div>
   );
