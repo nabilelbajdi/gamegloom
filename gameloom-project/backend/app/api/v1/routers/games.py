@@ -77,10 +77,10 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
     """Get highly rated games"""
     # Check database first
     db_games = services.get_highly_rated_games(db)
-    if len(db_games) >= 20:
+    if len(db_games) >= 100:
         return db_games
 
-    query = f"{services.IGDB_GAME_FIELDS} where total_rating != null & total_rating_count > 500 & total_rating > 85 & cover != null; sort total_rating desc; limit 20;"
+    query = f"{services.IGDB_GAME_FIELDS} where total_rating != null & total_rating_count > 500 & total_rating > 85 & cover != null; sort total_rating desc; limit 100;"
     
     try:
         await services.sync_games_from_igdb(db, query)
@@ -93,14 +93,14 @@ async def get_latest_games(db: Session = Depends(get_db)):
     """Get latest games"""
     # Check database first
     db_games = services.get_latest_games(db)
-    if len(db_games) >= 20:
+    if len(db_games) >= 100:
         return db_games
 
     # If no games in database, fetch from IGDB
     current_timestamp = int(datetime.now().timestamp())
     one_month_ago = current_timestamp - (30 * 24 * 60 * 60)  # 30 days ago
     
-    query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {one_month_ago} & first_release_date <= {current_timestamp} & first_release_date != null & cover != null; sort first_release_date desc; limit 20;"
+    query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {one_month_ago} & first_release_date <= {current_timestamp} & first_release_date != null & cover != null; sort first_release_date desc; limit 100;"
     
     try:
         await services.sync_games_from_igdb(db, query)

@@ -213,7 +213,7 @@ def get_anticipated_games(db: Session, limit: int = 100) -> list[game.Game]:
         .limit(limit)
     ))
 
-def get_highly_rated_games(db: Session, limit: int = 20) -> list[game.Game]:
+def get_highly_rated_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get highly rated games from the database"""
     return list(db.scalars(
         select(game.Game)
@@ -227,7 +227,7 @@ def get_highly_rated_games(db: Session, limit: int = 20) -> list[game.Game]:
         .limit(limit)
     ))
 
-def get_latest_games(db: Session, limit: int = 20) -> list[game.Game]:
+def get_latest_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get latest released games from the database"""
     current_time = datetime.utcnow()
     one_month_ago = current_time - timedelta(days=30)
