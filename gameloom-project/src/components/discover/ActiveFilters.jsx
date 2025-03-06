@@ -17,7 +17,7 @@ const ActiveFilters = ({
   }
   
   return (
-    <div className="mt-2">
+    <div className="mt-4">
       <div className="flex flex-wrap gap-2 items-center">
         {genreFilters.map(genre => (
           <div key={genre} className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-700/20">
