@@ -45,7 +45,7 @@ const SortDropdown = ({
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${
           isOpen 
             ? "bg-surface/80 text-white" 
             : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
@@ -66,7 +66,7 @@ const SortDropdown = ({
               <button
                 key={option.value}
                 onClick={() => handleSortSelect(option.value)}
-                className={`w-full text-left px-3 py-1.5 rounded text-xs flex items-center cursor-pointer ${
+                className={`w-full text-left px-3 py-1.5 rounded text-[13px] flex items-center cursor-pointer ${
                   sortOption === option.value 
                     ? "bg-surface/80 text-white font-semibold" 
                     : "text-gray-400 hover:bg-surface hover:text-white"

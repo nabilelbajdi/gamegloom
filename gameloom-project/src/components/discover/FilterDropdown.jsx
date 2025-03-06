@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Filter, Check, ChevronDown, Gamepad2, Tags, X, Star } from "lucide-react";
 
 const FilterModal = ({
@@ -19,7 +20,6 @@ const FilterModal = ({
   const [rating, setRating] = useState(minRating);
   const modalRef = useRef(null);
 
-  // Handle escape key press
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === "Escape") {
@@ -29,7 +29,6 @@ const FilterModal = ({
     
     if (isOpen) {
       document.addEventListener("keydown", handleEscKey);
-      // Prevent body from scrolling when modal is open
       document.body.style.overflow = "hidden";
     }
     
@@ -39,7 +38,6 @@ const FilterModal = ({
     };
   }, [isOpen, onClose]);
 
-  // Reset show all states when modal closes
   useEffect(() => {
     if (!isOpen) {
       setShowAllGenres(false);
@@ -47,7 +45,6 @@ const FilterModal = ({
     }
   }, [isOpen]);
 
-  // Sync the rating with the prop when modal opens
   useEffect(() => {
     if (isOpen) {
       setRating(minRating);
@@ -110,11 +107,9 @@ const FilterModal = ({
     setRatingExpanded(!ratingExpanded);
   };
 
-  // Get visible genres - either all or just first 9
   const visibleGenres = showAllGenres ? allGenres : allGenres.slice(0, 9);
   const hasMoreGenres = allGenres.length > 9;
 
-  // Get visible themes - either all or just first 9
   const visibleThemes = showAllThemes ? allThemes : allThemes.slice(0, 9);
   const hasMoreThemes = allThemes.length > 9;
 
@@ -148,7 +143,7 @@ const FilterModal = ({
           </button>
         </div>
         
-        {/* Modal Body - Scrollable */}
+        {/* Modal Body */}
         <div className="flex-1 overflow-y-auto">
           {/* Rating Section */}
           <div className="border-b border-gray-800/50">
@@ -341,36 +336,46 @@ const FilterDropdown = ({
   minRating = 0,
   onFilterChange
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const activeFiltersCount = activeGenres.length + activeThemes.length + (minRating > 0 ? 1 : 0);
+  const [isOpen, setIsOpen] = useState(false);
+  const hasActiveFilters = activeGenres.length > 0 || activeThemes.length > 0 || minRating > 0;
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
 
   return (
-    <div className="relative">
-      <button 
-        onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50 transition-all"
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`
+          inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold
+          transition-colors cursor-pointer
+          ${hasActiveFilters 
+            ? 'bg-primary/10 text-primary hover:bg-primary/20' 
+            : 'bg-surface hover:bg-surface-hover text-light/70 hover:text-light'}
+        `}
       >
         <Filter className="w-3.5 h-3.5" />
         <span>Filter</span>
-        {activeFiltersCount > 0 && (
-          <span className="flex items-center justify-center bg-primary/20 text-primary w-4 h-4 rounded-full text-[10px] ml-1">
-            {activeFiltersCount}
-          </span>
+        {hasActiveFilters && (
+          <div className="w-2 h-2 rounded-full bg-primary"></div>
         )}
       </button>
 
-      <FilterModal
-        allGenres={allGenres}
-        allThemes={allThemes}
-        activeGenres={activeGenres}
-        activeThemes={activeThemes}
-        minRating={minRating}
-        onFilterChange={onFilterChange}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </div>
+      {isOpen && createPortal(
+        <FilterModal
+          allGenres={allGenres}
+          allThemes={allThemes}
+          activeGenres={activeGenres}
+          activeThemes={activeThemes}
+          minRating={minRating}
+          onFilterChange={onFilterChange}
+          isOpen={isOpen}
+          onClose={handleClose}
+        />,
+        document.body
+      )}
+    </>
   );
 };
 
