@@ -13,7 +13,7 @@ const LatestGames = () => {
   return (
     <GameCarousel
       title="Latest Games"
-      viewAllLink="/discover"
+      viewAllLink="/discover/latest-releases"
       games={latestGames}
       maxGames={20}
       slidesToShow={5}

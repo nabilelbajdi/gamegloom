@@ -13,7 +13,7 @@ const HighlyRatedGames = () => {
   return (
     <GameCarousel
       title="Highly Rated Games"
-      viewAllLink="/discover"
+      viewAllLink="/discover/highly-rated"
       games={highlyRatedGames}
       maxGames={20}
       slidesToShow={5}

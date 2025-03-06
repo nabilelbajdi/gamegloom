@@ -16,8 +16,8 @@ const NAV_ITEMS = [
     dropdown: [
       { name: "Trending Now", path: "/discover/trending" },
       { name: "Anticipated Games", path: "/discover/anticipated" },
-      { name: "Latest Releases", path: "/discover/latest" },
-      { name: "Popular Games", path: "/discover/top-100" },
+      { name: "Highly Rated Games", path: "/discover/highly-rated" },
+      { name: "Latest Releases", path: "/discover/latest-releases" },
       { name: "Browse by Genre", path: "/discover/genres" },
       { name: "Community Lists", path: "/discover/community-lists" },
       { name: "Recommendations", path: "/discover/recommendations" },
