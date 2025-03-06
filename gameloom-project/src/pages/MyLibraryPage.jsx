@@ -8,6 +8,7 @@ import LibraryControls from "../components/library/LibraryControls";
 import GameLibraryGrid from "../components/library/GameLibraryGrid";
 import LoadingState from "../components/library/LoadingState";
 import { EmptyLibrary } from "../components/library/EmptyState";
+import ScrollToTop from "../components/discover/ScrollToTop";
 
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
@@ -111,6 +112,9 @@ const MyLibraryPage = () => {
           />
         )}
       </div>
+
+      {/* Scroll to Top Button */}
+      <ScrollToTop />
     </div>
   );
 };

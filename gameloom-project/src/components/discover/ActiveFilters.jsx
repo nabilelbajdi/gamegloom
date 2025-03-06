@@ -17,10 +17,10 @@ const ActiveFilters = ({
   }
   
   return (
-    <div className="mb-4">
+    <div className="mt-2">
       <div className="flex flex-wrap gap-2 items-center">
         {genreFilters.map(genre => (
-          <div key={genre} className="inline-flex items-center gap-1.5 bg-surface-dark px-2.5 py-1 rounded-full text-xs font-medium">
+          <div key={genre} className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-700/20">
             <Tags className="w-3 h-3 text-primary" />
             <span className="font-semibold text-gray-300">{genre}</span>
             <X 
@@ -31,7 +31,7 @@ const ActiveFilters = ({
         ))}
         
         {themeFilters.map(theme => (
-          <div key={theme} className="inline-flex items-center gap-1.5 bg-surface-dark px-2.5 py-1 rounded-full text-xs font-medium">
+          <div key={theme} className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-700/20">
             <Filter className="w-3 h-3 text-primary" />
             <span className="font-semibold text-gray-300">{theme}</span>
             <X 
@@ -42,7 +42,7 @@ const ActiveFilters = ({
         ))}
         
         {minRating > 0 && (
-          <div className="inline-flex items-center gap-1.5 bg-surface-dark px-2.5 py-1 rounded-full text-xs font-medium">
+          <div className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-700/20">
             <Star className="w-3 h-3 text-primary" fill="currentColor" />
             <span className="font-semibold text-gray-300">{minRating.toFixed(1)}+</span>
             <X 
@@ -55,7 +55,7 @@ const ActiveFilters = ({
         {hasActiveFilters && (
           <button 
             onClick={onClearAll}
-            className="inline-flex items-center gap-1.5 hover:border-primary hover:text-primary px-2.5 py-1 rounded-full text-xs font-semibold text-gray-400 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 border border-gray-700/20 hover:border-primary hover:text-primary px-2.5 py-1 rounded-full text-xs font-semibold text-gray-400 transition-colors cursor-pointer"
           >
             Clear all
           </button>
