@@ -338,6 +338,7 @@ const FilterDropdown = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const hasActiveFilters = activeGenres.length > 0 || activeThemes.length > 0 || minRating > 0;
+  const activeFiltersCount = activeGenres.length + activeThemes.length + (minRating > 0 ? 1 : 0);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -358,7 +359,9 @@ const FilterDropdown = ({
         <Filter className="w-3.5 h-3.5" />
         <span>Filter</span>
         {hasActiveFilters && (
-          <div className="w-2 h-2 rounded-full bg-primary"></div>
+          <span className="flex items-center justify-center bg-primary/20 text-primary w-4 h-4 rounded-full text-[10px] ml-1">
+            {activeFiltersCount}
+          </span>
         )}
       </button>
 
