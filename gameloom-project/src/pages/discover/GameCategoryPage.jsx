@@ -30,6 +30,9 @@ const GameCategoryPage = ({
   const [sortOption, setSortOption] = useState("default");
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
+  const [platformFilters, setPlatformFilters] = useState([]);
+  const [gameModeFilters, setGameModeFilters] = useState([]);
+  const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
 
   const getGamesForCategory = () => {
@@ -60,8 +63,8 @@ const GameCategoryPage = ({
     originalIndex: index
   }));
   
-  // Extract all unique genres and themes from games
-  const extractGenresAndThemes = () => {
+  // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
+  const extractFilterOptions = () => {
     const allGenres = [...new Set(gamesWithIndex
       .filter(game => game.genres)
       .flatMap(game => typeof game.genres === 'string' 
@@ -76,12 +79,39 @@ const GameCategoryPage = ({
         : game.themes)
     )].sort();
 
-    return { allGenres, allThemes };
+    const allPlatforms = [...new Set(gamesWithIndex
+      .filter(game => game.platforms)
+      .flatMap(game => typeof game.platforms === 'string' 
+        ? game.platforms.split(',').map(p => p.trim())
+          .map(p => p.replace("PC (Microsoft Windows)", "PC")
+                    .replace("PlayStation 5", "PS5")
+                    .replace("PlayStation 4", "PS4")
+                    .replace("Nintendo Switch", "Switch")
+                    .replace("PlayStation 3", "PS3")
+                    .replace("PlayStation 2", "PS2"))
+        : game.platforms)
+    )].sort();
+
+    const allGameModes = [...new Set(gamesWithIndex
+      .filter(game => game.gameModes)
+      .flatMap(game => typeof game.gameModes === 'string' 
+        ? game.gameModes.split(',').map(m => m.trim())
+        : game.gameModes)
+    )].sort();
+
+    const allPlayerPerspectives = [...new Set(gamesWithIndex
+      .filter(game => game.playerPerspectives)
+      .flatMap(game => typeof game.playerPerspectives === 'string' 
+        ? game.playerPerspectives.split(',').map(p => p.trim())
+        : game.playerPerspectives)
+    )].sort();
+
+    return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives };
   };
 
-  const { allGenres, allThemes } = extractGenresAndThemes();
+  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives } = extractFilterOptions();
 
-  // Filter games based on search query, genres, themes, and minimum rating
+  // Filter games based on search query, genres, themes, platforms, game modes, player perspectives, and minimum rating
   const filterGames = () => {
     return gamesWithIndex.filter(game => {
       // Search filter
@@ -111,12 +141,46 @@ const GameCategoryPage = ({
           return false;
         }));
       
+      // Platform filter
+      const matchesPlatform = platformFilters.length === 0 || 
+        (game.platforms && platformFilters.some(platform => {
+          if (typeof game.platforms === 'string') {
+            return game.platforms.toLowerCase().includes(platform.toLowerCase());
+          } else if (Array.isArray(game.platforms)) {
+            return game.platforms.some(p => p.toLowerCase().includes(platform.toLowerCase()));
+          }
+          return false;
+        }));
+      
+      // Game Mode filter
+      const matchesGameMode = gameModeFilters.length === 0 || 
+        (game.gameModes && gameModeFilters.some(mode => {
+          if (typeof game.gameModes === 'string') {
+            return game.gameModes.toLowerCase().includes(mode.toLowerCase());
+          } else if (Array.isArray(game.gameModes)) {
+            return game.gameModes.some(m => m.toLowerCase().includes(mode.toLowerCase()));
+          }
+          return false;
+        }));
+      
+      // Player Perspective filter
+      const matchesPerspective = perspectiveFilters.length === 0 || 
+        (game.playerPerspectives && perspectiveFilters.some(perspective => {
+          if (typeof game.playerPerspectives === 'string') {
+            return game.playerPerspectives.toLowerCase().includes(perspective.toLowerCase());
+          } else if (Array.isArray(game.playerPerspectives)) {
+            return game.playerPerspectives.some(p => p.toLowerCase().includes(perspective.toLowerCase()));
+          }
+          return false;
+        }));
+      
       // Rating filter
       const gameRating = typeof game.rating === 'string' ? parseFloat(game.rating) : game.rating;
       const matchesRating = minRatingFilter === 0 || 
         (gameRating !== undefined && gameRating !== null && gameRating !== "N/A" && gameRating >= minRatingFilter);
       
-      return matchesSearch && matchesGenre && matchesTheme && matchesRating;
+      return matchesSearch && matchesGenre && matchesTheme && matchesPlatform && 
+             matchesGameMode && matchesPerspective && matchesRating;
     });
   };
 
@@ -150,6 +214,9 @@ const GameCategoryPage = ({
   const handleFilterChange = (filters) => {
     setGenreFilters(filters.genres);
     setThemeFilters(filters.themes);
+    setPlatformFilters(filters.platforms || []);
+    setGameModeFilters(filters.gameModes || []);
+    setPerspectiveFilters(filters.playerPerspectives || []);
     setMinRatingFilter(filters.minRating || 0);
   };
 
@@ -161,6 +228,18 @@ const GameCategoryPage = ({
     setThemeFilters(prev => prev.filter(t => t !== theme));
   };
 
+  const handleRemovePlatform = (platform) => {
+    setPlatformFilters(prev => prev.filter(p => p !== platform));
+  };
+
+  const handleRemoveGameMode = (mode) => {
+    setGameModeFilters(prev => prev.filter(m => m !== mode));
+  };
+
+  const handleRemovePerspective = (perspective) => {
+    setPerspectiveFilters(prev => prev.filter(p => p !== perspective));
+  };
+
   const handleRemoveRating = () => {
     setMinRatingFilter(0);
   };
@@ -168,6 +247,9 @@ const GameCategoryPage = ({
   const handleClearAllFilters = () => {
     setGenreFilters([]);
     setThemeFilters([]);
+    setPlatformFilters([]);
+    setGameModeFilters([]);
+    setPerspectiveFilters([]);
     setMinRatingFilter(0);
   };
 
@@ -186,7 +268,7 @@ const GameCategoryPage = ({
       {/* Main Content Area */}
       <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
         <div className="container mx-auto px-4 -mt-8">
-          {/* Two column layout */}
+          {/* Two-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Column - Games */}
             <div className="flex-1">
@@ -215,8 +297,14 @@ const GameCategoryPage = ({
                         <FilterDropdown
                           allGenres={allGenres}
                           allThemes={allThemes}
+                          allPlatforms={allPlatforms}
+                          allGameModes={allGameModes}
+                          allPlayerPerspectives={allPlayerPerspectives}
                           activeGenres={genreFilters}
                           activeThemes={themeFilters}
+                          activePlatforms={platformFilters}
+                          activeGameModes={gameModeFilters}
+                          activePlayerPerspectives={perspectiveFilters}
                           minRating={minRatingFilter}
                           onFilterChange={handleFilterChange}
                         />
@@ -240,9 +328,15 @@ const GameCategoryPage = ({
                   <ActiveFilters
                     genreFilters={genreFilters}
                     themeFilters={themeFilters}
+                    platformFilters={platformFilters}
+                    gameModeFilters={gameModeFilters}
+                    perspectiveFilters={perspectiveFilters}
                     minRating={minRatingFilter}
                     onRemoveGenre={handleRemoveGenre}
                     onRemoveTheme={handleRemoveTheme}
+                    onRemovePlatform={handleRemovePlatform}
+                    onRemoveGameMode={handleRemoveGameMode}
+                    onRemovePerspective={handleRemovePerspective}
                     onRemoveRating={handleRemoveRating}
                     onClearAll={handleClearAllFilters}
                   />
@@ -270,8 +364,14 @@ const GameCategoryPage = ({
               <FilterPanel
                 allGenres={allGenres}
                 allThemes={allThemes}
+                allPlatforms={allPlatforms}
+                allGameModes={allGameModes}
+                allPlayerPerspectives={allPlayerPerspectives}
                 activeGenres={genreFilters}
                 activeThemes={themeFilters}
+                activePlatforms={platformFilters}
+                activeGameModes={gameModeFilters}
+                activePlayerPerspectives={perspectiveFilters}
                 minRating={minRatingFilter}
                 onFilterChange={handleFilterChange}
               />
