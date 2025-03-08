@@ -126,6 +126,10 @@ class GameBasicInfo(BaseModel):
     name: str
     coverImage: str | None = None
     genres: str | None = None
+    themes: str | None = None
+    platforms: str | None = None
+    game_modes: str | None = None
+    player_perspectives: str | None = None
     rating: str | None = None
     first_release_date: datetime | None = None
     added_at: datetime
