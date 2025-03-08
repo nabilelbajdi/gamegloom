@@ -1,29 +1,23 @@
 // src/components/GamePage/GameSticky.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { PlusCircle, Check, ChevronDown, Trash2, AlertCircle, X, Edit, Plus } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 import useReviewStore from "../../store/useReviewStore";
-import { Link } from "react-router-dom";
+import GameCover from "../game/GameCover";
 
 const GameSticky = ({ game }) => {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [showRibbonDropdown, setShowRibbonDropdown] = useState(false);
-  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [hasUserReview, setHasUserReview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
-  const dropdownRef = useRef(null);
-  const ribbonDropdownRef = useRef(null);
-  const coverImageRef = useRef(null);
+  const [content, setContent] = useState("");
   
   const { user } = useAuth();
-  const { addGame, updateStatus, removeGame, getGameStatus } = useUserGameStore();
+  const { getGameStatus } = useUserGameStore();
   const { addReview, fetchUserReviewForGame, userReviews, updateReview, deleteReview } = useReviewStore();
   const gameStatus = getGameStatus(game.id);
   
@@ -51,27 +45,6 @@ const GameSticky = ({ game }) => {
       setHasUserReview(false);
     }
   }, [userReviews, game.igdb_id]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowStatusMenu(false);
-      }
-      
-      if (ribbonDropdownRef.current && !ribbonDropdownRef.current.contains(event.target)) {
-        setShowRibbonDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleCoverMouseLeave = () => {
-    if (showRibbonDropdown) {
-      setShowRibbonDropdown(false);
-    }
-  };
 
   const handleStarClick = async (rating) => {
     if (!user) {
@@ -179,56 +152,6 @@ const GameSticky = ({ game }) => {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'want_to_play': return <Check className="h-4 w-4" />;
-      case 'playing': return <span className="text-base">▶</span>;
-      case 'played': return <span className="text-base">🏆</span>;
-      default: return <Plus className="h-4 w-4" />;
-    }
-  };
-  
-  const handleRibbonStatusClick = async (e, status = null) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (!user) return;
-    
-    if (status === null) {
-      setShowRibbonDropdown(!showRibbonDropdown);
-      return;
-    }
-    
-    try {
-      if (status === gameStatus) {
-        await removeGame(game.id);
-      } else if (gameStatus) {
-        await updateStatus(game.id, status);
-      } else {
-        await addGame(game.id, status);
-      }
-      
-      setShowRibbonDropdown(false);
-    } catch (error) {
-      console.error("Failed to update game status:", error);
-    }
-  };
-
-  const getStatusLabel = () => {
-    switch (gameStatus) {
-      case "want_to_play":
-        return "Want to Play";
-      case "playing":
-        return "Playing";
-      case "played":
-        return "Played";
-      default:
-        return "Add to Library";
-    }
-  };
-
   const ratingLabels = {
     1: "Poor",
     2: "Fair",
@@ -237,216 +160,15 @@ const GameSticky = ({ game }) => {
     5: "Excellent"
   };
 
-  const getRibbonColor = () => {
-    if (!gameStatus) return 'fill-black/70';
-    
-    switch(gameStatus) {
-      case 'want_to_play': return 'fill-primary';
-      case 'playing': return 'fill-secondary';
-      case 'played': return 'fill-gray-300';
-      default: return 'fill-black/70';
-    }
-  };
-  
-  const getHoverColor = () => {
-    if (!gameStatus) return 'fill-white/20';
-    
-    switch(gameStatus) {
-      case 'want_to_play': return 'fill-primary/30';
-      case 'playing': return 'fill-secondary/30';
-      case 'played': return 'fill-gray-300/30';
-      default: return 'fill-white/20';
-    }
-  };
-
   return (
     <div className="sticky top-20 self-start w-64 sm:w-52 md:w-64 sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
       {/* Game Cover */}
-      <div 
-        className="relative w-full group overflow-hidden rounded-lg"
-        ref={coverImageRef}
-        onMouseLeave={handleCoverMouseLeave}
-      >
-        <img
-          src={game.coverImage}
-          alt={game.name}
-          className="w-full shadow-md object-cover transition-opacity duration-700 group-hover:opacity-90"
-        />
-        
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
-        {/* Status Ribbon */}
-        {user && (
-          <div className="absolute top-0 left-0 z-10" ref={ribbonDropdownRef}>
-            <div 
-              className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
-              onClick={(e) => handleRibbonStatusClick(e)}
-              aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
-              role="button"
-              tabIndex="0"
-            >
-              <svg width="36px" height="54px" viewBox="0 0 36 54" xmlns="http://www.w3.org/2000/svg" role="presentation">
-                {/* Ribbon Background */}
-                <polygon 
-                  className={`${getRibbonColor()} transition-colors duration-300`} 
-                  points="36 0 0 0 0 50 18 42 36 50"
-                />
-                {/* Hover Effect */}
-                <polygon 
-                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
-                  points="36 0 0 0 0 50 18 42 36 50"
-                />
-                {/* Shadow */}
-                <polygon 
-                  className="fill-black/40" 
-                  points="36 50 36 54 18 46 0 54 0 50 18 42"
-                />
-              </svg>
-              
-              {/* Icon */}
-              <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: "8px" }}>
-                {(() => {
-                  if (!gameStatus) return <Plus className="h-6 w-6" />;
-                  
-                  switch(gameStatus) {
-                    case 'want_to_play': return <Check className="h-6 w-6 stroke-white" />;
-                    case 'playing': return <span className="text-xl">▶</span>;
-                    case 'played': return <span className="text-xl">🏆</span>;
-                    default: return <Plus className="h-6 w-6" />;
-                  }
-                })()}
-              </div>
-            </div>
-            
-            {/* Status Dropdown */}
-            {showRibbonDropdown && (
-              <div 
-                className="absolute top-[50px] left-0 z-20 w-36 bg-surface-dark rounded-b-lg shadow-lg border border-gray-800/50 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {["want_to_play", "playing", "played"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={(e) => handleRibbonStatusClick(e, status)}
-                    className={`
-                      w-full flex items-center gap-2 px-3 py-2 text-xs text-left
-                      transition-colors duration-200 cursor-pointer
-                      ${gameStatus === status 
-                        ? "bg-gray-800/50 font-semibold" 
-                        : "hover:bg-gray-800/50"
-                      }
-                      ${status === 'want_to_play' ? 'text-primary' : 
-                        status === 'playing' ? 'text-secondary' : 
-                        status === 'played' ? 'text-white' : 'text-white'}
-                    `}
-                  >
-                    {getStatusIcon(status)}
-                    <span className="capitalize">{status.replace(/_/g, " ")}</span>
-                  </button>
-                ))}
-                
-                {gameStatus && (
-                  <button
-                    onClick={(e) => handleRibbonStatusClick(e, gameStatus)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-700 hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Remove
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+      <div className="w-full">
+        <GameCover game={game} />
       </div>
 
-      {/* Add to Library Button */}
-      <div className="mt-5 w-full">
-        {user ? (
-          <div className="relative" ref={dropdownRef}>
-            <button 
-              onClick={() => setShowStatusMenu(!showStatusMenu)}
-              className={`
-                w-full flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg
-                text-sm font-bold transition-all duration-200
-                bg-surface-dark text-gray-100 hover:bg-gray-800/50
-                border border-gray-800/50 cursor-pointer
-              `}
-            >
-              {gameStatus ? (
-                gameStatus === 'want_to_play' ? <Check className="w-3.5 h-3.5" /> :
-                gameStatus === 'playing' ? <span className="text-sm">▶</span> :
-                gameStatus === 'played' ? <span className="text-sm">🏆</span> :
-                <Check className="w-3.5 h-3.5" />
-              ) : <PlusCircle className="w-3.5 h-3.5" />}
-              {getStatusLabel()}
-              <ChevronDown className={`w-3.5 h-3.5 ml-1.5 transition-transform duration-200 ${showStatusMenu ? "rotate-180" : ""}`} />
-            </button>
-
-            {showStatusMenu && (
-              <div 
-                className="
-                  absolute top-full left-0 w-full mt-1.5
-                  bg-surface-dark rounded-lg shadow-lg
-                  border border-gray-800/50
-                  overflow-hidden
-                  z-20
-                "
-              >
-                {["want_to_play", "playing", "played"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={(e) => handleRibbonStatusClick(e, status)}
-                    className={`
-                      w-full flex items-center justify-between
-                      px-3.5 py-2 text-sm font-semibold
-                      transition-colors duration-200 cursor-pointer
-                      ${gameStatus === status 
-                        ? "text-primary bg-gray-800/50"
-                        : "text-gray-100 hover:bg-gray-800/50"
-                      }
-                    `}
-                  >
-                    <span className="capitalize">{status.replace(/_/g, " ")}</span>
-                    {gameStatus === status && <Check className="w-3.5 h-3.5" />}
-                  </button>
-                ))}
-                
-                {gameStatus && (
-                  <button
-                    onClick={(e) => handleRibbonStatusClick(e, gameStatus)}
-                    className="
-                      w-full flex items-center gap-2 px-3.5 py-2
-                      text-sm font-bold text-red-700
-                      transition-colors duration-200 cursor-pointer
-                      hover:bg-gray-800/50
-                    "
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Remove from Library
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link 
-            to="/login" 
-            className="
-              w-full flex items-center justify-center gap-2 
-              py-2.5 px-4 rounded-md
-              bg-surface text-light hover:bg-surface-hover
-              text-sm font-medium transition-all duration-200
-            "
-          >
-            <PlusCircle className="w-4 h-4" /> Add to Library
-          </Link>
-        )}
-      </div>
-
-      {/* Rating Section */}
-      <div className="mt-6 pt-6 w-full border-t border-gray-800/30">
+      {/* Rating Section - directly below the cover now */}
+      <div className="mt-6 pt-4 w-full border-t border-gray-800/30">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs uppercase text-gray-500 font-bold">
             {user ? (hasUserReview ? "Your Rating" : "Rate Game") : "Sign in to rate"}
@@ -498,145 +220,118 @@ const GameSticky = ({ game }) => {
             </div>
           )}
         </div>
-        
-        {/* Error Message */}
-        {error && (
-          <div className="mt-3.5 p-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-md text-xs flex items-center gap-2">
-            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
       </div>
 
-      {/* Review Modal */}
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-surface-dark p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-2xl w-full mx-4 relative">
-            <button
-              onClick={() => {
-                setShowReviewModal(false);
-                setContent("");
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-200 mb-1">
-                {userReviews[game.igdb_id]?.content ? "Edit your review" : "Write your review"}
-              </h3>
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setUserRating(star)}
-                    className={`text-2xl cursor-pointer ${
-                      star <= userRating ? "text-primary" : "text-gray-400"
-                    }`}
-                  >
-                    ★
-                  </button>
-                ))}
-                <span className="text-sm font-medium text-primary ml-2">
-                  {ratingLabels[userRating]}
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <textarea
-                  id="review-content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="What did you think about this game?"
-                  rows={5}
-                  className="w-full px-3 py-2 text-sm bg-white text-gray-700 placeholder-gray-500 rounded-lg border-0 focus:outline-none focus:ring-1 focus:ring-gray-300 resize-none"
-                />
-                {content.length > 0 && (
-                  <div className="text-xs text-gray-500">
-                    {content.length} characters
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReviewModal(false);
-                    setContent("");
-                  }}
-                  className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !content.trim()}
-                  className="px-4 py-2 text-sm bg-primary text-dark font-medium rounded-lg hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-dark/20 border-t-dark rounded-full animate-spin"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    "Post Review"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-surface-dark p-6 rounded-lg border border-gray-800/50 shadow-lg max-w-sm w-full mx-4 relative">
-            <button
-              onClick={() => setShowDeleteConfirm(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <h3 className="text-lg font-medium text-gray-200 mb-2">Delete Rating</h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Are you sure you want to delete your {userRating}-star rating{userReviews[game.igdb_id]?.content ? " and review" : ""}?
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-surface-dark p-5 rounded-lg max-w-sm w-full">
+            <h3 className="text-base font-bold mb-3">Delete Rating</h3>
+            <p className="text-sm text-gray-300 mb-4">
+              Are you sure you want to delete your rating for this game?
             </p>
-            
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+                className="px-4 py-2 text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteReview}
-                disabled={isSubmitting}
-                className="px-4 py-2 text-sm bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-2"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete"
-                )}
+                Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-surface-dark p-5 rounded-lg max-w-lg w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold">Your Review</h3>
+              <button 
+                onClick={() => setShowReviewModal(false)}
+                className="p-1 rounded-full hover:bg-gray-800"
+              >
+                <Trash2 className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => handleStarClick(star)}
+                        onMouseEnter={() => handleStarMouseEnter(star)}
+                        onMouseLeave={handleStarMouseLeave}
+                        className={`
+                          text-2xl transition-all duration-200 cursor-pointer
+                          ${isSubmitting && "cursor-wait opacity-70"}
+                          ${star <= (hoverRating || userRating) 
+                            ? "text-primary hover:text-primary/90" 
+                            : "text-gray-600 hover:text-gray-400"
+                          }
+                        `}
+                        disabled={isSubmitting}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {(userRating > 0 || hoverRating > 0) && (
+                    <div className="ml-2 text-sm font-medium text-primary">
+                      {ratingLabels[hoverRating || userRating]}
+                    </div>
+                  )}
+                </div>
+                
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Write your review here (optional)"
+                  className="w-full h-32 p-3 bg-gray-900 text-gray-100 border border-gray-800 rounded-md text-sm"
+                />
+              </div>
+              
+              {error && (
+                <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 rounded-md flex items-start gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Trash2 className="h-4 w-4 text-red-400" />
+                  </div>
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-4 py-2 text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!userRating || isSubmitting}
+                  className={`
+                    px-4 py-2 bg-primary hover:bg-primary/90 text-black text-sm font-medium rounded-md
+                    ${(!userRating || isSubmitting) && "opacity-60 cursor-not-allowed"}
+                  `}
+                >
+                  {isSubmitting ? "Saving..." : "Save Review"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
