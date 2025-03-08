@@ -10,7 +10,7 @@ export const TABS = [
 
 const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists, setSelectedList }) => {
   return (
-    <div className="flex items-center overflow-x-auto hide-scrollbar md:w-auto">
+    <div className="flex items-center overflow-x-auto hide-scrollbar flex-shrink-0 md:flex-nowrap">
       {TABS.map(tab => (
         <TabButton 
           key={tab.id}
@@ -27,7 +27,7 @@ const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists,
           setActiveTab("my_lists");
           setSelectedList(null);
         }}
-        className={`px-3 py-2 whitespace-nowrap text-sm font-semibold transition-colors cursor-pointer ${activeTab === "my_lists" 
+        className={`px-2.5 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors cursor-pointer ${activeTab === "my_lists" 
           ? "text-primary border-b-2 border-primary" 
           : "text-gray-400 hover:text-gray-300"}`}
       >
@@ -41,7 +41,7 @@ const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists,
 const TabButton = ({ id, label, count, color = "primary", activeTab, setActiveTab }) => (
   <button
     onClick={() => setActiveTab(id)}
-    className={`px-3 py-2 whitespace-nowrap text-sm font-semibold transition-colors cursor-pointer ${
+    className={`px-2.5 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors cursor-pointer ${
       activeTab === id
         ? `text-${color} border-b-2 border-${color}`
         : "text-gray-400 hover:text-gray-300"

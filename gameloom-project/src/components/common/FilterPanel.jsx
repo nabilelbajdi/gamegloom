@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Filter, Check, ChevronDown, Gamepad2, Tags, Star, Monitor, Users, Eye } from "lucide-react";
 
 const FilterPanel = ({
-  allGenres,
-  allThemes,
+  allGenres = [],
+  allThemes = [],
   allPlatforms = [],
   allGameModes = [],
   allPlayerPerspectives = [],
-  activeGenres,
-  activeThemes,
+  activeGenres = [],
+  activeThemes = [],
   activePlatforms = [],
   activeGameModes = [],
   activePlayerPerspectives = [],

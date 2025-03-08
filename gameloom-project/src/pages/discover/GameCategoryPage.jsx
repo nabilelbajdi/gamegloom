@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import useGameStore from "../../store/useGameStore";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
-import GamesList from "../../components/discover/GamesList";
-import SearchInput from "../../components/discover/SearchInput";
-import FilterDropdown from "../../components/discover/FilterDropdown";
-import FilterPanel from "../../components/discover/FilterPanel";
-import SortDropdown from "../../components/discover/SortDropdown";
-import ViewToggle from "../../components/discover/ViewToggle";
-import ActiveFilters from "../../components/discover/ActiveFilters";
-import ScrollToTop from "../../components/discover/ScrollToTop";
+import GamesList from "../../components/common/GamesList";
+import SearchInput from "../../components/common/SearchInput";
+import FilterDropdown from "../../components/common/FilterDropdown";
+import FilterPanel from "../../components/common/FilterPanel";
+import SortDropdown from "../../components/common/SortDropdown";
+import ViewToggle from "../../components/common/ViewToggle";
+import ActiveFilters from "../../components/common/ActiveFilters";
+import ScrollToTop from "../../components/common/ScrollToTop";
+import { gamePassesAllFilters } from "../../utils/filterUtils";
 
 const GameCategoryPage = ({ 
   title, 
@@ -67,9 +68,12 @@ const GameCategoryPage = ({
   const extractFilterOptions = () => {
     const allGenres = [...new Set(gamesWithIndex
       .filter(game => game.genres)
-      .flatMap(game => typeof game.genres === 'string' 
-        ? game.genres.split(',').map(g => g.trim())
-        : game.genres)
+      .flatMap(game => {
+        let genres = typeof game.genres === 'string' 
+          ? game.genres.split(',').map(g => g.trim())
+          : game.genres;
+        return genres;
+      })
     )].sort();
     
     const allThemes = [...new Set(gamesWithIndex
@@ -93,17 +97,23 @@ const GameCategoryPage = ({
     )].sort();
 
     const allGameModes = [...new Set(gamesWithIndex
-      .filter(game => game.gameModes)
-      .flatMap(game => typeof game.gameModes === 'string' 
-        ? game.gameModes.split(',').map(m => m.trim())
-        : game.gameModes)
+      .filter(game => game.gameModes || game.game_modes)
+      .flatMap(game => {
+        const modes = game.gameModes || game.game_modes;
+        return typeof modes === 'string' 
+          ? modes.split(',').map(m => m.trim())
+          : modes;
+      })
     )].sort();
 
     const allPlayerPerspectives = [...new Set(gamesWithIndex
-      .filter(game => game.playerPerspectives)
-      .flatMap(game => typeof game.playerPerspectives === 'string' 
-        ? game.playerPerspectives.split(',').map(p => p.trim())
-        : game.playerPerspectives)
+      .filter(game => game.playerPerspectives || game.player_perspectives)
+      .flatMap(game => {
+        const perspectives = game.playerPerspectives || game.player_perspectives;
+        return typeof perspectives === 'string' 
+          ? perspectives.split(',').map(p => p.trim())
+          : perspectives;
+      })
     )].sort();
 
     return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives };
@@ -119,68 +129,17 @@ const GameCategoryPage = ({
         game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (game.description && game.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Genre filter
-      const matchesGenre = genreFilters.length === 0 || 
-        (game.genres && genreFilters.some(genre => {
-          if (typeof game.genres === 'string') {
-            return game.genres.toLowerCase().includes(genre.toLowerCase());
-          } else if (Array.isArray(game.genres)) {
-            return game.genres.some(g => g.toLowerCase().includes(genre.toLowerCase()));
-          }
-          return false;
-        }));
+      // Apply all other filters
+      const passesOtherFilters = gamePassesAllFilters(game, {
+        genres: genreFilters,
+        themes: themeFilters,
+        platforms: platformFilters,
+        gameModes: gameModeFilters,
+        playerPerspectives: perspectiveFilters,
+        minRating: minRatingFilter
+      });
       
-      // Theme filter
-      const matchesTheme = themeFilters.length === 0 || 
-        (game.themes && themeFilters.some(theme => {
-          if (typeof game.themes === 'string') {
-            return game.themes.toLowerCase().includes(theme.toLowerCase());
-          } else if (Array.isArray(game.themes)) {
-            return game.themes.some(t => t.toLowerCase().includes(theme.toLowerCase()));
-          }
-          return false;
-        }));
-      
-      // Platform filter
-      const matchesPlatform = platformFilters.length === 0 || 
-        (game.platforms && platformFilters.some(platform => {
-          if (typeof game.platforms === 'string') {
-            return game.platforms.toLowerCase().includes(platform.toLowerCase());
-          } else if (Array.isArray(game.platforms)) {
-            return game.platforms.some(p => p.toLowerCase().includes(platform.toLowerCase()));
-          }
-          return false;
-        }));
-      
-      // Game Mode filter
-      const matchesGameMode = gameModeFilters.length === 0 || 
-        (game.gameModes && gameModeFilters.some(mode => {
-          if (typeof game.gameModes === 'string') {
-            return game.gameModes.toLowerCase().includes(mode.toLowerCase());
-          } else if (Array.isArray(game.gameModes)) {
-            return game.gameModes.some(m => m.toLowerCase().includes(mode.toLowerCase()));
-          }
-          return false;
-        }));
-      
-      // Player Perspective filter
-      const matchesPerspective = perspectiveFilters.length === 0 || 
-        (game.playerPerspectives && perspectiveFilters.some(perspective => {
-          if (typeof game.playerPerspectives === 'string') {
-            return game.playerPerspectives.toLowerCase().includes(perspective.toLowerCase());
-          } else if (Array.isArray(game.playerPerspectives)) {
-            return game.playerPerspectives.some(p => p.toLowerCase().includes(perspective.toLowerCase()));
-          }
-          return false;
-        }));
-      
-      // Rating filter
-      const gameRating = typeof game.rating === 'string' ? parseFloat(game.rating) : game.rating;
-      const matchesRating = minRatingFilter === 0 || 
-        (gameRating !== undefined && gameRating !== null && gameRating !== "N/A" && gameRating >= minRatingFilter);
-      
-      return matchesSearch && matchesGenre && matchesTheme && matchesPlatform && 
-             matchesGameMode && matchesPerspective && matchesRating;
+      return matchesSearch && passesOtherFilters;
     });
   };
 
@@ -205,15 +164,18 @@ const GameCategoryPage = ({
         case "release-old":
           return new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0);
         default:
-          return 0;
+          return a.originalIndex - b.originalIndex;
       }
     });
   };
 
-  // Event handlers
+  const filteredGames = filterGames();
+  const sortedGames = sortGames(filteredGames);
+  
+  // Filter handlers
   const handleFilterChange = (filters) => {
-    setGenreFilters(filters.genres);
-    setThemeFilters(filters.themes);
+    setGenreFilters(filters.genres || []);
+    setThemeFilters(filters.themes || []);
     setPlatformFilters(filters.platforms || []);
     setGameModeFilters(filters.gameModes || []);
     setPerspectiveFilters(filters.playerPerspectives || []);
@@ -252,10 +214,6 @@ const GameCategoryPage = ({
     setPerspectiveFilters([]);
     setMinRatingFilter(0);
   };
-
-  // Process games through filtering and sorting
-  const filteredGames = filterGames();
-  const sortedGames = sortGames(filteredGames);
 
   return (
     <div className="min-h-screen bg-dark flex flex-col">

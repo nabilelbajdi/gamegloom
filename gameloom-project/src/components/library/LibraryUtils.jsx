@@ -39,18 +39,25 @@ export const getActiveGames = (collection, activeTab, selectedList, myLists, sea
 // Sort games based on sort option
 export const sortGames = (games, sortOption) => {
   switch (sortOption) {
+    case "name-asc":
     case "name_asc":
       return [...games].sort((a, b) => a.name.localeCompare(b.name));
+    case "name-desc":
     case "name_desc":
       return [...games].sort((a, b) => b.name.localeCompare(a.name));
+    case "rating-high":
     case "rating_high":
       return [...games].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    case "rating-low":
     case "rating_low":
       return [...games].sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    case "release-old":
     case "release_old":
       return [...games].sort((a, b) => new Date(a.first_release_date || 0) - new Date(b.first_release_date || 0));
-    default:
-      // Newest releases as default
+    case "release-new":
+    case "release_new":
       return [...games].sort((a, b) => new Date(b.first_release_date || 0) - new Date(a.first_release_date || 0));
+    default:
+      return games;
   }
 }; 
