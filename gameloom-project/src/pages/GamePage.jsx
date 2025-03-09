@@ -11,14 +11,13 @@ import ReviewList from "../components/reviews/ReviewList";
 
 const GamePage = () => {
   const { gameId } = useParams();
-  const { gameDetails, fetchGameDetails, gameTimeToBeat, fetchGameTimeToBeat } = useGameStore();
+  const { gameDetails, fetchGameDetails } = useGameStore();
   const { fetchCollection } = useUserGameStore();
 
   useEffect(() => {
     fetchGameDetails(parseInt(gameId));
-    fetchGameTimeToBeat(parseInt(gameId));
     fetchCollection();
-  }, [gameId]);
+  }, [fetchGameDetails, gameId, fetchCollection]);
 
   // Find game by IGDB ID
   const game = Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId));
@@ -67,7 +66,7 @@ const GamePage = () => {
 
         {/* Game Details Section */}
         <div className="w-full max-w-3xl">
-          <GameDetails game={game} timeToBeat={gameTimeToBeat[gameId]} trailer={game.videos?.[0]} />
+          <GameDetails game={game} trailer={game.videos?.[0]} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
           <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
           <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>

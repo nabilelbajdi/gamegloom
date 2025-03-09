@@ -29,7 +29,6 @@ export const fetchMultipleGameDetails = async (gameIds) => {
 
 // Fetch Single Game Details
 export const fetchGameDetails = (gameId) => fetchGames(`games/${gameId}`);
-export const fetchGameTimeToBeat = (gameId) => fetchGames(`game-time-to-beat/${gameId}`);
 
 // User Game Collection API Functions
 export const fetchUserCollection = async () => {

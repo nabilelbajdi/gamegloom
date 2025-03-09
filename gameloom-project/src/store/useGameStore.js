@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { 
   fetchTrendingGames, fetchAnticipatedGames, fetchHighlyRatedGames, 
-  fetchLatestGames, fetchGameDetails, fetchGameTimeToBeat 
+  fetchLatestGames, fetchGameDetails
 } from "../api";
 import { transformGameData } from "../utils/transformGameData";
 
@@ -13,7 +13,6 @@ const useGameStore = create((set, get) => ({
   anticipatedGames: [],
   highlyRatedGames: [],
   latestGames: [],
-  gameTimeToBeat: {},
 
   // Fetch Games
   fetchGames: async (type) => {
@@ -52,20 +51,6 @@ const useGameStore = create((set, get) => ({
       }
     } catch (error) {
       console.error(`Error fetching game ${igdbId} details:`, error);
-    }
-  },
-
-  // Fetch Game Time to Beat
-  fetchGameTimeToBeat: async (igdbId) => {
-    if (get().gameTimeToBeat[igdbId]) return;
-
-    try {
-      const data = await fetchGameTimeToBeat(igdbId);
-      set((state) => ({
-        gameTimeToBeat: { ...state.gameTimeToBeat, [igdbId]: data },
-      }));
-    } catch (error) {
-      console.error(`Error fetching time to beat for game ${igdbId}:`, error);
     }
   },
 }));

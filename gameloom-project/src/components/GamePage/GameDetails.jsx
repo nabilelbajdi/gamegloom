@@ -1,10 +1,10 @@
 // src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
-import { Menu, Clock, Calendar, Gamepad2 } from "lucide-react";
+import { Menu, Calendar, Gamepad2 } from "lucide-react";
 import StarRating from "../UI/StarRating";
 import GameMediaPreview from "./GameMediaPreview";
 
-const GameDetails = ({ game, trailer, timeToBeat }) => {
+const GameDetails = ({ game, trailer }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleSummary = () => {
@@ -76,18 +76,8 @@ const GameDetails = ({ game, trailer, timeToBeat }) => {
         </div>
       )}
 
-      {/* Time to beat, release date and platforms section */}
+      {/* Release date and platforms section */}
       <div className="mt-4 space-y-2">
-        {/* Time to beat */}
-        {timeToBeat && timeToBeat.normally && (
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <Clock className="w-5 h-5" />
-            <span>
-              Approximate time to beat: {timeToBeat.normally ? ` ${(timeToBeat.normally / 3600).toFixed(0)} hours` : " Unknown"}
-            </span>
-          </div>
-        )}
-
         {/* Release date */}
         {game.firstReleaseDate && (
           <div className="flex items-center gap-2 text-gray-400 text-sm">
