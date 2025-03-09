@@ -68,6 +68,7 @@ class GameBase(BaseModel):
     genres: Optional[str] = None
     platforms: Optional[str] = None
     developers: Optional[str] = None
+    publishers: Optional[str] = None
     game_modes: Optional[str] = None
     player_perspectives: Optional[str] = None
     themes: Optional[str] = None
@@ -78,6 +79,31 @@ class GameBase(BaseModel):
     artworks: Optional[List[str]] = None
     videos: Optional[List[str]] = None
     similar_games: Optional[List[SimilarGame]] = None
+    
+    # New fields
+    dlcs: Optional[List[Dict]] = None
+    expansions: Optional[List[Dict]] = None
+    remakes: Optional[List[Dict]] = None
+    remasters: Optional[List[Dict]] = None
+    parent_game: Optional[Dict] = None
+    
+    slug: Optional[str] = None
+    game_status_id: Optional[int] = None
+    game_status_name: Optional[str] = None
+    game_type_id: Optional[int] = None
+    game_type_name: Optional[str] = None
+    
+    # New detailed info fields
+    age_ratings: Optional[List[Dict]] = None
+    game_engines: Optional[List[str]] = None
+    multiplayer_modes: Optional[Dict] = None
+    language_supports: Optional[List[Dict]] = None
+    
+    franchise: Optional[str] = None
+    franchises: Optional[List[str]] = None
+    collections: Optional[List[str]] = None
+    alternative_names: Optional[List[str]] = None
+    keywords: Optional[List[str]] = None
 
 class GameCreate(GameBase):
     """Schema for creating a new game entry."""

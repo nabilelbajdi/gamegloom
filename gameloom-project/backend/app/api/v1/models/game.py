@@ -24,6 +24,7 @@ class Game(Base):
     genres: Mapped[str | None] = mapped_column(String, nullable=True)
     platforms: Mapped[str | None] = mapped_column(String, nullable=True)
     developers: Mapped[str | None] = mapped_column(String, nullable=True)
+    publishers: Mapped[str | None] = mapped_column(String, nullable=True)
     game_modes: Mapped[str | None] = mapped_column(String, nullable=True)
     player_perspectives: Mapped[str | None] = mapped_column(String, nullable=True)
     themes: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -36,6 +37,51 @@ class Game(Base):
     similar_games: Mapped[list | None] = mapped_column(
         JSON, nullable=True, comment="List of similar games with details (id, name, cover_image, rating, genres)"
     )
+    
+    # New fields as JSON
+    dlcs: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of DLCs for this game"
+    )
+    expansions: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of expansions for this game"
+    )
+    remakes: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of remakes for this game"
+    )
+    remasters: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of remasters for this game"
+    )
+    parent_game: Mapped[dict | None] = mapped_column(
+        JSON, nullable=True, comment="Parent game if this is DLC/expansion"
+    )
+    
+    # New queryable fields
+    slug: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    game_status_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game status ID")
+    game_status_name: Mapped[str | None] = mapped_column(String, nullable=True, comment="Game status name (released, alpha, beta, etc)")
+    game_type_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game type ID")
+    game_type_name: Mapped[str | None] = mapped_column(String, nullable=True, comment="Game type name (main_game, dlc_addon, etc)")
+    
+    # New detailed info fields
+    age_ratings: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="Age ratings (PEGI, ESRB)"
+    )
+    game_engines: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="Game engines used"
+    )
+    multiplayer_modes: Mapped[dict | None] = mapped_column(
+        JSON, nullable=True, comment="Multiplayer features"
+    )
+    language_supports: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="Supported languages"
+    )
+    
+    # Remaining fields in JSON format
+    franchise: Mapped[str | None] = mapped_column(String, nullable=True)
+    franchises: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    collections: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    alternative_names: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    keywords: Mapped[list | None] = mapped_column(JSON, nullable=True)
     
     raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Store full IGDB response
     

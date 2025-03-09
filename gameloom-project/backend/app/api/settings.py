@@ -13,7 +13,6 @@ class Settings(BaseSettings):
     IGDB_CLIENT_ID: str = os.getenv("IGDB_CLIENT_ID", "")
     IGDB_ACCESS_TOKEN: str = os.getenv("IGDB_ACCESS_TOKEN", "")
     IGDB_URL: str = "https://api.igdb.com/v4/games"
-    IGDB_TIME_TO_BEAT_URL: str = "https://api.igdb.com/v4/game_time_to_beats"
 
     # JWT settings
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
