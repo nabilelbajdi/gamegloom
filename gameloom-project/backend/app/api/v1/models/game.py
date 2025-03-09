@@ -54,6 +54,9 @@ class Game(Base):
     parent_game: Mapped[dict | None] = mapped_column(
         JSON, nullable=True, comment="Parent game if this is DLC/expansion"
     )
+    bundles: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of bundles this game is a part of"
+    )
     
     # New queryable fields
     slug: Mapped[str | None] = mapped_column(String, nullable=True, index=True)

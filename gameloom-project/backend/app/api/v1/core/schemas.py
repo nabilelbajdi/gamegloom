@@ -86,6 +86,7 @@ class GameBase(BaseModel):
     remakes: Optional[List[Dict]] = None
     remasters: Optional[List[Dict]] = None
     parent_game: Optional[Dict] = None
+    bundles: Optional[List[Dict]] = None
     
     slug: Optional[str] = None
     game_status_id: Optional[int] = None

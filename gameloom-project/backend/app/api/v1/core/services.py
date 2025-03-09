@@ -142,10 +142,22 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
             remaster_data = {
                 "id": remaster.get('id'),
                 "name": remaster.get('name'),
-                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{remaster['cover']['image_id']}.jpg" 
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{remaster['cover']['image_id']}.jpg"
                 if remaster.get('cover', {}).get('image_id') else None
             }
             remasters.append(remaster_data)
+    
+    # Process bundles
+    bundles = []
+    for bundle in igdb_data.get('bundles', []):
+        if bundle.get('name'):
+            bundle_data = {
+                "id": bundle.get('id'),
+                "name": bundle.get('name'),
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{bundle['cover']['image_id']}.jpg"
+                if bundle.get('cover', {}).get('image_id') else None
+            }
+            bundles.append(bundle_data)
     
     # Process parent game
     parent_game = None
@@ -279,6 +291,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         remakes=remakes,
         remasters=remasters,
         parent_game=parent_game,
+        bundles=bundles,
         slug=igdb_data.get('slug'),
         game_status_id=game_status_id,
         game_status_name=game_status_name,
