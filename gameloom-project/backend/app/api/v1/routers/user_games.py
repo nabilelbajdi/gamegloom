@@ -75,6 +75,7 @@ async def get_user_collection(
             id=game.igdb_id,
             igdb_id=game.igdb_id,
             name=game.name,
+            slug=game.slug,
             coverImage=game.cover_image,
             genres=game.genres,
             themes=game.themes,
