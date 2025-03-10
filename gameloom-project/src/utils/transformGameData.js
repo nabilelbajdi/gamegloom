@@ -11,6 +11,7 @@ export const transformGameData = (game) => {
       id: game.igdb_id,
       igdb_id: game.igdb_id,
       name: game.name,
+      slug: game.slug,
       coverImage: game.cover_image,
       screenshots: game.screenshots,
       videos: game.videos,
@@ -25,6 +26,7 @@ export const transformGameData = (game) => {
         id: similar.id,
         igdb_id: similar.id,
         name: similar.name,
+        slug: similar.slug,
         coverImage: similar.cover_image,
         rating: similar.rating ? (similar.rating / 20).toFixed(1) : "N/A",
         genres: similar.genres
