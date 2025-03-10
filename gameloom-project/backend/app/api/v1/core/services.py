@@ -18,7 +18,7 @@ IGDB_GAME_FIELDS = """
            screenshots.image_id, videos.video_id, rating, 
            aggregated_rating, total_rating, total_rating_count, hypes,
            similar_games.name, similar_games.cover.image_id, similar_games.rating,
-           similar_games.total_rating, similar_games.genres.name,
+           similar_games.total_rating, similar_games.genres.name, similar_games.slug,
            involved_companies.company.name, involved_companies.developer, involved_companies.publisher,
            game_modes.name, player_perspectives.name, themes.name, artworks.image_id,
            dlcs.name, dlcs.cover.image_id, 
@@ -38,8 +38,6 @@ IGDB_GAME_FIELDS = """
            multiplayer_modes.splitscreen,
            language_supports.language.name, language_supports.language.native_name;
 """
-
-IGDB_SIMILAR_GAME_FIELDS = "fields id, name, cover.image_id, total_rating, rating, genres.name;"
 
 # IGDB Service Functions
 def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "games") -> dict | list:
@@ -71,6 +69,7 @@ def process_similar_games(similar_games_data: list) -> list:
             similar_games.append({
                 "id": similar_data["id"],
                 "name": similar_data["name"],
+                "slug": similar_data.get("slug"),
                 "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
                 if similar_data.get("cover") else None,
                 "rating": similar_data.get("total_rating", similar_data.get("rating")),
@@ -311,29 +310,25 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
 
 # Database Service Functions
 async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
-    """Sync games from IGDB to database using provided query
-    Returns: (new_games_count, updated_games_count)
-    """
+    """Sync games from IGDB to database"""
     try:
-        games_data = fetch_from_igdb(query=query)
-        new_count = update_count = 0
+        igdb_data = fetch_from_igdb(query=query)
+        new_count = 0
+        update_count = 0
         
-        for game_data in games_data:
+        for game_data in igdb_data:
             try:
+                if not game_data.get('name'):
+                    continue
+                    
                 processed_data = process_igdb_data(game_data)
+                
+                # Check if game already exists
                 existing_game = get_game_by_igdb_id(db, game_data['id'])
                 
                 if existing_game:
-                    # Only update if there are actual changes
-                    has_changes = False
-                    for key, value in processed_data.model_dump(exclude={'raw_data'}).items():
-                        if getattr(existing_game, key) != value:
-                            has_changes = True
-                            break
-                    
-                    if has_changes:
-                        update_game(db, existing_game.id, processed_data)
-                        update_count += 1
+                    update_game(db, existing_game.id, processed_data)
+                    update_count += 1
                 else:
                     create_game(db, processed_data)
                     new_count += 1
@@ -348,6 +343,35 @@ async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
         logger.error(f"Error syncing games from IGDB: {str(e)}")
         return 0, 0
 
+async def sync_similar_games(db: Session, game_id: int) -> tuple[int, int]:
+    """
+    Fetches and stores similar games for a given game
+    
+    Args:
+        db: Database session
+        game_id: Game ID to fetch similar games for
+        
+    Returns:
+        Tuple of (number of new games added, number of games updated)
+    """
+    try:
+        game = get_game_by_id(db, game_id)
+        if not game or not game.similar_games:
+            return 0, 0
+            
+        similar_ids = [similar["id"] for similar in game.similar_games if "id" in similar]
+        if not similar_ids:
+            return 0, 0
+
+        ids_string = ",".join(str(id) for id in similar_ids)
+        query = f"{IGDB_GAME_FIELDS} where id = ({ids_string}); limit {len(similar_ids)};"
+        
+        return await sync_games_from_igdb(db, query)
+        
+    except Exception as e:
+        logger.error(f"Error syncing similar games for game {game_id}: {str(e)}")
+        return 0, 0
+
 def get_game_by_id(db: Session, game_id: int) -> game.Game | None:
     """Fetch a game from the database by ID"""
     return db.scalar(select(game.Game).where(game.Game.id == game_id))
@@ -355,6 +379,10 @@ def get_game_by_id(db: Session, game_id: int) -> game.Game | None:
 def get_game_by_igdb_id(db: Session, igdb_id: int) -> game.Game | None:
     """Fetch a game from the database by IGDB ID"""
     return db.scalar(select(game.Game).where(game.Game.igdb_id == igdb_id))
+
+def get_game_by_slug(db: Session, slug: str) -> game.Game | None:
+    """Fetch a game from the database by slug"""
+    return db.scalar(select(game.Game).where(game.Game.slug == slug))
 
 def create_game(db: Session, game_data: schemas.GameCreate) -> game.Game:
     """Create a new game in the database"""

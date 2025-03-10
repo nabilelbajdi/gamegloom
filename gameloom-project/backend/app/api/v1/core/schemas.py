@@ -46,6 +46,7 @@ class SimilarGame(BaseModel):
     """Schema for similar games linked to a main game."""
     id: int
     name: str
+    slug: Optional[str] = None
     cover_image: Optional[str] = None
     rating: Optional[float] = None
     genres: Optional[str] = None
@@ -151,6 +152,7 @@ class GameBasicInfo(BaseModel):
     id: int
     igdb_id: int
     name: str
+    slug: str | None = None
     coverImage: str | None = None
     genres: str | None = None
     themes: str | None = None
