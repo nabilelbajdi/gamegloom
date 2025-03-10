@@ -29,7 +29,7 @@ const NAV_ITEMS = [
 
 const LoadingSkeleton = () => (
   <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
-    <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-12">
+    <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
       <Link to="/" className="text-lg font-bold cursor-pointer px-2">
         GameLoom
       </Link>
@@ -51,8 +51,8 @@ const LoadingSkeleton = () => (
       </form>
 
       <div className="hidden md:flex items-center space-x-2">
-        <div className="h-5 w-24 bg-gray-700 animate-pulse rounded"></div>
-        <div className="h-8 w-16 bg-gray-700 animate-pulse rounded"></div>
+        <div className="h-6 w-28 bg-gray-700 animate-pulse rounded"></div>
+        <div className="h-9 w-20 bg-gray-700 animate-pulse rounded"></div>
       </div>
 
       <div className="md:hidden p-2">
@@ -150,7 +150,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
-      <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-12">
+      <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
         <Link to="/" className="text-lg font-bold cursor-pointer px-2">
           GameLoom
         </Link>
@@ -195,7 +195,7 @@ export default function Navbar() {
 
         <form onSubmit={(e) => e.preventDefault()} className="flex items-center flex-grow max-w-md px-2">
           <div className="relative w-full" ref={searchContainerRef}>
-            <div className="flex items-center w-full bg-white rounded-xl overflow-hidden shadow-sm">
+            <div className="flex items-center w-full bg-white rounded-md overflow-hidden shadow-sm">
               <div className="flex items-center border-r border-gray-300 h-8">
                 <button type="button" className="flex items-center px-3 hover:bg-gray-100 h-full">
                   <span className="text-xs text-gray-700">All</span>
@@ -256,9 +256,9 @@ export default function Navbar() {
             <div className="flex items-center space-x-2">
               <Icon name="bookmark-plus" className="icon pointer-events-none" />
               <span>Collection</span>
-              {user && collection.want_to_play.length > 0 && (
+              {user && (collection.want_to_play.length + collection.playing.length + collection.played.length) > 0 && (
                 <span className="bg-primary text-dark rounded-full px-2">
-                  {collection.want_to_play.length}
+                  {collection.want_to_play.length + collection.playing.length + collection.played.length}
                 </span>
               )}
             </div>
@@ -267,36 +267,37 @@ export default function Navbar() {
           {user ? (
             <div className="relative group">
               <button
-                className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center space-x-2 focus:outline-none cursor-pointer"
+                className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center focus:outline-none cursor-pointer"
               >
-                <Icon name="user" className="icon pointer-events-none" />
+                <Icon name="user" className="icon pointer-events-none mr-2" />
                 <span>{user.username}</span>
+                <Icon name="chevron-down" className="icon ml-1 w-3 h-3" />
               </button>
 
-              <div className="absolute right-0 mt-1 w-48 rounded-lg shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible">
-                <div className="py-1" role="menu">
+              <div className="absolute right-0 mt-0.5 w-48 rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hover:opacity-100 hover:visible z-50">
+                <div className="py-1.5" role="menu">
                   <Link
                     to="/profile"
-                    className="block px-3 py-1.5 text-sm text-gray-100 hover:bg-gray-800/50 transition-colors duration-200"
+                    className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
                     role="menuitem"
                   >
                     Profile
                   </Link>
                   <Link
                     to="/settings"
-                    className="block px-3 py-1.5 text-sm text-gray-100 hover:bg-gray-800/50 transition-colors duration-200"
+                    className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
                     role="menuitem"
                   >
                     Settings
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-3 py-1.5 text-sm text-red-700 hover:bg-gray-800/50 transition-colors duration-200"
+                    className="block w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800/70 transition-colors duration-200 my-0.5"
                     role="menuitem"
                   >
                     <div className="flex items-center gap-2">
-                      <LogOut className="w-3.5 h-3.5" />
-                      Logout
+                      <LogOut size={14} className="opacity-80" />
+                      <span>Logout</span>
                     </div>
                   </button>
                 </div>
@@ -329,7 +330,7 @@ export default function Navbar() {
               <div key={index} className="space-y-1">
                 <Link 
                   to={item.path} 
-                  className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5 flex items-center justify-between"
+                  className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5 flex items-center justify-between"
                   onClick={() => setIsOpen(false)}
                 >
                   <span>{item.name}</span>
@@ -339,7 +340,7 @@ export default function Navbar() {
                     <Link
                       key={dropdownIndex}
                       to={dropdownItem.path}
-                      className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5 block text-gray-300 hover:text-white"
+                      className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5 block text-gray-300 hover:text-white"
                       onClick={() => setIsOpen(false)}
                     >
                       {dropdownItem.name}
@@ -351,7 +352,7 @@ export default function Navbar() {
               <Link 
                 key={index} 
                 to={item.path} 
-                className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" 
+                className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" 
                 onClick={() => setIsOpen(false)}
               >
                 {item.name}
@@ -360,7 +361,7 @@ export default function Navbar() {
           ))}
           {user ? (
             <>
-              <Link to="/profile" className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
+              <Link to="/profile" className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
                 Profile
               </Link>
               <button onClick={handleLogout} className="nav-link text-xs text-left hover:bg-gray-800 rounded-md px-3 py-1.5">
@@ -368,7 +369,7 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <Link to="/login" className="nav-link text-xs hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
+            <Link to="/login" className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
               Login
             </Link>
           )}
