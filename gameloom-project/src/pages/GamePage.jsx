@@ -15,12 +15,14 @@ const GamePage = () => {
   const { fetchCollection } = useUserGameStore();
 
   useEffect(() => {
-    fetchGameDetails(parseInt(gameId));
+    fetchGameDetails(gameId);
     fetchCollection();
   }, [fetchGameDetails, gameId, fetchCollection]);
 
-  // Find game by IGDB ID
-  const game = Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId));
+  const game = gameId.match(/^\d+$/) 
+    ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
+    : Object.values(gameDetails).find(g => g.slug === gameId);
+    
   if (!game) return <div className="flex-center h-screen">Loading...</div>;
 
   // Function to convert screenshot URLs to high resolution (1080p)
