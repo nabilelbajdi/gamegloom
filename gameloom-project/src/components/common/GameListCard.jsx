@@ -125,7 +125,7 @@ const GameListCard = ({ game, index }) => {
     <div className="flex items-stretch overflow-hidden max-w-3xl">
       {/* Game Cover with Ribbon */}
       <Link 
-        to={`/game/${game.igdb_id}`} 
+        to={`/game/${game.slug || game.igdb_id}`} 
         className="w-16 md:w-20 shrink-0 relative overflow-hidden group cursor-pointer rounded-lg"
         onMouseLeave={handleCoverMouseLeave}
       >
@@ -217,7 +217,7 @@ const GameListCard = ({ game, index }) => {
               <span className="text-gray-400 font-mono mr-1.5">{game.originalIndex + 1}.</span>
             )}
             <Link 
-              to={`/game/${game.igdb_id}`}
+              to={`/game/${game.slug || game.igdb_id}`}
               className="text-white hover:text-primary transition-colors duration-200"
             >
               {game.name}

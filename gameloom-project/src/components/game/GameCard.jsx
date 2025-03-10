@@ -16,7 +16,7 @@ const GameCard = ({ game }) => {
 
   return (
     <Link 
-      to={`/game/${game.igdb_id}`}
+      to={`/game/${game.slug || game.igdb_id}`}
       className="block group relative overflow-hidden rounded-lg bg-surface transition-all duration-300 hover:bg-surface-hover"
     >
       {/* Game Cover */}

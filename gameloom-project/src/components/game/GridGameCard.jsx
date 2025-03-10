@@ -15,7 +15,7 @@ const GridGameCard = ({ game }) => {
   
   return (
     <Link 
-      to={`/game/${game.igdb_id}`}
+      to={`/game/${game.slug || game.igdb_id}`}
       className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface transition-all duration-300 hover:shadow-xl"
     >
       {/* Game Cover */}
