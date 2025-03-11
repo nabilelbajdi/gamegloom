@@ -14,21 +14,25 @@ import { gamePassesAllFilters } from "../../utils/filterUtils";
 
 const GameCategoryPage = ({ 
   title, 
-  categoryType, 
-  description = ""
+  categoryType,
+  description = "",
+  genreFilter = null,
+  themeFilter = null
 }) => {
   const { 
     fetchGames,
     trendingGames,
     anticipatedGames,
     highlyRatedGames,
-    latestGames
+    latestGames,
+    genreGames,
+    themeGames
   } = useGameStore();
   
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
-  const [sortOption, setSortOption] = useState("default");
+  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating-high" : "default");
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
   const [platformFilters, setPlatformFilters] = useState([]);
@@ -42,6 +46,8 @@ const GameCategoryPage = ({
       case "anticipated": return anticipatedGames;
       case "highlyRated": return highlyRatedGames;
       case "latest": return latestGames;
+      case "genre": return genreFilter ? (genreGames[genreFilter] || []) : [];
+      case "theme": return themeFilter ? (themeGames[themeFilter] || []) : [];
       default: return [];
     }
   };
@@ -49,12 +55,18 @@ const GameCategoryPage = ({
   useEffect(() => {
     const loadGames = async () => {
       setLoading(true);
-      await fetchGames(categoryType);
+      if (categoryType === "genre" && genreFilter) {
+        await fetchGames(categoryType, genreFilter);
+      } else if (categoryType === "theme" && themeFilter) {
+        await fetchGames(categoryType, themeFilter);
+      } else {
+        await fetchGames(categoryType);
+      }
       setLoading(false);
     };
 
     loadGames();
-  }, [categoryType, fetchGames]);
+  }, [categoryType, fetchGames, genreFilter, themeFilter]);
 
   const games = getGamesForCategory();
   
