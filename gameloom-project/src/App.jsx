@@ -19,6 +19,8 @@ import TrendingGamesPage from "./pages/discover/TrendingGamesPage";
 import AnticipatedGamesPage from "./pages/discover/AnticipatedGamesPage";
 import HighlyRatedGamesPage from "./pages/discover/HighlyRatedGamesPage";
 import LatestReleasesPage from "./pages/discover/LatestReleasesPage";
+import GenrePage from "./pages/discover/GenrePage";
+import ThemePage from "./pages/discover/ThemePage";
 
 const LoadingBarContext = createContext(null);
 
@@ -44,6 +46,8 @@ function AppContent() {
         <Route path="/discover/anticipated" element={<AnticipatedGamesPage />} />
         <Route path="/discover/highly-rated" element={<HighlyRatedGamesPage />} />
         <Route path="/discover/latest-releases" element={<LatestReleasesPage />} />
+        <Route path="/genre/:genreSlug" element={<GenrePage />} />
+        <Route path="/theme/:themeSlug" element={<ThemePage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/login" element={<LoginPage />} />
