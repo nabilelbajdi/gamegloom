@@ -20,10 +20,7 @@ logger = logging.getLogger(__name__)
 # Startup and shutdown events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize the database on startup
     init_db()
-    
-    # Initialize the scheduler
     try:
         init_scheduler()
         logger.info("Scheduler started successfully")

@@ -47,10 +47,10 @@ export const sortGames = (games, sortOption) => {
       return [...games].sort((a, b) => b.name.localeCompare(a.name));
     case "rating-high":
     case "rating_high":
-      return [...games].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      return [...games].sort((a, b) => (b.rating === "N/A" ? -1 : b.rating) - (a.rating === "N/A" ? -1 : a.rating));
     case "rating-low":
     case "rating_low":
-      return [...games].sort((a, b) => (a.rating || 0) - (b.rating || 0));
+      return [...games].sort((a, b) => (a.rating === "N/A" ? -1 : a.rating) - (b.rating === "N/A" ? -1 : b.rating));
     case "release-old":
     case "release_old":
       return [...games].sort((a, b) => new Date(a.first_release_date || 0) - new Date(b.first_release_date || 0));

@@ -340,7 +340,7 @@ export default function Navbar() {
                     <Link
                       key={dropdownIndex}
                       to={dropdownItem.path}
-                      className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5 block text-gray-300 hover:text-white"
+                      className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5 block hover:text-white"
                       onClick={() => setIsOpen(false)}
                     >
                       {dropdownItem.name}
