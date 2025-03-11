@@ -27,7 +27,6 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
             try:
                 igdb_data = services.fetch_from_igdb(game_id=igdb_id)
                 game_data = services.process_igdb_data(igdb_data)
-                
                 db_game = services.create_game(db, game_data)
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -197,3 +196,26 @@ async def search_games(query: str, db: Session = Depends(get_db)):
         return services.search_games_in_db(db, query)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/games", response_model=List[schemas.Game])
+async def get_games(
+    db: Session = Depends(get_db), 
+    genre: str = None, 
+    theme: str = None, 
+    ids: str = None,
+    limit: int = None
+):
+    """Get games with optional filtering by genre, theme, or IDs"""
+    if ids:
+        game_ids = [int(id) for id in ids.split(",")]
+        return services.get_games_by_ids(db, game_ids)
+    
+    if genre:
+        db_games = services.get_games_by_genre(db, genre, limit)
+        return db_games
+    
+    if theme:
+        db_games = services.get_games_by_theme(db, theme, limit)
+        return db_games
+    
+    return services.get_recent_games(db, limit=limit or 100)

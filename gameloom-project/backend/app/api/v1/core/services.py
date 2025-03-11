@@ -49,7 +49,6 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
     }
 
     if game_id:
-        # Make sure to explicitly request artworks for individual game fetches
         body = f"{IGDB_GAME_FIELDS} where id = {game_id};"
     else:
         body = query
@@ -482,3 +481,102 @@ def search_games_in_db(db: Session, query: str, limit: int = 6) -> list[game.Gam
         .order_by(game.Game.total_rating.desc().nulls_last())
         .limit(limit)
     ))
+
+def get_games_by_genre(db: Session, genre_slug: str, limit: int = None):
+    """Get games that match a specific genre slug"""
+    from ..models.game import Game
+    
+    search_pattern = f"%{genre_slug}%"
+    genre_name = " ".join(word.capitalize() for word in genre_slug.replace("-", " ").split())
+    name_pattern = f"%{genre_name}%"
+    
+    query = db.query(Game).filter(
+        (Game.genres.ilike(search_pattern) | Game.genres.ilike(name_pattern)) &
+        Game.total_rating.is_not(None)
+    ).order_by(Game.total_rating.desc().nulls_last())
+    
+    if limit:
+        query = query.limit(limit)
+        
+    return query.all()
+
+def get_genre_id_by_slug(genre_slug: str):
+    """Map genre slug to IGDB genre ID"""
+    genre_mapping = {
+        "adventure": 31,
+        "rpg": 12,
+        "shooter": 5,
+        "strategy": 15,
+        "platform": 8,
+        "puzzle": 9,
+        "racing": 10,
+        "fighting": 6,
+        "indie": 32,
+        "simulator": 13,
+        "sport": 14,
+        "arcade": 33,
+        "card": 16,
+        "visual-novel": 34,
+        "moba": 36,
+        "tactical": 24,
+    }
+    
+    return genre_mapping.get(genre_slug)
+
+def get_theme_id_by_slug(theme_slug: str):
+    """Map theme slug to IGDB theme ID"""
+    theme_mapping = {
+        "action": 1,
+        "fantasy": 17,
+        "science-fiction": 18,
+        "horror": 19,
+        "thriller": 27,
+        "survival": 21,
+        "historical": 22,
+        "stealth": 41,
+        "comedy": 42,
+        "business": 43,
+        "drama": 31,
+        "mystery": 20,
+        "educational": 32,
+        "kids": 33,
+        "open-world": 38,
+        "warfare": 39,
+    }
+    
+    return theme_mapping.get(theme_slug)
+
+def get_recent_games(db: Session, limit: int = None):
+    """Get recent games ordered by release date"""
+    from ..models.game import Game
+    
+    query = db.query(Game).order_by(Game.first_release_date.desc())
+    
+    if limit:
+        query = query.limit(limit)
+        
+    return query.all()
+
+def get_games_by_ids(db: Session, game_ids: list):
+    """Get games by their IDs"""
+    from ..models.game import Game
+    
+    return db.query(Game).filter(Game.id.in_(game_ids)).all()
+
+def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
+    """Get games that match a specific theme slug"""
+    from ..models.game import Game
+    
+    search_pattern = f"%{theme_slug}%"
+    theme_name = " ".join(word.capitalize() for word in theme_slug.replace("-", " ").split())
+    name_pattern = f"%{theme_name}%"
+    
+    query = db.query(Game).filter(
+        (Game.themes.ilike(search_pattern) | Game.themes.ilike(name_pattern)) &
+        Game.total_rating.is_not(None)
+    ).order_by(Game.total_rating.desc().nulls_last())
+    
+    if limit:
+        query = query.limit(limit)
+        
+    return query.all()
