@@ -21,6 +21,12 @@ export const fetchHighlyRatedGames = () => fetchGames("highly-rated-games");
 export const fetchLatestGames = () => fetchGames("latest-games");
 export const fetchTrendingGames = () => fetchGames("trending-games");
 
+// Fetch Games by Genre
+export const fetchGamesByGenre = (genreSlug) => fetchGames(`games?genre=${genreSlug}`);
+
+// Fetch Games by Theme
+export const fetchGamesByTheme = (themeSlug) => fetchGames(`games?theme=${themeSlug}`);
+
 // Fetch Multiple Game Details
 export const fetchMultipleGameDetails = async (gameIds) => {
   if (!gameIds || gameIds.length === 0) return [];
