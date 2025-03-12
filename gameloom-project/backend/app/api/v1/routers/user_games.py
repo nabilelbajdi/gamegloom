@@ -8,7 +8,7 @@ from ..models.user_game import UserGame, GameStatus
 from ..models.game import Game
 from ..models.user import User
 from ...db_setup import get_db
-from ..core.auth import get_current_user
+from ..core.security import get_current_user
 
 router = APIRouter(
     prefix="/user-games",

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from ..core import schemas, auth
+from ..core import schemas, security
 from ..models.user import User
 from ...db_setup import get_db
 
@@ -17,7 +17,7 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
         db_user = User(
             username=user_data.username,
             email=user_data.email,
-            hashed_password=auth.get_password_hash(user_data.password)
+            hashed_password=security.get_password_hash(user_data.password)
         )
         db.add(db_user)
         db.commit()
@@ -42,17 +42,17 @@ async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
         )
     
     # Verify password
-    if not auth.verify_password(credentials.password, user.hashed_password):
+    if not security.verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
         )
     
     # Create token
-    token = auth.create_token(db, user.id)
+    token = security.create_token(db, user.id)
     return token
 
 @router.get("/me", response_model=schemas.UserResponse)
-async def get_current_user_info(current_user: User = Depends(auth.get_current_user)):
+async def get_current_user_info(current_user: User = Depends(security.get_current_user)):
     """Test endpoint to verify authentication."""
     return current_user 
