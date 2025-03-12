@@ -1,6 +1,7 @@
 // src/components/GamePage/GameDetails.jsx
 import React, { useState } from "react";
-import { Menu, Calendar, Gamepad2 } from "lucide-react";
+import { Menu, Calendar, Gamepad2, Tags, Filter } from "lucide-react";
+import { Link } from "react-router-dom";
 import StarRating from "../UI/StarRating";
 import GameMediaPreview from "./GameMediaPreview";
 
@@ -9,6 +10,16 @@ const GameDetails = ({ game, trailer }) => {
 
   const toggleSummary = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // Helper function to convert string to URL-friendly slug
+  const toSlug = (str) => {
+    return str
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim();
   };
 
   return (
@@ -55,23 +66,27 @@ const GameDetails = ({ game, trailer }) => {
       />
 
       {/* Genres and themes section */}
-      {(game.genre || game.themes) && (
+      {(game.genres || game.themes) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {game.genre && game.genre.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
-            <span
+          {game.genres && game.genres.replace("Role-playing (RPG)", "RPG").split(", ").map((genre, index) => (
+            <Link
               key={`genre-${index}`}
-              className="bg-gray-800 text-white text-xs font-semibold px-3 py-1 rounded-full cursor-pointer hover:bg-gray-700"
+              to={`/genre/${toSlug(genre)}`}
+              className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-semibold border border-gray-700/20 hover:bg-gray-700/40 transition-colors"
             >
-              {genre}
-            </span>
+              <Tags className="w-3 h-3 text-primary" />
+              <span className="text-gray-300">{genre}</span>
+            </Link>
           ))}
           {game.themes && game.themes.split(", ").map((theme, index) => (
-            <span
+            <Link
               key={`theme-${index}`}
-              className="bg-gray-800 text-white text-xs font-semibold px-3 py-1 rounded-full cursor-pointer hover:bg-gray-700"
+              to={`/theme/${toSlug(theme)}`}
+              className="inline-flex items-center gap-1.5 bg-gray-800/40 px-2.5 py-1 rounded-full text-xs font-semibold border border-gray-700/20 hover:bg-gray-700/40 transition-colors"
             >
-              {theme}
-            </span>
+              <Filter className="w-3 h-3 text-primary" />
+              <span className="text-gray-300">{theme}</span>
+            </Link>
           ))}
         </div>
       )}
