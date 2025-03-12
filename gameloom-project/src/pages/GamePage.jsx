@@ -19,7 +19,8 @@ const GamePage = () => {
     fetchCollection();
   }, [fetchGameDetails, gameId, fetchCollection]);
 
-  const game = gameId.match(/^\d+$/) 
+  const isNumber = !isNaN(gameId);
+  const game = isNumber
     ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
     : Object.values(gameDetails).find(g => g.slug === gameId);
     

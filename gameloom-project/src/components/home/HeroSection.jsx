@@ -14,7 +14,7 @@ import { motion } from "motion/react";
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { trendingGames, fetchGames } = useGameStore();
+  const { highlyRatedGames, trendingGames, anticipatedGames, fetchGames } = useGameStore();
   const { user } = useAuth();
   const { fetchCollection } = useUserGameStore();
   const [featuredGames, setFeaturedGames] = useState([]);
@@ -24,36 +24,58 @@ const HeroSection = () => {
   const sliderRef = useRef(null);
 
   useEffect(() => {
+    // Fetch all types of games if not available
+    if (!highlyRatedGames || highlyRatedGames.length === 0) {
+      fetchGames("highlyRated");
+    }
     if (!trendingGames || trendingGames.length === 0) {
       fetchGames("trending");
-    } else if (featuredGames.length === 0) {
-      if (Array.isArray(trendingGames) && trendingGames.length > 0) {
-        const validGames = trendingGames.filter(game => 
-          game && game.igdb_id && game.name && 
-          (game.coverImage || game.cover_image)
-        );
-        
-        if (validGames.length > 0) {
-          const selectedGames = [];
-          const gamesCopy = [...validGames];
-          
-          const numGamesToSelect = Math.min(10, gamesCopy.length);
-          
-          for (let i = 0; i < numGamesToSelect; i++) {
-            const randomIndex = Math.floor(Math.random() * gamesCopy.length);
-            selectedGames.push(gamesCopy[randomIndex]);
-            gamesCopy.splice(randomIndex, 1);
-          }
-          
-          setFeaturedGames(selectedGames);
-          
-          updateBackgroundImage(selectedGames[0]);
+    }
+    if (!anticipatedGames || anticipatedGames.length === 0) {
+      fetchGames("anticipated");
+    }
+  }, [highlyRatedGames, trendingGames, anticipatedGames, fetchGames]);
 
-          document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
+  useEffect(() => {
+    if (featuredGames.length === 0 && 
+        highlyRatedGames?.length > 0 && 
+        trendingGames?.length > 0 && 
+        anticipatedGames?.length > 0) {
+      
+      // Get valid games from all lists
+      const validHighlyRated = highlyRatedGames
+        .slice(0, 20)
+        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+      
+      const validTrending = trendingGames
+        .slice(0, 20)
+        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+
+      const validAnticipated = anticipatedGames
+        .slice(0, 20)
+        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+
+      // Combine all lists
+      const combinedGames = [...validHighlyRated, ...validTrending, ...validAnticipated];
+      
+      if (combinedGames.length > 0) {
+        const selectedGames = [];
+        const gamesCopy = [...combinedGames];
+        
+        const numGamesToSelect = Math.min(10, gamesCopy.length);
+        
+        for (let i = 0; i < numGamesToSelect; i++) {
+          const randomIndex = Math.floor(Math.random() * gamesCopy.length);
+          selectedGames.push(gamesCopy[randomIndex]);
+          gamesCopy.splice(randomIndex, 1);
         }
+        
+        setFeaturedGames(selectedGames);
+        updateBackgroundImage(selectedGames[0]);
+        document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
       }
     }
-  }, [trendingGames, fetchGames, featuredGames.length]);
+  }, [highlyRatedGames, trendingGames, anticipatedGames, featuredGames.length]);
 
   useEffect(() => {
     if (user) {
