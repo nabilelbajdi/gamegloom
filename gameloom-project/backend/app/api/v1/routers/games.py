@@ -61,7 +61,13 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
 async def get_trending_games(db: Session = Depends(get_db)):
     """Get trending games based on popularity and ratings"""
     try:
-        # Get games with high hype/popularity with complete details
+        # First try to get recent trending games from our database
+        db_games = services.get_trending_games(db)
+        
+        if len(db_games) >= 20:
+            return db_games
+            
+        # Otherwise, sync with IGDB
         time_6_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
         time_now = int(datetime.now().timestamp())
         
@@ -70,7 +76,7 @@ async def get_trending_games(db: Session = Depends(get_db)):
         # Fetch and sync the trending games
         await services.sync_games_from_igdb(db, popularity_query)
         
-        # Get the trending games from our database
+        # Get the updated trending games from the database
         return services.get_trending_games(db)
         
     except Exception as e:
@@ -83,7 +89,13 @@ async def get_trending_games(db: Session = Depends(get_db)):
 async def get_anticipated_games(db: Session = Depends(get_db)):
     """Get anticipated games"""
     try:
-        # Get upcoming games with high hypes
+        # First try to get recent anticipated games from the database
+        db_games = services.get_anticipated_games(db)
+        
+        if len(db_games) >= 20:
+            return db_games
+            
+        # Otherwise, sync with IGDB
         current_timestamp = int(datetime.now().timestamp())
         one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
         
@@ -92,7 +104,7 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
         # Fetch and sync the anticipated games
         await services.sync_games_from_igdb(db, query)
         
-        # Get the anticipated games from our database
+        # Get the updated anticipated games from our database
         return services.get_anticipated_games(db)
         
     except Exception as e:
@@ -102,36 +114,54 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
 async def get_highly_rated_games(db: Session = Depends(get_db)):
     """Get highly rated games"""
     try:
-        # Get games with high ratings
-        query = f"{services.IGDB_GAME_FIELDS} where total_rating != null & total_rating_count > 500 & total_rating > 85 & cover != null; sort total_rating desc; limit 100;"
+        # First try to get recent highly rated games from our database
+        db_games = services.get_highly_rated_games(db)
+        
+        if len(db_games) >= 20:
+            return db_games
+            
+        # Otherwise, sync with IGDB
+        query = f"{services.IGDB_GAME_FIELDS} where total_rating_count > 50 & total_rating > 85 & cover != null; sort total_rating desc; limit 100;"
         
         # Fetch and sync the highly rated games
         await services.sync_games_from_igdb(db, query)
         
-        # Get the highly rated games from our database
+        # Get the updated highly rated games from our database
         return services.get_highly_rated_games(db)
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching highly rated games: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching highly rated games: {str(e)}"
+        )
 
 @router.get("/latest-games", response_model=List[schemas.Game])
 async def get_latest_games(db: Session = Depends(get_db)):
-    """Get latest games"""
+    """Get latest released games"""
     try:
-        # Get recently released games
-        current_timestamp = int(datetime.now().timestamp())
-        one_month_ago = current_timestamp - (30 * 24 * 60 * 60)  # 30 days ago
+        # First try to get recent latest games from our database
+        db_games = services.get_latest_games(db)
         
-        query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {one_month_ago} & first_release_date <= {current_timestamp} & first_release_date != null & cover != null; sort first_release_date desc; limit 100;"
+        if len(db_games) >= 20:
+            return db_games
+            
+        # Otherwise, sync with IGDB
+        time_3_months_ago = int((datetime.now() - timedelta(days=90)).timestamp())
+        time_now = int(datetime.now().timestamp())
+        
+        query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_3_months_ago} & first_release_date <= {time_now} & cover != null; sort first_release_date desc; limit 100;"
         
         # Fetch and sync the latest games
         await services.sync_games_from_igdb(db, query)
         
-        # Get the latest games from our database
+        # Get the updated latest games from our database
         return services.get_latest_games(db)
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching latest games: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching latest games: {str(e)}"
+        )
 
 @router.get("/update-similar-games")
 async def update_similar_games(db: Session = Depends(get_db)):
