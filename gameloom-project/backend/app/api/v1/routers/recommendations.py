@@ -12,9 +12,16 @@ from ..models.game import Game
 from ..models.user_game import UserGame, GameStatus
 from ...db_setup import get_db
 from ..core.security import get_current_user
+from ..recommendations.ai_recommender import AIRecommender
+from ..recommendations.semantic_analyzer import SemanticAnalyzer
+from ..recommendations.preference_analyzer import PreferenceAnalyzer
 
-# Set up logging
 logger = logging.getLogger(__name__)
+
+# Initialize recommender and analyzers
+ai_recommender = AIRecommender()
+semantic_analyzer = SemanticAnalyzer()
+preference_analyzer = PreferenceAnalyzer()
 
 router = APIRouter(
     prefix="/recommendations",
@@ -116,99 +123,116 @@ def calculate_platform_score(game: Game, platform_preferences: Dict[str, int], m
     
     return platform_score
 
-def calculate_game_score(game: Game, genre_preferences: Dict[str, int], platform_preferences: Dict[str, int], max_genre_count: int, max_platform_count: int) -> Tuple[float, float, float, float]:
+def calculate_game_score(game: Game, preferences: PreferenceAnalyzer, semantic_scores: Dict[int, float]) -> Dict[str, float]:
     """
-    Calculate scores for a game based on genre preferences, platform preferences, release date, and ratings.
+    Calculate comprehensive game scores based on multiple factors.
     
-    Args:
-        game: The game to score
-        genre_preferences: Dictionary of user's genre preferences and their counts
-        platform_preferences: Dictionary of user's platform preferences and their counts
-        max_genre_count: The count of the most preferred genre (used for normalization)
-        max_platform_count: The count of the most preferred platform (used for normalization)
-        
     Returns:
-        Tuple[float, float, float, float]: (genre_score, platform_score, release_date_score, rating_score)
-        All scores are between 0 and 1, where 1 is the best match
+        Dict[str, float]: Dictionary of scores for each category
     """
-    if not game.genres:
-        genre_score = 0.0
-    else:
-        game_genres = [g.strip() for g in game.genres.split(',')]
-        genre_score = 0.0
-        
-        for genre in game_genres:
-            if genre in genre_preferences:
-                genre_weight = genre_preferences[genre] / max_genre_count
-                genre_score += genre_weight
-        
-        if len(game_genres) > 0:
-            genre_score = genre_score / len(game_genres)
+    scores = {}
     
-    platform_score = calculate_platform_score(game, platform_preferences, max_platform_count)
-    release_date_score = calculate_release_date_score(game.first_release_date)
+    # Content Matching (45% total)
+    scores['genre'] = preferences.calculate_preference_score(
+        game, 'genres', 
+        [g.strip() for g in (game.genres or '').split(',')]
+    )
+    scores['theme'] = preferences.calculate_preference_score(
+        game, 'themes',
+        [t.strip() for t in (game.themes or '').split(',')]
+    )
+    scores['keyword'] = preferences.calculate_preference_score(
+        game, 'keywords',
+        game.keywords or []
+    )
+    scores['semantic'] = semantic_scores.get(game.id, 0.0)
     
-    rating_score = 0.0
-    if game.total_rating and game.total_rating_count:
-        normalized_rating = game.total_rating / 100
-        rating_reliability = min(1.0, game.total_rating_count / 500)
-        rating_score = normalized_rating * rating_reliability
+    # Technical Aspects (20% total)
+    scores['platform'] = preferences.calculate_preference_score(
+        game, 'platforms',
+        [p.strip() for p in (game.platforms or '').split(',')]
+    )
+    scores['game_modes'] = preferences.calculate_preference_score(
+        game, 'game_modes',
+        [m.strip() for m in (game.game_modes or '').split(',')]
+    )
+    scores['perspective'] = preferences.calculate_preference_score(
+        game, 'player_perspectives',
+        [p.strip() for p in (game.player_perspectives or '').split(',')]
+    )
     
-    return (genre_score, platform_score, release_date_score, rating_score)
+    # Quality Indicators (20% total)
+    scores['rating'] = game.total_rating / 100 if game.total_rating else 0.0
+    scores['rating_reliability'] = min(1.0, (game.total_rating_count or 0) / 500)
+    scores['developer'] = preferences.calculate_preference_score(
+        game, 'developers',
+        [d.strip() for d in (game.developers or '').split(',')]
+    )
+    
+    # Discovery Factors (15% total)
+    scores['release'] = calculate_release_date_score(game.first_release_date)
+    scores['franchise'] = preferences.calculate_preference_score(
+        game, 'franchises',
+        [game.franchise] if game.franchise else []
+    )
+    scores['similar'] = min(1.0, len(game.similar_games or []) / 5)
+    
+    return scores
 
-@router.get("/games", response_model=List[schemas.GameBasicInfo])
+@router.get("/games", response_model=List[schemas.Game])
 async def get_recommended_games(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    limit: int = 10,
-    min_score: float = 0.3,  # Minimum genre match score (0-1)
-    min_rating: float = 3.5  # Minimum rating required (0-100)
+    limit: int = 20,
+    min_score: float = 0.3,
+    min_rating: float = 3.5,
+    ai_weight: float = 0.2
 ):
     """
-    Get personalized game recommendations based on genre preferences, platform preferences, ratings, and release date.
+    Get personalized game recommendations using enhanced scoring system:
     
-    Args:
-        current_user: The authenticated user requesting recommendations
-        db: Database session
-        limit: Maximum number of recommendations to return (default: 10)
-        min_score: Minimum genre match score required (default: 0.3)
-        min_rating: Minimum rating required (default: 3.5)
-        
-    Returns:
-        List[GameBasicInfo]: List of recommended games
-        
-    Raises:
-        HTTPException: If no genre preferences are found or if there's an error
+    Content Matching (45% total):
+    - Genre match (15%)
+    - Theme match (10%)
+    - Keyword match (10%)
+    - Semantic similarity (10%)
+    
+    Technical Aspects (20% total):
+    - Platform compatibility (10%)
+    - Game modes match (5%)
+    - Player perspective match (5%)
+    
+    Quality Indicators (20% total):
+    - Rating score (10%)
+    - Rating reliability (5%)
+    - Developer track record (5%)
+    
+    Discovery Factors (15% total):
+    - Release date relevance (5%)
+    - Franchise/collection match (5%)
+    - Similar games (5%)
     """
-    genre_preferences = get_user_genre_preferences(db, current_user.id)
-    platform_preferences = get_user_platform_preferences(db, current_user.id)
-    
-    if not genre_preferences:
-        logger.info(f"No genre preferences found for user: {current_user.username}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No genre preferences found. Try adding some games to your collection first!"
-        )
-    
-    user_game_ids = (
-        db.query(Game.id)
+    user_games = (
+        db.query(Game)
         .join(UserGame)
         .filter(UserGame.user_id == current_user.id)
         .all()
     )
-    user_game_ids = [g[0] for g in user_game_ids]
     
-    max_genre_count = max(genre_preferences.values())
-    max_platform_count = max(platform_preferences.values()) if platform_preferences else 1
+    if not user_games:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No games found in your collection. Add some games first!"
+        )
     
-    genre_conditions = [Game.genres.like(f"%{genre}%") for genre in genre_preferences.keys()]
+    user_game_ids = [game.id for game in user_games]
+    preference_analyzer.analyze_user_games(user_games)
     
     try:
         candidate_games = (
             db.query(Game)
             .filter(
                 and_(
-                    or_(*genre_conditions),
                     ~Game.id.in_(user_game_ids),
                     Game.game_type_id == 0,
                     Game.first_release_date <= datetime.utcnow(),
@@ -219,52 +243,64 @@ async def get_recommended_games(
             .all()
         )
         
-        scored_games = [
-            (
-                game,
-                *calculate_game_score(game, genre_preferences, platform_preferences, max_genre_count, max_platform_count)
-            )
-            for game in candidate_games
-        ]
+        semantic_scores = semantic_analyzer.calculate_semantic_similarities(
+            user_games, candidate_games
+        )
         
-        recommended_games = [
-            game for game, genre_score, platform_score, release_score, rating_score in sorted(
-                scored_games,
-                key=lambda x: (0.25 * x[1] + 0.25 * x[2] + 0.3 * x[3] + 0.2 * x[4], x[0].total_rating or 0),
-                reverse=True
-            )
-            if genre_score >= min_score and platform_score > 0
-        ][:limit]
+        weights = {
+            'genre': 0.15, 'theme': 0.10, 'keyword': 0.10, 'semantic': 0.10,  # Content (45%)
+            'platform': 0.10, 'game_modes': 0.05, 'perspective': 0.05,  # Technical (20%)
+            'rating': 0.10, 'rating_reliability': 0.05, 'developer': 0.05,  # Quality (20%)
+            'release': 0.05, 'franchise': 0.05, 'similar': 0.05  # Discovery (15%)
+        }
         
-        formatted_recommendations = []
-        current_time = datetime.utcnow()
+        scored_games = []
+        for game in candidate_games:
+            scores = calculate_game_score(game, preference_analyzer, semantic_scores)
+            total_score = sum(weights[category] * score for category, score in scores.items())
+            scored_games.append((game, total_score, scores))
         
-        for game in recommended_games:
-            formatted_game = schemas.GameBasicInfo(
-                id=game.id,
-                igdb_id=game.igdb_id,
-                name=game.name,
-                slug=game.slug,
-                coverImage=game.cover_image,
-                genres=game.genres,
-                themes=game.themes,
-                platforms=game.platforms,
-                game_modes=game.game_modes,
-                player_perspectives=game.player_perspectives,
-                rating=str(game.total_rating) if game.total_rating else None,
-                first_release_date=game.first_release_date,
-                added_at=current_time,
-                updated_at=current_time,
-                status=GameStatus.WANT_TO_PLAY
-            )
-            formatted_recommendations.append(formatted_game)
+        ai_scores = ai_recommender.calculate_ai_scores(user_games, candidate_games)
+        sorted_games = sorted(
+            scored_games,
+            key=lambda x: (1 - ai_weight) * x[1] + ai_weight * ai_scores[x[0].id],
+            reverse=True
+        )
         
-        logger.info(f"Generated {len(formatted_recommendations)} recommendations for user {current_user.username}")
-        return formatted_recommendations
+        recommended_games = []
+        seen_franchises = set()
+        
+        for game, _, scores in sorted_games:
+            if scores['genre'] < min_score:
+                continue
+                
+            franchises = set()
+            if game.franchise:
+                franchises.add(game.franchise)
+            if game.franchises:
+                franchises.update(game.franchises)
+                
+            if not franchises or not (franchises & seen_franchises):
+                recommended_games.append(game)
+                seen_franchises.update(franchises)
+            
+            if len(recommended_games) >= limit:
+                break
+            
+        if len(recommended_games) < limit:
+            remaining_games = [
+                game for game, _, scores in sorted_games 
+                if game not in recommended_games 
+                and scores['genre'] >= min_score
+            ]
+            recommended_games.extend(remaining_games[:limit - len(recommended_games)])
+        
+        logger.info(f"Generated {len(recommended_games)} recommendations for user {current_user.username}")
+        return recommended_games
         
     except Exception as e:
-        logger.error(f"Error generating recommendations for user {current_user.username}: {str(e)}")
+        logger.error(f"Error generating recommendations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while generating recommendations"
-        ) 
+        )
