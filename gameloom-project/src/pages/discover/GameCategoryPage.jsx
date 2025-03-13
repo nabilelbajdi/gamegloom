@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import useGameStore from "../../store/useGameStore";
+import { useAuth } from "../../context/AuthContext";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
 import GamesList from "../../components/common/GamesList";
@@ -19,6 +21,8 @@ const GameCategoryPage = ({
   genreFilter = null,
   themeFilter = null
 }) => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { 
     fetchGames,
     trendingGames,
@@ -26,7 +30,8 @@ const GameCategoryPage = ({
     highlyRatedGames,
     latestGames,
     genreGames,
-    themeGames
+    themeGames,
+    recommendedGames
   } = useGameStore();
   
   const [loading, setLoading] = useState(true);
@@ -48,11 +53,18 @@ const GameCategoryPage = ({
       case "latest": return latestGames;
       case "genre": return genreFilter ? (genreGames[genreFilter] || []) : [];
       case "theme": return themeFilter ? (themeGames[themeFilter] || []) : [];
+      case "recommendations": return recommendedGames;
       default: return [];
     }
   };
 
   useEffect(() => {
+    // Only redirect to login if auth is loaded and user is not authenticated
+    if (!authLoading && categoryType === "recommendations" && !user) {
+      navigate("/login");
+      return;
+    }
+
     const loadGames = async () => {
       setLoading(true);
       if (categoryType === "genre" && genreFilter) {
@@ -66,14 +78,14 @@ const GameCategoryPage = ({
     };
 
     loadGames();
-  }, [categoryType, fetchGames, genreFilter, themeFilter]);
+  }, [categoryType, fetchGames, genreFilter, themeFilter, user, navigate, authLoading]);
 
   const games = getGamesForCategory();
   
   // Preserve default ordering
   const gamesWithIndex = games.map((game, index) => ({
     ...game,
-    originalIndex: index
+    originalIndex: categoryType !== "recommendations" ? index : null
   }));
   
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games

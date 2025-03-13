@@ -2,7 +2,8 @@
 import { create } from "zustand";
 import { 
   fetchTrendingGames, fetchAnticipatedGames, fetchHighlyRatedGames, 
-  fetchLatestGames, fetchGameDetails, fetchGamesByGenre, fetchGamesByTheme
+  fetchLatestGames, fetchGameDetails, fetchGamesByGenre, fetchGamesByTheme,
+  fetchRecommendations
 } from "../api";
 import { transformGameData } from "../utils/transformGameData";
 
@@ -15,6 +16,7 @@ const useGameStore = create((set, get) => ({
   latestGames: [],
   genreGames: {},
   themeGames: {},
+  recommendedGames: [],
 
   fetchTopGamesForGenre: async (genreSlug, limit = 3) => {
     try {
@@ -74,71 +76,71 @@ const useGameStore = create((set, get) => ({
     }
   },
 
-  fetchGames: async (type, filterSlug) => {
-    if (type === "genre" && filterSlug) {
-      if (get().genreGames[filterSlug]?.length > 0) return;
-
-      try {
-        const data = await fetchGamesByGenre(filterSlug);
-        set((state) => ({
-          genreGames: { 
-            ...state.genreGames,
-            [filterSlug]: data.map(transformGameData)
-          }
-        }));
-      } catch (error) {
-        console.error(`Error fetching games for genre ${filterSlug}:`, error);
-        set((state) => ({
-          genreGames: { 
-            ...state.genreGames,
-            [filterSlug]: []
-          }
-        }));
-      }
-      return;
-    }
-    
-    if (type === "theme" && filterSlug) {
-      if (get().themeGames[filterSlug]?.length > 0) return;
-
-      try {
-        const data = await fetchGamesByTheme(filterSlug);
-        set((state) => ({
-          themeGames: { 
-            ...state.themeGames,
-            [filterSlug]: data.map(transformGameData)
-          }
-        }));
-      } catch (error) {
-        console.error(`Error fetching games for theme ${filterSlug}:`, error);
-        set((state) => ({
-          themeGames: { 
-            ...state.themeGames,
-            [filterSlug]: []
-          }
-        }));
-      }
-      return;
-    }
-
-    const stateKey = `${type}Games`;
-    if (get()[stateKey].length > 0) return;
-
+  fetchGames: async (categoryType, filter = null) => {
     try {
-      let fetchFunction;
-      switch (type) {
-        case "trending": fetchFunction = fetchTrendingGames; break;
-        case "anticipated": fetchFunction = fetchAnticipatedGames; break;
-        case "highlyRated": fetchFunction = fetchHighlyRatedGames; break;
-        case "latest": fetchFunction = fetchLatestGames; break;
-        default: throw new Error(`Unknown fetch type: ${type}`);
+      let data;
+      switch (categoryType) {
+        case "trending":
+          data = await fetchTrendingGames();
+          break;
+        case "anticipated":
+          data = await fetchAnticipatedGames();
+          break;
+        case "highlyRated":
+          data = await fetchHighlyRatedGames();
+          break;
+        case "latest":
+          data = await fetchLatestGames();
+          break;
+        case "genre":
+          data = await fetchGamesByGenre(filter);
+          break;
+        case "theme":
+          data = await fetchGamesByTheme(filter);
+          break;
+        case "recommendations":
+          data = await fetchRecommendations();
+          break;
+        default:
+          data = [];
       }
 
-      const data = await fetchFunction();
-      set({ [stateKey]: data.map(transformGameData) });
+      if (data && data.length > 0) {
+        const transformedGames = data.map(transformGameData);
+        
+        set((state) => {
+          switch (categoryType) {
+            case "trending":
+              return { trendingGames: transformedGames };
+            case "anticipated":
+              return { anticipatedGames: transformedGames };
+            case "highlyRated":
+              return { highlyRatedGames: transformedGames };
+            case "latest":
+              return { latestGames: transformedGames };
+            case "genre":
+              return {
+                genreGames: {
+                  ...state.genreGames,
+                  [filter]: transformedGames
+                }
+              };
+            case "theme":
+              return {
+                themeGames: {
+                  ...state.themeGames,
+                  [filter]: transformedGames
+                }
+              };
+            case "recommendations":
+              return { recommendedGames: transformedGames };
+            default:
+              return state;
+          }
+        });
+      }
     } catch (error) {
-      console.error(`Error fetching ${type} games:`, error);
-      set({ [stateKey]: [] });
+      console.error(`Error fetching ${categoryType} games:`, error);
     }
   },
 

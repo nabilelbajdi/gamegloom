@@ -317,3 +317,21 @@ export const getRecentReviews = async () => {
     return [];
   }
 };
+
+// Fetch Recommendations
+export const fetchRecommendations = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/recommendations/games`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch recommendations");
+  }
+
+  return await response.json();
+};

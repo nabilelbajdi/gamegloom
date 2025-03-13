@@ -213,7 +213,7 @@ const GameListCard = ({ game, index }) => {
       <div className="flex-1 p-3 flex flex-col justify-between relative">
         <div>
           <h3 className="font-semibold text-sm">
-            {game.originalIndex !== undefined && (
+            {game.originalIndex !== undefined && game.originalIndex !== null && (
               <span className="text-gray-400 font-mono mr-1.5">{game.originalIndex + 1}.</span>
             )}
             <Link 
