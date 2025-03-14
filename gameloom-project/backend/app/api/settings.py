@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # IGDB settings
     IGDB_CLIENT_ID: str = os.getenv("IGDB_CLIENT_ID", "")
     IGDB_ACCESS_TOKEN: str = os.getenv("IGDB_ACCESS_TOKEN", "")
+    IGDB_WEBHOOK_SECRET: str = os.getenv("IGDB_WEBHOOK_SECRET", "")
     IGDB_URL: str = "https://api.igdb.com/v4/games"
 
     class Config:
@@ -26,6 +27,8 @@ class Settings(BaseSettings):
             raise ValueError("IGDB_CLIENT_ID must be set in environment variables")
         if not self.IGDB_ACCESS_TOKEN:
             raise ValueError("IGDB_ACCESS_TOKEN must be set in environment variables")
+        if not self.IGDB_WEBHOOK_SECRET:
+            raise ValueError("IGDB_WEBHOOK_SECRET must be set in environment variables")
         return self
 
 settings = Settings().validate()

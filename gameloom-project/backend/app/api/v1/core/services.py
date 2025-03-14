@@ -401,7 +401,6 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> game.Gam
     for key, value in game_data.items():
         setattr(db_game, key, value)
     
-    db_game.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(db_game)
     return db_game
@@ -580,3 +579,14 @@ def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
         query = query.limit(limit)
         
     return query.all()
+
+def mark_game_as_deleted(db: Session, igdb_id: int) -> game.Game | None:
+    """Mark a game as deleted in the database"""
+    db_game = get_game_by_igdb_id(db, igdb_id)
+    if not db_game:
+        return None
+    
+    db_game.is_deleted = True
+    db.commit()
+    db.refresh(db_game)
+    return db_game
