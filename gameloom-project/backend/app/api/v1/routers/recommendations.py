@@ -130,53 +130,40 @@ def calculate_game_score(game: Game, preferences: PreferenceAnalyzer, semantic_s
     Returns:
         Dict[str, float]: Dictionary of scores for each category
     """
-    scores = {}
-    
-    # Content Matching (45% total)
-    scores['genre'] = preferences.calculate_preference_score(
-        game, 'genres', 
-        [g.strip() for g in (game.genres or '').split(',')]
-    )
-    scores['theme'] = preferences.calculate_preference_score(
-        game, 'themes',
-        [t.strip() for t in (game.themes or '').split(',')]
-    )
-    scores['keyword'] = preferences.calculate_preference_score(
-        game, 'keywords',
-        game.keywords or []
-    )
-    scores['semantic'] = semantic_scores.get(game.id, 0.0)
-    
-    # Technical Aspects (20% total)
-    scores['platform'] = preferences.calculate_preference_score(
-        game, 'platforms',
-        [p.strip() for p in (game.platforms or '').split(',')]
-    )
-    scores['game_modes'] = preferences.calculate_preference_score(
-        game, 'game_modes',
-        [m.strip() for m in (game.game_modes or '').split(',')]
-    )
-    scores['perspective'] = preferences.calculate_preference_score(
-        game, 'player_perspectives',
-        [p.strip() for p in (game.player_perspectives or '').split(',')]
-    )
-    
-    # Quality Indicators (20% total)
-    scores['rating'] = game.total_rating / 100 if game.total_rating else 0.0
-    scores['rating_reliability'] = min(1.0, (game.total_rating_count or 0) / 500)
-    scores['developer'] = preferences.calculate_preference_score(
-        game, 'developers',
-        [d.strip() for d in (game.developers or '').split(',')]
-    )
-    
-    # Discovery Factors (15% total)
-    scores['release'] = calculate_release_date_score(game.first_release_date)
-    scores['franchise'] = preferences.calculate_preference_score(
-        game, 'franchises',
-        [game.franchise] if game.franchise else []
-    )
-    scores['similar'] = min(1.0, len(game.similar_games or []) / 5)
-    
+    scores = {key: 0.0 for key in [
+        "genre", "theme", "keyword", "semantic", "platform", "game_modes",
+        "perspective", "rating", "rating_reliability", "developer",
+        "release", "franchise", "similar"
+    ]}
+
+    # Process fields with common pattern
+    fields = {
+        "genre": (game.genres, "genres"),
+        "theme": (game.themes, "themes"),
+        "keyword": (game.keywords, "keywords"),
+        "platform": (game.platforms, "platforms"),
+        "game_modes": (game.game_modes, "game_modes"),
+        "perspective": (game.player_perspectives, "player_perspectives"),
+        "developer": (game.developers, "developers"),
+        "franchise": ([game.franchise] if game.franchise else [], "franchises")
+    }
+
+    for score_key, (value, pref_key) in fields.items():
+        if isinstance(value, str):
+            items = [item.strip() for item in value.split(',')]
+        elif isinstance(value, list):
+            items = value
+        else:
+            items = []
+        scores[score_key] = preferences.calculate_preference_score(game, pref_key, items)
+
+    # Special scores
+    scores["semantic"] = semantic_scores.get(game.id, 0.0)
+    scores["rating"] = game.total_rating / 100 if game.total_rating else 0.0
+    scores["rating_reliability"] = min(1.0, (game.total_rating_count or 0) / 500)
+    scores["release"] = calculate_release_date_score(game.first_release_date)
+    scores["similar"] = min(1.0, len(game.similar_games or []) / 5)
+
     return scores
 
 @router.get("/games", response_model=List[schemas.Game])

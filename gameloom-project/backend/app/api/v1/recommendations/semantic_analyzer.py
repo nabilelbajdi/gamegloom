@@ -8,7 +8,7 @@ class SemanticAnalyzer:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(
             stop_words='english',
-            max_features=5000,
+            max_features=10000,
             ngram_range=(1, 2)
         )
         self.game_vectors = None

@@ -62,7 +62,7 @@ class PreferenceAnalyzer:
 
     def calculate_preference_score(self, game: Game, category: str, items: List[str]) -> float:
         """Calculate normalized preference score for a specific category."""
-        if not items or category not in self.preferences:
+        if not items or category not in self.preferences or not self.max_counts.get(category):
             return 0.0
         
         scores = [
@@ -70,5 +70,4 @@ class PreferenceAnalyzer:
             for item in items
             if item in self.preferences[category]
         ]
-        
-        return sum(scores) / len(items) if scores else 0.0 
+        return sum(scores) / len(scores) if scores else 0.0 

@@ -1,5 +1,6 @@
 from sentence_transformers import SentenceTransformer
 import torch
+import torch.nn.functional as F
 import logging
 from typing import List, Dict
 from ..models.game import Game
@@ -24,7 +25,7 @@ class AIRecommender:
             game: Game object containing game information
             
         Returns:
-            torch.Tensor: Embedding vector representing the game
+            torch.Tensor: Normalized embedding vector representing the game
         """
         if game.id in self.cache:
             return self.cache[game.id]
@@ -38,9 +39,11 @@ class AIRecommender:
             Perspectives: {game.player_perspectives or ''}
             """
             
-            embedding = self.model.encode(game_text)
-            self.cache[game.id] = embedding
-            return embedding
+            embedding = torch.tensor(self.model.encode(game_text))
+            # Normalize the embedding
+            normalized_embedding = F.normalize(embedding, p=2, dim=0)
+            self.cache[game.id] = normalized_embedding
+            return normalized_embedding
             
         except Exception as e:
             logger.error(f"Error creating embedding for game {game.id}: {str(e)}")
@@ -65,8 +68,9 @@ class AIRecommender:
                 logger.warning("No valid embeddings found for user games")
                 return {game.id: 0.5 for game in candidate_games}
             
-            # Calculate average user profile
-            user_profile = torch.mean(torch.stack([torch.tensor(emb) for emb in user_embeddings]), dim=0)
+            # Calculate average user profile and normalize it
+            user_profile = torch.mean(torch.stack(user_embeddings), dim=0)
+            user_profile = F.normalize(user_profile, p=2, dim=0)
             
             # Calculate similarities for each candidate game
             scores = {}
@@ -74,7 +78,7 @@ class AIRecommender:
                 game_embedding = self.create_game_embedding(game)
                 similarity = torch.cosine_similarity(
                     user_profile.unsqueeze(0),
-                    torch.tensor(game_embedding).unsqueeze(0)
+                    game_embedding.unsqueeze(0)
                 ).item()
                 # Normalize similarity to 0-1 range
                 scores[game.id] = (similarity + 1) / 2
