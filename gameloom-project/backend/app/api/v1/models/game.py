@@ -1,8 +1,9 @@
 # models/game.py
 from datetime import datetime
-from sqlalchemy import Integer, String, Float, JSON, DateTime
+from sqlalchemy import Integer, String, Float, JSON, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from ...db_setup import Base
+import sqlalchemy as sa
 
 class Game(Base):
     __tablename__ = "games"
@@ -90,6 +91,7 @@ class Game(Base):
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_deleted: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False, server_default=sa.text('false'))
 
     def __repr__(self):
         return f"<Game(id={self.id}, name={self.name}, rating={self.rating})>"

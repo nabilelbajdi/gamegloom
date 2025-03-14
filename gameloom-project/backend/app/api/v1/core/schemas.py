@@ -117,8 +117,10 @@ class GameUpdate(GameBase):
 
 class Game(GameBase):
     """Schema for reading game data, including timestamps."""
+    id: int
     created_at: datetime
     updated_at: datetime
+    is_deleted: bool = False
 
     class Config:
         from_attributes = True
