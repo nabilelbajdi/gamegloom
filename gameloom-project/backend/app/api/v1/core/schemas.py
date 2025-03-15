@@ -1,6 +1,7 @@
 # schemas.py
 from datetime import datetime
 from typing import Optional, List, Dict
+from enum import Enum
 from pydantic import BaseModel, Field, EmailStr
 from ..models.user_game import GameStatus
 
@@ -9,6 +10,7 @@ class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     avatar: str = Field(default="/images/default-avatar.svg")
+    bio: Optional[str] = None
     
 class UserCreate(UserBase):
     """Schema for user registration."""
@@ -239,6 +241,76 @@ class ReviewLike(BaseModel):
     user_id: int
     review_id: int
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    """Schema for updating user profile information."""
+    avatar: Optional[str] = None
+    bio: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class UserStats(BaseModel):
+    """Schema for user statistics."""
+    total_games: int
+    want_to_play_count: int
+    playing_count: int
+    played_count: int
+    reviews_count: int
+    average_rating: Optional[float] = None
+    lists_count: int
+
+    class Config:
+        from_attributes = True
+
+class ActivityGameInfo(BaseModel):
+    """Basic game info for activity items."""
+    id: int
+    igdb_id: int
+    name: str
+    slug: Optional[str] = None
+    cover_image: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class ActivityReviewInfo(BaseModel):
+    """Basic review info for activity items."""
+    id: int
+    rating: float
+    content: Optional[str] = None
+    game: Optional[ActivityGameInfo] = None
+
+    class Config:
+        from_attributes = True
+
+class ActivityType(str, Enum):
+    """Types of user activities."""
+    GAME_STATUS_UPDATED = "game_status_updated"
+    REVIEW_CREATED = "review_created"
+    REVIEW_COMMENTED = "review_commented"
+
+class UserActivity(BaseModel):
+    """Schema for a user activity item."""
+    id: str
+    activity_type: ActivityType
+    timestamp: datetime
+    game: Optional[ActivityGameInfo] = None
+    review: Optional[ActivityReviewInfo] = None
+    review_content: Optional[str] = None
+    game_status: Optional[str] = None
+    comment_content: Optional[str] = None
+    target_username: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class UserActivityResponse(BaseModel):
+    """Schema for user activity response."""
+    activities: List[UserActivity]
 
     class Config:
         from_attributes = True
