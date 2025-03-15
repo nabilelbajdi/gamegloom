@@ -4,7 +4,7 @@ import { formatGenres } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
 
-const GridGameCard = ({ game }) => {
+const GridGameCard = ({ game, starRating, smallStatus = false }) => {
   const { user } = useAuth();
   const { 
     showStatusDropdown,
@@ -36,6 +36,7 @@ const GridGameCard = ({ game }) => {
               game={game}
               onStatusChange={handleStatusChange}
               showDropdown={showStatusDropdown}
+              size={smallStatus ? "small" : "default"}
             />
           </div>
         )}
@@ -47,11 +48,15 @@ const GridGameCard = ({ game }) => {
             <span className="text-xs text-gray-300">
               {formatGenres(game.genres, 1)}
             </span>
-            {game.rating !== "N/A" && (
-              <div className="flex items-center">
-                <span className="text-primary">★</span>
-                <span className="text-xs text-gray-300 ml-1">{game.rating}</span>
-              </div>
+            {starRating ? (
+              starRating
+            ) : (
+              game.rating !== "N/A" && (
+                <div className="flex items-center">
+                  <span className="text-primary">★</span>
+                  <span className="text-xs text-gray-300 ml-1">{game.rating}</span>
+                </div>
+              )
             )}
           </div>
         </div>

@@ -22,6 +22,20 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
       };
     }
     
+    if (size === "small") {
+      return {
+        width: "18px",
+        height: "28px",
+        viewBox: "0 0 30 46",
+        points: "30 0 0 0 0 44 15 37 30 44",
+        shadowPoints: "30 44 30 46 15 39 0 46 0 44 15 37",
+        iconSize: "h-3 w-3",
+        dropdownTop: "top-[28px]",
+        textSize: "text-xs",
+        paddingBottom: "4px"
+      };
+    }
+    
     return {
       width: "30px",
       height: "46px",
@@ -87,11 +101,13 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
   };
   
   const getStatusIcon = (status) => {
+    const isSmall = size === "small";
+    
     switch(status) {
-      case 'want_to_play': return <Check className="h-4 w-4" />;
-      case 'playing': return <span className="text-base">▶</span>;
-      case 'played': return <span className="text-base">🏆</span>;
-      default: return <Plus className="h-4 w-4" />;
+      case 'want_to_play': return <Check className={isSmall ? "h-3 w-3" : "h-4 w-4"} />;
+      case 'playing': return <span className={isSmall ? "text-xs" : "text-base"}>▶</span>;
+      case 'played': return <span className={isSmall ? "text-xs" : "text-base"}>🏆</span>;
+      default: return <Plus className={isSmall ? "h-3 w-3" : "h-4 w-4"} />;
     }
   };
 
@@ -142,7 +158,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
       {/* Status Dropdown */}
       {showDropdown && !isLoading && (
         <div 
-          className={`absolute ${dimensions.dropdownTop} left-0 z-20 w-32 bg-surface-dark rounded-b-lg shadow-lg border border-gray-800/50 overflow-hidden`}
+          className={`absolute ${dimensions.dropdownTop} left-0 z-20 ${size === "small" ? "w-28" : "w-32"} bg-surface-dark rounded-b-lg shadow-lg border border-gray-800/50 overflow-hidden`}
           onClick={(e) => e.stopPropagation()}
         >
           {["want_to_play", "playing", "played"].map((status) => (
@@ -150,7 +166,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
               key={status}
               onClick={(e) => handleStatusClick(e, status)}
               className={`
-                w-full flex items-center gap-2 px-3 py-2 text-xs text-left
+                w-full flex items-center gap-2 ${size === "small" ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-xs"} text-left
                 transition-colors duration-200 cursor-pointer
                 ${gameStatus === status 
                   ? "bg-gray-800/50 font-semibold" 
@@ -169,9 +185,9 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
           {gameStatus && (
             <button
               onClick={(e) => handleStatusClick(e, gameStatus)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-700 hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer"
+              className={`w-full flex items-center gap-2 ${size === "small" ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-xs"} text-red-700 hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer`}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className={size === "small" ? "h-3 w-3" : "h-4 w-4"} />
               Remove
             </button>
           )}

@@ -5,6 +5,7 @@ import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileBio from '../components/profile/ProfileBio';
 import ActivityFeed from '../components/profile/ActivityFeed';
 import GameProgress from '../components/profile/GameProgress';
+import RecommendedGames from '../components/profile/RecommendedGames';
 import { Heart } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -108,22 +109,7 @@ const ProfilePage = () => {
           
           {/* Right Column: Game Stats */}
           <div className="lg:col-span-1 space-y-8">
-            {/* Recommended For You */}
-            <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden shadow-md">
-              <div className="px-6 py-5 border-b border-gray-800/30">
-                <h2 className="text-xl font-semibold text-white flex items-center">
-                  Recommended For You
-                </h2>
-              </div>
-              
-              <div className="p-8 flex flex-col items-center justify-center text-center">
-                <Heart className="h-12 w-12 text-gray-600 mb-4 fill-gray-600" />
-                <h3 className="text-gray-300 font-medium mb-2">Game Recommendations</h3>
-                <p className="text-gray-500 text-sm max-w-xs">
-                  Personalized game recommendations based on your gaming activity will appear here soon.
-                </p>
-              </div>
-            </div>
+            <RecommendedGames />
             
             <GameProgress stats={stats} isLoadingStats={isLoadingStats} />
           </div>
