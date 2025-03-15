@@ -78,14 +78,19 @@ const ProfilePage = () => {
 
   return (
     <div className="mt-14">
-      <ProfileHeader user={user} stats={stats} isLoadingStats={isLoadingStats} />
+      <ProfileHeader 
+        user={user} 
+        stats={stats} 
+        isLoadingStats={isLoadingStats} 
+        onProfileUpdate={(updatedUser) => checkAuth()}
+      />
       
       {/* Content Container */}
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative">
         {/* Two-column layout*/}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Left Column: Profile Bio and Activity Feed */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <ProfileBio 
               user={user} 
               bio={user.bio} 
@@ -102,9 +107,9 @@ const ProfilePage = () => {
           </div>
           
           {/* Right Column: Game Stats */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-8">
             {/* Recommended For You */}
-            <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden shadow-md mb-8 mt-10 md:mt-16">
+            <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden shadow-md">
               <div className="px-6 py-5 border-b border-gray-800/30">
                 <h2 className="text-xl font-semibold text-white flex items-center">
                   Recommended For You
