@@ -1,6 +1,6 @@
 import React from "react";
 
-const StarRating = ({ rating, totalRatingCount }) => {
+const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount }) => {
   if (!rating || rating === "N/A") {
     return (
       <div className="flex items-center">
@@ -44,11 +44,18 @@ const StarRating = ({ rating, totalRatingCount }) => {
         {rating}
         <span className="text-sm text-gray-400">/5.0</span>
       </span>
-      {totalRatingCount > 0 && (
-        <span className="text-sm ml-2 mt-1 text-gray-400">
-          ({totalRatingCount.toLocaleString()} Ratings)
-        </span>
-      )}
+      <div className="flex flex-col ml-2 text-sm text-gray-400">
+        {totalRatingCount > 0 && (
+          <span>
+            ({totalRatingCount.toLocaleString()} User Ratings)
+          </span>
+        )}
+        {aggregatedRatingCount > 0 && (
+          <span>
+            ({aggregatedRatingCount.toLocaleString()} Critic Ratings)
+          </span>
+        )}
+      </div>
     </div>
   );
 };

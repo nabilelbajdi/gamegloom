@@ -40,6 +40,7 @@ export const transformGameData = (game) => {
       gameModes: game.game_modes || game.gameModes,
       playerPerspectives: game.player_perspectives || game.playerPerspectives,
       themes: game.themes,
-      totalRatingCount: game.total_rating_count || game.totalRatingCount
+      totalRatingCount: game.total_rating_count || game.totalRatingCount,
+      aggregatedRatingCount: game.aggregated_rating_count || game.aggregatedRatingCount
     };
   };

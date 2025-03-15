@@ -62,6 +62,7 @@ class GameBase(BaseModel):
     
     rating: Optional[float] = None
     aggregated_rating: Optional[float] = None
+    aggregated_rating_count: Optional[int] = None
     total_rating: Optional[float] = None
     total_rating_count: Optional[int] = None
     hypes: Optional[int] = None

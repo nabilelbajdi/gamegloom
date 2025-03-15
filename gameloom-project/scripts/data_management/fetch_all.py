@@ -53,7 +53,7 @@ IGDB_GAME_FIELDS = """
     fields id, name, summary, storyline, first_release_date, 
            genres.name, platforms.name, cover.image_id, 
            screenshots.image_id, videos.video_id, rating, 
-           aggregated_rating, total_rating, total_rating_count, hypes,
+           aggregated_rating, aggregated_rating_count, total_rating, total_rating_count, hypes,
            similar_games.name, similar_games.cover.image_id, similar_games.rating,
            similar_games.total_rating, similar_games.genres.name,
            involved_companies.company.name, involved_companies.developer, involved_companies.publisher,

@@ -34,7 +34,7 @@ const GameDetails = ({ game, trailer }) => {
 
       {/* Rating Section */}
       <div className="mt-4 mb-6">
-        <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} />
+        <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} />
       </div>
 
       {/* Separator */}

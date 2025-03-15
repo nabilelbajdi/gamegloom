@@ -18,6 +18,7 @@ class Game(Base):
     
     rating: Mapped[float | None] = mapped_column(Float, nullable=True)
     aggregated_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
+    aggregated_rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
     total_rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     hypes: Mapped[int | None] = mapped_column(Integer, nullable=True)
