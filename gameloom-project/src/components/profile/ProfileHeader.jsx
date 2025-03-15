@@ -87,7 +87,7 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
             <div className="flex-1 pt-2 md:pb-2">
               <div className="space-y-3">
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{user.username}</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">{user.username}</h1>
                   <div className="flex items-center text-sm text-gray-300 mt-1.5">
                     <span className="tracking-wide">Member since {joinDate}</span>
                   </div>
