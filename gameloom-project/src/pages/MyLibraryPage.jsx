@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useUserGameStore from "../store/useUserGameStore";
 import LibraryHeader from "../components/library/LibraryHeader";
@@ -19,6 +19,8 @@ import { gamePassesAllFilters } from "../utils/filterUtils";
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
   const { collection, fetchCollection, isLoading } = useUserGameStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   // Component state
   const [activeTab, setActiveTab] = useState("all");
@@ -35,6 +37,24 @@ const MyLibraryPage = () => {
   const [gameModeFilters, setGameModeFilters] = useState([]);
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['all', 'want_to_play', 'playing', 'played', 'my_lists'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    
+    if (tabId === 'all') {
+      navigate('/library', { replace: true });
+    } else {
+      navigate(`/library?tab=${tabId}`, { replace: true });
+    }
+  };
 
   // Fetch user collection on mount
   useEffect(() => {
@@ -237,7 +257,7 @@ const MyLibraryPage = () => {
         <div className="container mx-auto px-4 py-2">
           <LibraryTabs 
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             collection={collection}
             totalGames={totalGames}
             myLists={myLists}

@@ -40,7 +40,7 @@ const RecentReviewCard = ({ review }) => {
                 <h3>
                   <Link 
                     to={`/game/${game.igdb_id}`}
-                    className="inline-block text-lg font-semibold text-light hover:text-primary transition-colors"
+                    className="inline-block text-lg font-semibold text-light hover:text-primary transition-colors max-w-[200px] truncate"
                   >
                     {game.name}
                   </Link>
