@@ -357,6 +357,25 @@ export const updateUserProfile = async (userData) => {
   return await response.json();
 };
 
+export const uploadAvatar = async (formData) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/me/avatar`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to upload avatar");
+  }
+
+  return await response.json();
+};
+
 export const fetchUserStats = async () => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
