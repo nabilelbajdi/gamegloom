@@ -15,6 +15,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ArticlesPage from "./pages/ArticlesPage";
 import SignUpPage from "./pages/SignUpPage";
 import GamePage from "./pages/GamePage";
+import ProfilePage from "./pages/ProfilePage";
 import TrendingGamesPage from "./pages/discover/TrendingGamesPage";
 import AnticipatedGamesPage from "./pages/discover/AnticipatedGamesPage";
 import HighlyRatedGamesPage from "./pages/discover/HighlyRatedGamesPage";
@@ -55,6 +56,7 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/articles" element={<ArticlesPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

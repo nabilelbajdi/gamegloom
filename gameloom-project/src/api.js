@@ -335,3 +335,76 @@ export const fetchRecommendations = async () => {
 
   return await response.json();
 };
+
+// User Profile Functions
+export const updateUserProfile = async (userData) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/me/profile`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(userData)
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update profile");
+  }
+
+  return await response.json();
+};
+
+export const fetchUserStats = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  try {
+    const response = await fetch(`${BASE_URL}/users/stats`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user stats");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return {
+      total_games: 0,
+      want_to_play_count: 0,
+      playing_count: 0,
+      played_count: 0,
+      reviews_count: 0,
+      average_rating: null,
+      lists_count: 0
+    };
+  }
+};
+
+export const fetchUserActivities = async (limit = 10) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  try {
+    const response = await fetch(`${BASE_URL}/users/activities?limit=${limit}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user activities");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching user activities:", error);
+    return { activities: [] };
+  }
+};
