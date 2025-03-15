@@ -1,0 +1,92 @@
+import React from 'react';
+import { format } from 'date-fns';
+import { Gamepad2, Star, BarChart3 } from 'lucide-react';
+
+const ProfileHeader = ({ user, stats, isLoadingStats }) => {
+  const joinDate = user.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : 'Unknown';
+
+  return (
+    <>
+      {/* Background Banner */}
+      <div className="relative w-full h-72 md:h-96 overflow-hidden">
+        <img 
+          src="/images/emerald.jpg" 
+          alt="Profile banner" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-dark via-surface-dark/70 to-surface-dark/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-surface-dark/80 via-transparent to-surface-dark/80"></div>
+      </div>
+      
+      {/* Profile Header*/}
+      <div className="w-full -mt-24 md:-mt-28 mb-8 relative z-10 bg-gradient-to-b from-surface-dark/40 via-surface-dark/30 to-surface-dark/25 backdrop-blur-[2px] shadow-[0_0_15px_rgba(0,0,0,0.2)]">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-8 py-6 pt-0 md:py-8 md:pt-0">
+            {/* Avatar */}
+            <div className="flex-shrink-0 relative">
+              <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-surface-dark shadow-xl overflow-hidden bg-gray-700">
+                <img
+                  src={user.avatar || '/images/default-avatar.svg'}
+                  alt={user.username}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-green-500 border-2 border-surface-dark"></div>
+            </div>
+
+            {/* User Info */}
+            <div className="flex-1 pt-2 md:pb-2">
+              <div className="space-y-3">
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">{user.username}</h1>
+                  <div className="flex items-center text-sm text-gray-300 mt-1.5">
+                    <span className="tracking-wide">Member since {joinDate}</span>
+                  </div>
+                </div>
+                
+                {/* Quick Stats */}
+                {!isLoadingStats && (
+                  <div className="flex flex-nowrap items-center gap-x-6 gap-y-2">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="p-1.5 rounded-full bg-primary/10">
+                        <Gamepad2 className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-primary font-semibold leading-tight text-sm">{stats.total_games}</span>
+                        <span className="text-gray-400 text-xs">Games</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="p-1.5 rounded-full bg-primary/10">
+                        <Star className="w-3.5 h-3.5 text-primary fill-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-primary font-semibold leading-tight text-sm">{stats.reviews_count}</span>
+                        <span className="text-gray-400 text-xs">Reviews</span>
+                      </div>
+                    </div>
+                    
+                    {stats.average_rating !== null && (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="p-1.5 rounded-full bg-primary/10">
+                          <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-primary font-semibold leading-tight text-sm">{stats.average_rating}</span>
+                          <span className="text-gray-400 text-xs">Rating</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default ProfileHeader; 
