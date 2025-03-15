@@ -1,6 +1,7 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from backend.app.api.db_setup import init_db
@@ -12,12 +13,16 @@ from backend.app.api.v1.routers.recommendations import router as recommendations
 from backend.app.api.v1.routers.webhooks import router as webhooks_router
 from scripts.scheduler.scheduler import init_scheduler
 import logging
+import os
 
 load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Ensure avatar directory exists
+os.makedirs("public/images/avatars", exist_ok=True)
 
 # Startup and shutdown events
 @asynccontextmanager
@@ -59,3 +64,6 @@ app.include_router(user_games_router, prefix="/api/v1")
 app.include_router(reviews_router, prefix="/api/v1")
 app.include_router(recommendations_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
+
+# Mount static files
+app.mount("/images", StaticFiles(directory="public/images"), name="images")

@@ -1,11 +1,17 @@
 # routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, and_, desc, union_all, select
 from datetime import datetime, timedelta
 from typing import List
 import uuid
+import os
+import shutil
+from pathlib import Path
+from PIL import Image
+import io
+import logging
 
 from ..core import schemas, security
 from ..models.user import User
@@ -13,6 +19,10 @@ from ..models.user_game import UserGame, GameStatus
 from ..models.review import Review, ReviewLike, ReviewComment
 from ..models.game import Game
 from ...db_setup import get_db
+from ...settings import settings
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
 
@@ -77,6 +87,68 @@ async def update_user_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@router.post("/me/avatar", response_model=schemas.UserResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Upload a new avatar image for the current user."""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only image files (JPEG, PNG, GIF, WEBP) are allowed"
+        )
+    
+    # Ensure avatars directory exists
+    avatars_dir = Path("public/images/avatars")
+    os.makedirs(avatars_dir, exist_ok=True)
+    
+    # Generate unique filename
+    file_extension = file.filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+    file_path = avatars_dir / unique_filename
+    
+    # Process and save the file
+    try:
+        # Read the image
+        image_bytes = await file.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # Resize while maintaining aspect ratio
+        max_size = (400, 400)
+        image.thumbnail(max_size)
+        
+        # Save the processed image
+        image.save(file_path)
+        
+        # Clean up old avatar if it's not the default
+        if current_user.avatar and '/images/default-avatar.svg' not in current_user.avatar:
+            old_avatar_path = Path("public") / current_user.avatar.lstrip('/')
+            if os.path.exists(old_avatar_path):
+                try:
+                    os.remove(old_avatar_path)
+                except Exception as e:
+                    logger.error(f"Error removing old avatar: {str(e)}")
+        
+        # Update user's avatar URL in database
+        avatar_url = f"/images/avatars/{unique_filename}"
+        current_user.avatar = avatar_url
+        db.commit()
+        db.refresh(current_user)
+        
+        return current_user
+    except Exception as e:
+        # Clean up if something goes wrong
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload avatar: {str(e)}"
+        )
 
 @router.get("/users/stats", response_model=schemas.UserStats)
 async def get_user_stats(
