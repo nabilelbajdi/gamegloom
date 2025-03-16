@@ -1,8 +1,18 @@
 // src/components/GamePage/GameMediaPreview.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Image as ImageIcon } from "lucide-react";
+import ImageGallery from "../common/ImageGallery";
 
 const GameMediaPreview = ({ screenshots = [], trailer }) => {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
+
+  // Function to open the gallery
+  const openGallery = (initialIndex = 0) => {
+    setGalleryInitialIndex(initialIndex);
+    setGalleryOpen(true);
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-4 mt-6 items-start">
       {/* Trailer Preview */}
@@ -29,12 +39,16 @@ const GameMediaPreview = ({ screenshots = [], trailer }) => {
               key={index} 
               src={screenshot} 
               alt={`Screenshot ${index + 1}`} 
-              className="w-full h-auto object-cover rounded-lg shadow-md" 
-              loading="lazy" 
+              className="w-full h-auto object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity" 
+              loading="lazy"
+              onClick={() => openGallery(index)}
             />
           ))}
           {screenshots.length > 3 && (
-            <div className="relative w-full h-auto rounded-lg shadow-md overflow-hidden group cursor-pointer">
+            <div 
+              className="relative w-full h-auto rounded-lg shadow-md overflow-hidden group cursor-pointer"
+              onClick={() => openGallery(3)}
+            >
               <img 
                 src={screenshots[3]} 
                 alt="Screenshot 4" 
@@ -47,6 +61,15 @@ const GameMediaPreview = ({ screenshots = [], trailer }) => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Image Gallery */}
+      {galleryOpen && screenshots.length > 0 && (
+        <ImageGallery
+          images={screenshots}
+          initialIndex={galleryInitialIndex}
+          onClose={() => setGalleryOpen(false)}
+        />
       )}
     </div>
   );

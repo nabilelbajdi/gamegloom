@@ -1,7 +1,19 @@
 // src/components/GamePage/GameMedia.jsx
-import React from "react";
+import React, { useState } from "react";
+import ImageGallery from "../common/ImageGallery";
 
 const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryInitialIndex, setGalleryInitialIndex] = useState(0);
+  const [galleryImages, setGalleryImages] = useState(null);
+
+  // Function to open the gallery
+  const openGallery = (images, initialIndex) => {
+    setGalleryImages(images);
+    setGalleryInitialIndex(initialIndex);
+    setGalleryOpen(true);
+  };
+
   return (
     <div className="mt-8">
       <h2 className="text-2xl font-bold mb-4">Media</h2>
@@ -38,7 +50,8 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
                 key={index}
                 src={artwork}
                 alt={`Artwork ${index + 1}`}
-                className="w-64 h-36 object-cover rounded-lg shadow-md"
+                className="w-64 h-36 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => openGallery(artworks, index)}
               />
             ))}
           </div>
@@ -55,11 +68,21 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
                 key={index}
                 src={screenshot}
                 alt={`Screenshot ${index + 1}`}
-                className="w-64 h-36 object-cover rounded-lg shadow-md"
+                className="w-64 h-36 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => openGallery(screenshots, index)}
               />
             ))}
           </div>
         </div>
+      )}
+
+      {/* Image Gallery */}
+      {galleryOpen && galleryImages && (
+        <ImageGallery
+          images={galleryImages}
+          initialIndex={galleryInitialIndex}
+          onClose={() => setGalleryOpen(false)}
+        />
       )}
     </div>
   );
