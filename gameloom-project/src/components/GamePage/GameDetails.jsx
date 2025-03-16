@@ -23,24 +23,35 @@ const GameDetails = ({ game, trailer }) => {
   };
 
   return (
-    <div className="py-12">
-      {/* Game Title */}
-      <h1 className="text-5xl font-bold leading-tight">{game.name}</h1>
+    <div className="pt-8 md:pt-16">
+      {/* More compact header section */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+        <div className="flex-1 max-w-2xl">
+          {/* Game Title */}
+          <h1 className="text-4xl font-bold leading-tight">{game.name}</h1>
 
-      {/* Game Developers */}
-      <div className="text-gray-400 text-md mt-2 line-clamp-1">
-        {game.developers ? game.developers.split(", ").join(" • ") : "No developer found for this game"}
-      </div>
-
-      {/* Rating Section */}
-      <div className="mt-4 mb-6">
-        <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} />
+          {/* Game Developers */}
+          <div className="text-gray-400 text-md mt-1 line-clamp-1">
+            {game.developers ? game.developers.split(", ").join(" • ") : "No developer found for this game"}
+          </div>
+        </div>
+        
+        {/* Rating Section - positioned to the right on medium+ screens */}
+        <div className="md:self-start">
+          <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} />
+        </div>
       </div>
 
       {/* Separator */}
       <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
 
-      {/* Description Section */}
+      {/* Media Preview Section */}
+      <GameMediaPreview 
+        screenshots={game.screenshots} 
+        trailer={game.videos?.[0]} // Use the first video as the trailer
+      />
+
+      {/* Description Section - Moved below Media Preview */}
       <div className="mt-6">
         <div className="flex items-center gap-2 text-gray-400 text-md font-semibold">
           <Menu className="w-5 h-5" />
@@ -58,12 +69,6 @@ const GameDetails = ({ game, trailer }) => {
           )}
         </div>
       </div>
-
-      {/* Media Preview Section */}
-      <GameMediaPreview 
-        screenshots={game.screenshots} 
-        trailer={game.videos?.[0]} // Use the first video as the trailer
-      />
 
       {/* Genres and themes section */}
       {(game.genres || game.themes) && (
