@@ -24,20 +24,22 @@ const GameDetails = ({ game, trailer }) => {
 
   return (
     <div className="pt-8 md:pt-16">
-      {/* More compact header section */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-        <div className="flex-1 max-w-2xl">
+      {/* Header section */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex-1">
           {/* Game Title */}
-          <h1 className="text-4xl font-bold leading-tight">{game.name}</h1>
-
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-white mt-4">{game.name}</h1>
           {/* Game Developers */}
-          <div className="text-gray-400 text-md mt-1 line-clamp-1">
-            {game.developers ? game.developers.split(", ").join(" • ") : "No developer found for this game"}
+          <div className="flex items-center text-gray-400 text-base font-semibold">
+            <span className="font-bold mr-1"></span>
+            <span className="line-clamp-1">
+              {game.developers ? game.developers.split(", ").join(" • ") : "Unknown"}
+            </span>
           </div>
         </div>
         
-        {/* Rating Section - positioned to the right on medium+ screens */}
-        <div className="md:self-start">
+        {/* Rating Section */}
+        <div className="flex-shrink-0">
           <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} />
         </div>
       </div>
@@ -48,22 +50,22 @@ const GameDetails = ({ game, trailer }) => {
       {/* Media Preview Section */}
       <GameMediaPreview 
         screenshots={game.screenshots} 
-        trailer={game.videos?.[0]} // Use the first video as the trailer
+        trailer={game.videos?.[0]}
       />
 
-      {/* Description Section - Moved below Media Preview */}
-      <div className="mt-6">
-        <div className="flex items-center gap-2 text-gray-400 text-md font-semibold">
+      {/* Description Section */}
+      <div className="mt-4">
+        <div className="flex items-center gap-2 text-gray-400 text-md font-bold">
           <Menu className="w-5 h-5" />
           <span>DESCRIPTION</span>
         </div>
 
-        <div className="text-gray-300 mt-2 text-sm">
-          <p className={isExpanded ? "" : "line-clamp-3"}>
+        <div className="text-gray-300 mt-2 text-md">
+          <p className={`${isExpanded ? "" : "line-clamp-2"} font-medium`}>
             {game.summary}
           </p>
           {game.summary?.length > 300 && (
-            <button onClick={toggleSummary} className="text-blue-500 text-xs cursor-pointer">
+            <button onClick={toggleSummary} className="text-primary text-xs cursor-pointer font-semibold">
               {isExpanded ? "Show Less" : "Show More"}
             </button>
           )}
