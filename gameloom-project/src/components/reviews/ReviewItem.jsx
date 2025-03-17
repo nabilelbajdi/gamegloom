@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import useReviewStore from "../../store/useReviewStore";
-import { Heart, MessageCircle, ChevronDown, ChevronUp, Pencil, Trash2, X, Calendar, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, ChevronDown, ChevronUp, Pencil, Trash2, Calendar, MoreHorizontal, Star, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const ReviewItem = ({ review, gameId }) => {
@@ -130,7 +130,17 @@ const ReviewItem = ({ review, gameId }) => {
   };
 
   return (
-    <div className="bg-[#1a1b1e] p-6 rounded-lg space-y-4 border border-gray-800/50 shadow-lg">
+    <div className="bg-[#1a1b1e] p-6 rounded-lg space-y-4 border border-gray-800/50 shadow-lg relative">
+      {/* Your Review Badge */}
+      {user && user.id === review.user_id && (
+        <div className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+          <div className="bg-primary text-black text-xs font-bold px-2 py-0.5 rounded-full flex items-center">
+            <User size={12} className="mr-1" />
+            You
+          </div>
+        </div>
+      )}
+      
       {/* Review Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -151,34 +161,36 @@ const ReviewItem = ({ review, gameId }) => {
             )}
           </div>
           <div>
-            <h3 className="font-medium">{review.user?.username || "Anonymous"}</h3>
+            <h3 className="font-medium mb-1">{review.user?.username || "Anonymous"}</h3>
             <div className="flex items-center gap-2">
               {!isEditing ? (
                 <>
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <span
+                      <Star
                         key={star}
-                        className={`text-sm ${
-                          star <= review.rating ? "text-primary" : "text-gray-600"
+                        size={16}
+                        className={`${
+                          star <= review.rating ? "text-primary fill-primary" : "text-gray-600 fill-gray-600"
                         }`}
-                      >
-                        ★
-                      </span>
+                      />
                     ))}
                   </div>
                 </>
               ) : (
-                <div className="flex items-center">
+                <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => setEditedRating(star)}
-                      className={`text-sm cursor-pointer ${
-                        star <= editedRating ? "text-primary" : "text-gray-600"
-                      }`}
+                      className="flex items-center justify-center"
                     >
-                      ★
+                      <Star
+                        size={16}
+                        className={`${
+                          star <= editedRating ? "text-primary fill-primary" : "text-gray-600 fill-gray-600"
+                        } transition-colors duration-200 hover:text-primary hover:fill-primary`}
+                      />
                     </button>
                   ))}
                 </div>

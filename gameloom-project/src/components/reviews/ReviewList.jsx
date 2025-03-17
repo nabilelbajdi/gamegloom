@@ -18,10 +18,18 @@ const ReviewList = ({ gameId, releaseDate }) => {
   const dropdownRef = useRef(null);
   const gameReviews = reviews[gameId] || [];
 
+  // Add a tracking state for initial load vs subsequent loads
+  const [initialLoad, setInitialLoad] = useState(true);
+
   const isReleased = releaseDate ? new Date(releaseDate) <= new Date() : true;
 
   useEffect(() => {
-    fetchGameReviews(gameId);
+    const fetchReviews = async () => {
+      await fetchGameReviews(gameId);
+      setInitialLoad(false);
+    };
+    
+    fetchReviews();
   }, [gameId]);
 
   useEffect(() => {
@@ -38,7 +46,12 @@ const ReviewList = ({ gameId, releaseDate }) => {
   const getSortedReviews = () => {
     if (!gameReviews) return [];
     
-    const reviewsToSort = [...gameReviews];
+    // Filter out reviews that don't have content
+    const reviewsWithContent = gameReviews.filter(review => 
+      review.content && review.content.trim().length > 0
+    );
+    
+    const reviewsToSort = [...reviewsWithContent];
     
     switch(sortBy) {
       case "newest":
@@ -56,7 +69,8 @@ const ReviewList = ({ gameId, releaseDate }) => {
     return SORT_OPTIONS.find((option) => option.value === sortBy)?.label || "Sort By";
   };
 
-  if (isLoading) {
+  // Only show loading state on initial load, not for ratings updates
+  if (isLoading && initialLoad) {
     return (
       <div className="mt-8 space-y-4">
         <div className="h-32 bg-surface-dark animate-pulse rounded-lg"></div>
@@ -68,7 +82,7 @@ const ReviewList = ({ gameId, releaseDate }) => {
   const sortedReviews = getSortedReviews();
   
   return (
-    <div className="mt-8 space-y-8">
+    <div className="mt-8 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
@@ -138,7 +152,7 @@ const ReviewList = ({ gameId, releaseDate }) => {
             ) : (
               <div className="p-4 bg-surface-dark rounded-lg text-center">
                 <p className="text-gray-400">
-                  No reviews yet. Be the first to review!
+                  No written reviews yet. Be the first to share your detailed thoughts!
                 </p>
               </div>
             )}

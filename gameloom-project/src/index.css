@@ -7,6 +7,7 @@
   
   /* Dark Mode */
   --color-primary: #C8AA6E; /* Gold */
+  --color-primary-rgb: 200, 170, 110; /* RGB values for primary color */
   --color-secondary: #7A5C95; /* Purple */
   --color-want: #B24A4A; /* Red */
   --color-completed: #4A855C; /* Green */
@@ -318,7 +319,6 @@
 .animate-progress {
   animation-name: progress;
   animation-timing-function: var(--animation-linear);
-  animation-fill-mode: forwards;
 }
 
 .animate-progress-running {
@@ -327,4 +327,9 @@
 
 .animate-progress-paused {
   animation-play-state: paused;
+}
+
+/* Glow effect for star ratings */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 6px rgba(var(--color-primary-rgb), 0.6));
 }
