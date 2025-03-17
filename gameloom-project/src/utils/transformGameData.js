@@ -36,6 +36,12 @@ export const transformGameData = (game) => {
         rating: similar.rating ? (similar.rating / 20).toFixed(1) : "N/A",
         genres: similar.genres
       })) || [],
+      dlcs: game.dlcs || [],
+      expansions: game.expansions || [],
+      remakes: game.remakes || [],
+      remasters: game.remasters || [],
+      bundles: game.bundles || [],
+      parentGame: game.parent_game || null,
       developers: game.developers,
       gameModes: game.game_modes || game.gameModes,
       playerPerspectives: game.player_perspectives || game.playerPerspectives,
