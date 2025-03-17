@@ -54,10 +54,10 @@ const GamePage = () => {
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <div 
-          className="absolute inset-0 bg-cover bg-center blur-xs brightness-[0.85]"
+          className="absolute inset-0 bg-cover bg-center blur-md brightness-[0.8]"
           style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none" }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-black/40"></div>
       </div>
 
       {/* Content */}
@@ -70,10 +70,11 @@ const GamePage = () => {
         {/* Game Details Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} trailer={game.videos?.[0]} />
-          <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+          {/* <div className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
-          <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+          {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <SimilarGames games={game.similarGames} />
+          {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />
         </div>
       </div>
