@@ -161,7 +161,7 @@ const GameSticky = ({ game }) => {
   };
 
   return (
-    <div className="sticky top-20 self-start w-64 sm:w-52 md:w-64 sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
+    <div className="sticky top-20 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
       {/* Game Cover */}
       <div className="w-full">
         <GameCover game={game} />

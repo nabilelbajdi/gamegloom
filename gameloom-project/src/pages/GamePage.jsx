@@ -61,7 +61,7 @@ const GamePage = () => {
       </div>
 
       {/* Content */}
-      <div className="relative container mx-auto px-4 md:px-20 py-8 md:py-8 grid grid-cols-1 md:grid-cols-[minmax(250px,350px)_1fr] gap-16 items-start">
+      <div className="relative container mx-auto px-4 md:px-20 py-8 md:py-8 grid grid-cols-1 md:grid-cols-[minmax(280px,320px)_1fr] gap-16 items-start">
         {/* Game Cover Sticky Section */}
         <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
           <GameSticky game={game} />
