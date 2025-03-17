@@ -161,19 +161,35 @@ const GameSticky = ({ game }) => {
   };
 
   return (
-    <div className="sticky top-20 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
+    <div className="sticky top-24 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
       {/* Game Cover */}
       <div className="w-full">
         <GameCover game={game} />
       </div>
 
-      {/* Rating Section - directly below the cover now */}
-      <div className="mt-6 pt-4 w-full border-t border-gray-800/30">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs uppercase text-gray-500 font-bold">
-            {user ? (hasUserReview ? "Your Rating" : "Rate Game") : "Sign in to rate"}
-          </span>
+      {/* Rating Section */}
+      <div className="mt-3 pt-3 w-full border-t border-gray-800/30">
+        {/* Title with conditional text based on user state */}
+        <div className="flex items-center justify-between mb-2">
+          {user ? (
+            <div className="flex items-center gap-2">
+              {hasUserReview ? (
+                <span className="text-sm uppercase text-white font-bold">
+                  YOUR RATING
+                </span>
+              ) : (
+                <span className="text-sm uppercase text-gray-200 font-bold">
+                  RATE THIS GAME
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-sm uppercase text-gray-400 font-bold">
+              SIGN IN TO RATE
+            </span>
+          )}
           
+          {/* Write/Edit Review Button */}
           {user && hasUserReview && userRating > 0 && (
             <button
               onClick={() => {
@@ -181,16 +197,16 @@ const GameSticky = ({ game }) => {
                 setContent(userReview?.content || "");
                 setShowReviewModal(true);
               }}
-              className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <Edit className="w-3 h-3" />
-              {userReviews[game.igdb_id]?.content ? "Edit Review" : "Write Review"}
+              {userReviews[game.igdb_id]?.content ? "Edit your review" : "Share your thoughts"}
             </button>
           )}
         </div>
         
         {/* Rating Stars */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-surface-dark p-2 rounded-lg shadow-sm">
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -203,22 +219,25 @@ const GameSticky = ({ game }) => {
                   ${!user && "cursor-not-allowed opacity-50"}
                   ${isSubmitting && "cursor-wait opacity-70"}
                   ${star <= (hoverRating || userRating) 
-                    ? "text-primary hover:text-primary/90 scale-105" 
+                    ? "text-primary hover:text-primary/90 scale-110 drop-shadow-glow" 
                     : "text-gray-600 hover:text-gray-400"
                   }
                 `}
                 disabled={isSubmitting}
+                title={ratingLabels[star]}
               >
                 ★
               </button>
             ))}
           </div>
           
-          {(userRating > 0 || hoverRating > 0) && (
-            <div className="text-xs font-bold text-primary">
-              {ratingLabels[hoverRating || userRating]}
-            </div>
-          )}
+          <div className="text-xs font-bold mr-2">
+            {(userRating > 0 || hoverRating > 0) ? (
+              <span className="text-white">{ratingLabels[hoverRating || userRating]}</span>
+            ) : (
+              <span className="text-gray-400">Click to rate</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -298,7 +317,7 @@ const GameSticky = ({ game }) => {
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write your review here (optional)"
+                  placeholder="Share what you think about this game..."
                   className="w-full h-32 p-3 bg-gray-900 text-gray-100 border border-gray-800 rounded-md text-sm"
                 />
               </div>
