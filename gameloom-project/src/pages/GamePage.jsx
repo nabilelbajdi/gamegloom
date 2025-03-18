@@ -86,7 +86,7 @@ const GamePage = () => {
             standalone_expansions={game.standalone_expansions}
             seasons={game.seasons}
             packs={game.packs}
-            episodes={game.episodes}
+            editions={game.editions}
           />
           {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />
