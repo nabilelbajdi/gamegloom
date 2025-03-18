@@ -8,6 +8,7 @@ from . import schemas
 from ...settings import settings
 import requests
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -624,22 +625,81 @@ def get_games_by_ids(db: Session, game_ids: list):
     return db.query(Game).filter(Game.id.in_(game_ids)).all()
 
 def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
-    """Get games that match a specific theme slug"""
-    from ..models.game import Game
+    """Get games with a specific theme."""
+    theme_id = get_theme_id_by_slug(theme_slug)
+    if not theme_id:
+        return []
     
-    search_pattern = f"%{theme_slug}%"
-    theme_name = " ".join(word.capitalize() for word in theme_slug.replace("-", " ").split())
-    name_pattern = f"%{theme_name}%"
+    query = f"{IGDB_GAME_FIELDS} where themes = ({theme_id}) & version_parent = null & cover != null; limit {limit or 100};"
     
-    query = db.query(Game).filter(
-        (Game.themes.ilike(search_pattern) | Game.themes.ilike(name_pattern)) &
-        Game.total_rating.is_not(None)
-    ).order_by(Game.total_rating.desc().nulls_last())
-    
-    if limit:
-        query = query.limit(limit)
+    try:
+        # Sync with IGDB
+        asyncio.run(sync_games_from_igdb(db, query))
         
-    return query.all()
+        # Query games with this theme from the database
+        theme_name = next((theme['name'] for theme in THEME_CACHE if theme['id'] == theme_id), None)
+        if theme_name:
+            stmt = select(game.Game).where(game.Game.themes.like(f"%{theme_name}%")).order_by(game.Game.first_release_date.desc())
+            if limit:
+                stmt = stmt.limit(limit)
+            return db.execute(stmt).scalars().all()
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching games by theme: {str(e)}")
+        return []
+
+def fetch_time_to_beat(game_id: int) -> dict | None:
+    """Fetch time to beat data from IGDB for a specific game ID."""
+    try:
+        query = f"fields completely,count,game_id,hastily,normally; where game_id = {game_id};"
+        data = fetch_from_igdb(query=query, endpoint="game_time_to_beats")
+        
+        if data and len(data) > 0:
+            # Convert times from seconds to hours and minutes
+            time_data = data[0]
+            time_to_beat = {}
+            
+            if "hastily" in time_data and time_data["hastily"]:
+                seconds = time_data["hastily"]
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                time_to_beat["hastily"] = {
+                    "seconds": seconds,
+                    "hours": hours,
+                    "minutes": minutes,
+                    "formatted": f"{hours}h"
+                }
+                
+            if "normally" in time_data and time_data["normally"]:
+                seconds = time_data["normally"]
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                time_to_beat["normally"] = {
+                    "seconds": seconds,
+                    "hours": hours,
+                    "minutes": minutes,
+                    "formatted": f"{hours}h"
+                }
+                
+            if "completely" in time_data and time_data["completely"]:
+                seconds = time_data["completely"]
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                time_to_beat["completely"] = {
+                    "seconds": seconds,
+                    "hours": hours,
+                    "minutes": minutes,
+                    "formatted": f"{hours}h"
+                }
+                
+            if "count" in time_data:
+                time_to_beat["count"] = time_data["count"]
+                
+            return time_to_beat
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching time to beat data: {str(e)}")
+        return None
 
 def mark_game_as_deleted(db: Session, igdb_id: int) -> game.Game | None:
     """Mark a game as deleted in the database"""

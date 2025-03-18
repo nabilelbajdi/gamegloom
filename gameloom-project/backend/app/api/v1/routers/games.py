@@ -67,6 +67,16 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error starting editions and bundles fetch: {str(e)}")
     
+    # Fetch time to beat data
+    try:
+        time_to_beat = services.fetch_time_to_beat(db_game.igdb_id)
+        if time_to_beat:
+            db_game.time_to_beat = time_to_beat
+            db.commit()
+            db.refresh(db_game)
+    except Exception as e:
+        logger.error(f"Error fetching time to beat data: {str(e)}")
+    
     return db_game
 
 @router.get("/trending-games", response_model=List[schemas.Game])

@@ -115,6 +115,9 @@ class Game(Base):
     alternative_names: Mapped[list | None] = mapped_column(JSON, nullable=True)
     keywords: Mapped[list | None] = mapped_column(JSON, nullable=True)
     
+    # Time to beat data
+    time_to_beat: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="Time to beat data (hastily, normally, completely)")
+    
     raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Store full IGDB response
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
