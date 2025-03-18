@@ -91,6 +91,11 @@ class GameBase(BaseModel):
     remasters: Optional[List[Dict]] = None
     parent_game: Optional[Dict] = None
     bundles: Optional[List[Dict]] = None
+    ports: Optional[List[Dict]] = None
+    standalone_expansions: Optional[List[Dict]] = None
+    episodes: Optional[List[Dict]] = None
+    seasons: Optional[List[Dict]] = None
+    packs: Optional[List[Dict]] = None
     
     slug: Optional[str] = None
     game_status_id: Optional[int] = None

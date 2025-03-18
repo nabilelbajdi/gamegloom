@@ -59,6 +59,21 @@ class Game(Base):
     bundles: Mapped[list | None] = mapped_column(
         JSON, nullable=True, comment="List of bundles this game is a part of"
     )
+    ports: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of ports of this game"
+    )
+    standalone_expansions: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of standalone expansions of this game"
+    )
+    episodes: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of episodes of this game"
+    )
+    seasons: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of seasons of this game"
+    )
+    packs: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="List of packs/add-ons for this game"
+    )
     
     # New queryable fields
     slug: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
