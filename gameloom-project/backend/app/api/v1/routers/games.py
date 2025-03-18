@@ -55,6 +55,12 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
         except Exception as e:
             logger.error(f"Error starting similar games sync: {str(e)}")
     
+    # Fetch episodes, seasons and packs in the background
+    try:
+        asyncio.create_task(services.fetch_related_game_types(db, db_game.id))
+    except Exception as e:
+        logger.error(f"Error starting related game types fetch: {str(e)}")
+    
     return db_game
 
 @router.get("/trending-games", response_model=List[schemas.Game])

@@ -26,6 +26,8 @@ IGDB_GAME_FIELDS = """
            remakes.name, remakes.cover.image_id,
            remasters.name, remasters.cover.image_id,
            parent_game.name, parent_game.cover.image_id,
+           ports.name, ports.cover.image_id,
+           standalone_expansions.name, standalone_expansions.cover.image_id,
            slug, game_status, game_type,
            franchise.name, franchises.name,
            collections.name,
@@ -167,6 +169,35 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
             if igdb_data['parent_game'].get('cover', {}).get('image_id') else None
         }
     
+    # Process ports
+    ports = []
+    for port in igdb_data.get('ports', []):
+        if port.get('name'):
+            port_data = {
+                "id": port.get('id'),
+                "name": port.get('name'),
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{port['cover']['image_id']}.jpg"
+                if port.get('cover', {}).get('image_id') else None
+            }
+            ports.append(port_data)
+    
+    # Process standalone expansions
+    standalone_expansions = []
+    for exp in igdb_data.get('standalone_expansions', []):
+        if exp.get('name'):
+            exp_data = {
+                "id": exp.get('id'),
+                "name": exp.get('name'),
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{exp['cover']['image_id']}.jpg"
+                if exp.get('cover', {}).get('image_id') else None
+            }
+            standalone_expansions.append(exp_data)
+    
+    # Initialize empty arrays for special game types
+    episodes = []
+    seasons = []
+    packs = []
+    
     # Process franchise and franchises
     franchise = igdb_data.get('franchise', {}).get('name') if igdb_data.get('franchise') else None
     franchises = [f['name'] for f in igdb_data.get('franchises', []) if f.get('name')]
@@ -261,6 +292,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
     game_type_id = igdb_data.get('game_type')
     game_type_name = game_type_mapping.get(game_type_id) if game_type_id is not None else None
 
+    # Return the full game data
     return schemas.GameCreate(
         igdb_id=igdb_data['id'],
         name=igdb_data['name'],
@@ -291,6 +323,11 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         remasters=remasters,
         parent_game=parent_game,
         bundles=bundles,
+        ports=ports,
+        standalone_expansions=standalone_expansions,
+        episodes=episodes,
+        seasons=seasons,
+        packs=packs,
         slug=igdb_data.get('slug'),
         game_status_id=game_status_id,
         game_status_name=game_status_name,
@@ -591,3 +628,60 @@ def mark_game_as_deleted(db: Session, igdb_id: int) -> game.Game | None:
     db.commit()
     db.refresh(db_game)
     return db_game
+
+async def fetch_related_game_types(db: Session, game_id: int):
+    """
+    Fetch games that are episodes, seasons, or packs of the given game.
+    This runs asynchronously to avoid blocking the main request.
+    """
+    try:
+        # Get the game from DB
+        db_game = get_game_by_id(db, game_id)
+        if not db_game:
+            logger.error(f"Game with ID {game_id} not found when fetching related game types")
+            return
+            
+        game_types = {
+            6: "episodes",
+            7: "seasons",
+            13: "packs"
+        }
+        
+        # Fetch each type of related game
+        for type_id, field_name in game_types.items():
+            query = f"""
+                fields name, cover.image_id, slug;
+                where parent_game = {db_game.igdb_id} & game_type = {type_id};
+                limit 50;
+            """
+            
+            try:
+                # Fetch from IGDB
+                related_games = fetch_from_igdb(query=query)
+                
+                if related_games and len(related_games) > 0:
+                    # Process the results
+                    related_data = []
+                    for game in related_games:
+                        if game.get('name'):
+                            game_data = {
+                                "id": game.get('id'),
+                                "name": game.get('name'),
+                                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{game['cover']['image_id']}.jpg" 
+                                if game.get('cover', {}).get('image_id') else None,
+                                "slug": game.get('slug')
+                            }
+                            related_data.append(game_data)
+                    
+                    # Update the game in DB with these related games
+                    if related_data:
+                        setattr(db_game, field_name, related_data)
+                        db.commit()
+                        logger.info(f"Updated {len(related_data)} {field_name} for game {db_game.name}")
+            
+            except Exception as e:
+                logger.error(f"Error fetching {field_name} for game {db_game.name}: {str(e)}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Error in fetch_related_game_types: {str(e)}")
