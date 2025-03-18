@@ -96,6 +96,10 @@ class GameBase(BaseModel):
     episodes: Optional[List[Dict]] = None
     seasons: Optional[List[Dict]] = None
     packs: Optional[List[Dict]] = None
+    editions: Optional[List[Dict]] = None
+    in_bundles: Optional[List[Dict]] = None
+    version_parent: Optional[Dict] = None
+    version_title: Optional[str] = None
     
     slug: Optional[str] = None
     game_status_id: Optional[int] = None

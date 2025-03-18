@@ -74,6 +74,18 @@ class Game(Base):
     packs: Mapped[list | None] = mapped_column(
         JSON, nullable=True, comment="List of packs/add-ons for this game"
     )
+    editions: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="Different editions of this game"
+    )
+    in_bundles: Mapped[list | None] = mapped_column(
+        JSON, nullable=True, comment="Bundles that this game is included in"
+    )
+    version_parent: Mapped[dict | None] = mapped_column(
+        JSON, nullable=True, comment="Parent game if this is a specific edition"
+    )
+    version_title: Mapped[str | None] = mapped_column(
+        String, nullable=True, comment="Title of this edition (e.g., 'Gold Edition')"
+    )
     
     # New queryable fields
     slug: Mapped[str | None] = mapped_column(String, nullable=True, index=True)

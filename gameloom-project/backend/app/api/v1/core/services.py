@@ -28,6 +28,8 @@ IGDB_GAME_FIELDS = """
            parent_game.name, parent_game.cover.image_id,
            ports.name, ports.cover.image_id,
            standalone_expansions.name, standalone_expansions.cover.image_id,
+           version_parent.name, version_parent.cover.image_id,
+           version_title,
            slug, game_status, game_type,
            franchise.name, franchises.name,
            collections.name,
@@ -168,6 +170,23 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
             "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['parent_game']['cover']['image_id']}.jpg" 
             if igdb_data['parent_game'].get('cover', {}).get('image_id') else None
         }
+    
+    # Process version parent (for game editions)
+    version_parent = None
+    if igdb_data.get('version_parent', {}).get('name'):
+        version_parent = {
+            "id": igdb_data['version_parent'].get('id'),
+            "name": igdb_data['version_parent'].get('name'),
+            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['version_parent']['cover']['image_id']}.jpg" 
+            if igdb_data['version_parent'].get('cover', {}).get('image_id') else None
+        }
+    
+    # Get version title (for game editions)
+    version_title = igdb_data.get('version_title')
+    
+    # Initialize editions and in_bundles arrays
+    editions = []
+    in_bundles = []
     
     # Process ports
     ports = []
@@ -328,6 +347,10 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         episodes=episodes,
         seasons=seasons,
         packs=packs,
+        editions=editions,
+        in_bundles=in_bundles,
+        version_parent=version_parent,
+        version_title=version_title,
         slug=igdb_data.get('slug'),
         game_status_id=game_status_id,
         game_status_name=game_status_name,
@@ -685,3 +708,91 @@ async def fetch_related_game_types(db: Session, game_id: int):
                 
     except Exception as e:
         logger.error(f"Error in fetch_related_game_types: {str(e)}")
+
+async def fetch_game_editions_and_bundles(db: Session, game_id: int):
+    """
+    Fetch different editions of a game and bundles that include this game.
+    This runs asynchronously to avoid blocking the main request.
+    """
+    try:
+        # Get the game from DB
+        db_game = get_game_by_id(db, game_id)
+        if not db_game:
+            logger.error(f"Game with ID {game_id} not found when fetching game editions and bundles")
+            return
+        
+        # First fetch editions
+        try:
+            # If game has version_parent, it is an edition itself
+            if getattr(db_game, 'version_title', None):
+                logger.info(f"Game {db_game.name} is an edition with title: {db_game.version_title}")
+            
+            # Find editions where this game is the version_parent
+            editions_query = f"""
+                fields name, cover.image_id, slug, version_title, game_type;
+                where version_parent = {db_game.igdb_id};
+                limit 50;
+            """
+            
+            editions = fetch_from_igdb(query=editions_query)
+            
+            if editions and len(editions) > 0:
+                # Process the results
+                editions_data = []
+                for game in editions:
+                    if game.get('name'):
+                        edition_data = {
+                            "id": game.get('id'),
+                            "name": game.get('name'),
+                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{game['cover']['image_id']}.jpg" 
+                            if game.get('cover', {}).get('image_id') else None,
+                            "slug": game.get('slug'),
+                            "edition_title": game.get('version_title', "Edition")
+                        }
+                        editions_data.append(edition_data)
+                
+                # Update the game in DB with editions data
+                if editions_data:
+                    db_game.editions = editions_data
+                    db.commit()
+                    logger.info(f"Updated {len(editions_data)} editions for game {db_game.name}")
+        
+        except Exception as e:
+            logger.error(f"Error fetching editions for game {db_game.name}: {str(e)}")
+        
+        # Second, fetch bundles that include this game
+        try:
+            # Query bundles that include this game
+            bundles_query = f"""
+                fields name, cover.image_id, slug, games.name, games.cover.image_id;
+                where games = [{db_game.igdb_id}] & id != {db_game.igdb_id};
+                limit 50;
+            """
+            
+            bundles = fetch_from_igdb(query=bundles_query)
+            
+            if bundles and len(bundles) > 0:
+                # Process the results
+                bundles_data = []
+                for bundle in bundles:
+                    if bundle.get('name'):
+                        bundle_data = {
+                            "id": bundle.get('id'),
+                            "name": bundle.get('name'),
+                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{bundle['cover']['image_id']}.jpg" 
+                            if bundle.get('cover', {}).get('image_id') else None,
+                            "slug": bundle.get('slug')
+                        }
+                        bundles_data.append(bundle_data)
+                
+                # Update the game in DB with bundles data
+                if bundles_data:
+                    db_game.in_bundles = bundles_data
+                    db.commit()
+                    logger.info(f"Updated {len(bundles_data)} bundles containing {db_game.name}")
+        
+        except Exception as e:
+            logger.error(f"Error fetching bundles for game {db_game.name}: {str(e)}")
+                
+    except Exception as e:
+        logger.error(f"Error in fetch_game_editions_and_bundles: {str(e)}")
