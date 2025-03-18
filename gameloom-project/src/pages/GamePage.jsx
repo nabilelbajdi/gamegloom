@@ -82,6 +82,11 @@ const GamePage = () => {
             remakes={game.remakes}
             remasters={game.remasters}
             bundles={game.bundles}
+            ports={game.ports}
+            standalone_expansions={game.standalone_expansions}
+            seasons={game.seasons}
+            packs={game.packs}
+            episodes={game.episodes}
           />
           {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />

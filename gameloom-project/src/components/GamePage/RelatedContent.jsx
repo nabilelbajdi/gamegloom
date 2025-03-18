@@ -1,16 +1,30 @@
 import React, { memo, useState } from "react";
-import { BookOpen, Package, Gift, ChevronRight, ChevronLeft } from "lucide-react";
+import { BookOpen, Package, Gift, Bookmark, Layers, Anchor, Calendar, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import RelatedGameCover from "./RelatedGameCover";
 
 const ITEMS_PER_PAGE = 5;
 
-const RelatedContent = memo(({ dlcs, expansions, remakes, remasters, bundles }) => {
+const RelatedContent = memo(({ 
+  dlcs = [], 
+  expansions = [], 
+  remakes = [], 
+  remasters = [], 
+  bundles = [],
+  ports = [],
+  standalone_expansions = [],
+  seasons = [],
+  packs = []
+}) => {
   const tabs = [
     { id: 'dlcs', title: 'DLCs', icon: <Gift className="w-4 h-4 mr-1" />, content: dlcs },
     { id: 'expansions', title: 'Expansions', icon: <BookOpen className="w-4 h-4 mr-1" />, content: expansions },
     { id: 'bundles', title: 'Game Editions & Bundles', icon: <Package className="w-4 h-4 mr-1" />, content: bundles },
-    { id: 'remakes', title: 'Remakes', icon: <BookOpen className="w-4 h-4 mr-1" />, content: remakes },
-    { id: 'remasters', title: 'Remasters', icon: <BookOpen className="w-4 h-4 mr-1" />, content: remasters },
+    { id: 'remakes', title: 'Remakes', icon: <Bookmark className="w-4 h-4 mr-1" />, content: remakes },
+    { id: 'remasters', title: 'Remasters', icon: <Copy className="w-4 h-4 mr-1" />, content: remasters },
+    { id: 'ports', title: 'Ports', icon: <Anchor className="w-4 h-4 mr-1" />, content: ports },
+    { id: 'standalone_expansions', title: 'Standalone Expansions', icon: <Layers className="w-4 h-4 mr-1" />, content: standalone_expansions },
+    { id: 'seasons', title: 'Seasons', icon: <Calendar className="w-4 h-4 mr-1" />, content: seasons },
+    { id: 'packs', title: 'Packs & Add-ons', icon: <Package className="w-4 h-4 mr-1" />, content: packs }
   ].filter(tab => tab.content && tab.content.length > 0);
 
   // Check if any related content exists
