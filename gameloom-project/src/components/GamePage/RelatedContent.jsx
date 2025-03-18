@@ -1,6 +1,7 @@
 import React, { memo, useState } from "react";
-import { BookOpen, Package, Gift, Bookmark, Layers, Anchor, Calendar, Copy, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Package, Gift, Bookmark, Layers, Anchor, Calendar, Copy, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import RelatedGameCover from "./RelatedGameCover";
+import TabNavigation from "../common/TabNavigation";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -13,18 +14,20 @@ const RelatedContent = memo(({
   ports = [],
   standalone_expansions = [],
   seasons = [],
-  packs = []
+  packs = [],
+  editions = []
 }) => {
   const tabs = [
     { id: 'dlcs', title: 'DLCs', icon: <Gift className="w-4 h-4 mr-1" />, content: dlcs },
     { id: 'expansions', title: 'Expansions', icon: <BookOpen className="w-4 h-4 mr-1" />, content: expansions },
-    { id: 'bundles', title: 'Game Editions & Bundles', icon: <Package className="w-4 h-4 mr-1" />, content: bundles },
+    { id: 'editions', title: 'Editions', icon: <Star className="w-4 h-4 mr-1" />, content: editions },
+    { id: 'bundles', title: 'Game Bundles', icon: <Package className="w-4 h-4 mr-1" />, content: bundles },
     { id: 'remakes', title: 'Remakes', icon: <Bookmark className="w-4 h-4 mr-1" />, content: remakes },
     { id: 'remasters', title: 'Remasters', icon: <Copy className="w-4 h-4 mr-1" />, content: remasters },
     { id: 'ports', title: 'Ports', icon: <Anchor className="w-4 h-4 mr-1" />, content: ports },
     { id: 'standalone_expansions', title: 'Standalone Expansions', icon: <Layers className="w-4 h-4 mr-1" />, content: standalone_expansions },
     { id: 'seasons', title: 'Seasons', icon: <Calendar className="w-4 h-4 mr-1" />, content: seasons },
-    { id: 'packs', title: 'Packs & Add-ons', icon: <Package className="w-4 h-4 mr-1" />, content: packs }
+    { id: 'packs', title: 'Add-ons', icon: <Package className="w-4 h-4 mr-1" />, content: packs }
   ].filter(tab => tab.content && tab.content.length > 0);
 
   // Check if any related content exists
@@ -39,27 +42,7 @@ const RelatedContent = memo(({
       <h2 className="text-2xl font-bold text-light mb-4">Related Content</h2>
       
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-800 mb-6">
-        {tabs.map(tab => (
-          <button 
-            key={tab.id}
-            className={`flex items-center px-4 py-2 text-sm font-medium rounded-t-md transition-colors cursor-pointer ${
-              activeTab === tab.id 
-                ? 'bg-surface-dark text-primary border-b-2 border-primary' 
-                : 'text-gray-400 hover:text-gray-300 hover:bg-surface-dark/70'
-            }`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.icon}
-            {tab.title}
-            {tab.content.length > 0 && (
-              <span className="ml-2 text-xs bg-surface-dark text-gray-400 px-2 py-0.5 rounded-full">
-                {tab.content.length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       {/* Active Tab Content */}
       {tabs.map(tab => (

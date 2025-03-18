@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Video, Image, Film, ChevronRight, ChevronLeft } from "lucide-react";
 import ImageGallery from "../common/ImageGallery";
+import TabNavigation from "../common/TabNavigation";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -35,27 +36,7 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
       <h2 className="text-2xl font-bold text-light mb-4">Media</h2>
       
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-800 mb-6">
-        {tabs.map(tab => (
-          <button 
-            key={tab.id}
-            className={`flex items-center px-4 py-2 text-sm font-medium rounded-t-md transition-colors cursor-pointer ${
-              activeTab === tab.id 
-                ? 'bg-surface-dark text-primary border-b-2 border-primary' 
-                : 'text-gray-400 hover:text-gray-300 hover:bg-surface-dark/70'
-            }`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.icon}
-            {tab.title}
-            {tab.content?.length > 0 && (
-              <span className="ml-2 text-xs bg-surface-dark text-gray-400 px-2 py-0.5 rounded-full">
-                {tab.content.length}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       {/* Media Content Sections */}
       {activeTab === 'videos' && videos && videos.length > 0 && (
@@ -98,7 +79,7 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
 const MediaSection = ({ type, items, openGallery }) => {
   return (
     <div>
-      <div className={`flex gap-4 overflow-x-auto pb-4 ${type !== 'videos' ? 'snap-x snap-mandatory' : ''}`}>
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
         {items.map((item, index) => (
           type === 'videos' ? (
             <iframe
@@ -107,17 +88,20 @@ const MediaSection = ({ type, items, openGallery }) => {
               height="180"
               src={item}
               title={`Video ${index + 1}`}
-              frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="rounded-lg shadow-md flex-shrink-0"
+              className="rounded-lg shadow-md flex-shrink-0 transition-transform hover:scale-[1.02] border-0"
             ></iframe>
           ) : (
-            <div key={index} className="flex-shrink-0 snap-center">
+            <div 
+              key={index} 
+              className="flex-shrink-0 snap-center transition-transform hover:scale-[1.02]"
+              style={{ width: '320px', height: '180px' }}
+            >
               <img
                 src={item}
                 alt={`${type.slice(0, -1)} ${index + 1}`}
-                className="w-80 h-45 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                className="w-full h-full object-cover rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => openGallery(items, index)}
               />
             </div>
