@@ -60,6 +60,8 @@ export const transformGameData = (game) => {
       totalRatingCount: game.total_rating_count || game.totalRatingCount,
       aggregatedRatingCount: game.aggregated_rating_count || game.aggregatedRatingCount,
       time_to_beat: game.time_to_beat,
-      game_type_name: game.game_type_name
+      game_type_name: game.game_type_name,
+      game_engines: game.game_engines,
+      language_supports: game.language_supports
     };
   };

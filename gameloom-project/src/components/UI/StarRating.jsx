@@ -1,6 +1,6 @@
 import React from "react";
 
-const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount }) => {
+const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount, firstReleaseDate }) => {
   // Helper function to format numbers (1200 -> 1.2k)
   const formatNumber = (num) => {
     if (!num) return "0";
@@ -11,15 +11,21 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount }) => {
       : `${thousands.toFixed(1).replace(/\.0$/, '')}k`;
   };
 
+  // Check if game is unreleased
+  const isUnreleased = firstReleaseDate && new Date(firstReleaseDate) > new Date();
+
   if (!rating || rating === "N/A") {
     return (
-      <div className="flex items-center">
-        <div className="text-gray-500 text-3xl flex">
-          {[...Array(5)].map((_, i) => (
-            <span key={i}>★</span>
-          ))}
-        </div>
-        <span className="text-base ml-2 text-gray-500">No ratings yet</span>
+      <div className="flex justify-end pt-1">
+        {isUnreleased ? (
+          <div className="bg-primary/10 text-primary px-2 py-1 rounded-md text-sm font-semibold border border-primary/20">
+            Unreleased
+          </div>
+        ) : (
+          <div className="bg-gray-700/30 text-gray-400 px-2 py-1 rounded-md text-sm font-semibold">
+            Not rated
+          </div>
+        )}
       </div>
     );
   }
