@@ -30,7 +30,7 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount }) => {
   const emptyStars = 5 - Math.ceil(numericRating);
 
   return (
-    <div className="bg-surface-dark/30 backdrop-blur-sm p-3 rounded-lg">
+    <div className="pt-1">
       {/* Stars and numeric rating */}
       <div className="flex items-center">
         <div className="text-3xl flex gap-1">
@@ -61,7 +61,7 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount }) => {
       </div>
       
       {/* Ratings counts */}
-      <div className="flex justify-center gap-4 mt-1 text-sm">
+      <div className="flex justify-end gap-4 mt-1 text-sm">
         {totalRatingCount > 0 && (
           <div className="flex items-center text-gray-400">
             <span className="font-semibold text-gray-300">{formatNumber(totalRatingCount)}</span>

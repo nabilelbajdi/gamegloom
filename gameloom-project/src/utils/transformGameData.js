@@ -52,10 +52,14 @@ export const transformGameData = (game) => {
       versionParent: game.version_parent || null,
       versionTitle: game.version_title || null,
       developers: game.developers,
+      publishers: game.publishers,
+      franchise: game.franchise,
       gameModes: game.game_modes || game.gameModes,
       playerPerspectives: game.player_perspectives || game.playerPerspectives,
       themes: game.themes,
       totalRatingCount: game.total_rating_count || game.totalRatingCount,
-      aggregatedRatingCount: game.aggregated_rating_count || game.aggregatedRatingCount
+      aggregatedRatingCount: game.aggregated_rating_count || game.aggregatedRatingCount,
+      time_to_beat: game.time_to_beat,
+      game_type_name: game.game_type_name
     };
   };
