@@ -326,3 +326,40 @@ class UserActivityResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# User List schemas
+class UserListBase(BaseModel):
+    """Base schema for user lists."""
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+class UserListCreate(UserListBase):
+    """Schema for creating a user list."""
+    pass
+
+class UserListUpdate(BaseModel):
+    """Schema for updating a user list."""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+class UserList(UserListBase):
+    """Schema for returning a user list."""
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+    games: List[GameBasicInfo] = []
+
+    class Config:
+        from_attributes = True
+
+class UserListsResponse(BaseModel):
+    """Schema for returning all user lists."""
+    lists: List[UserList] = []
+
+    class Config:
+        from_attributes = True
+
+class AddGameToListRequest(BaseModel):
+    """Schema for adding a game to a user list."""
+    game_id: int

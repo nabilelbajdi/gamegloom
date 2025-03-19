@@ -8,6 +8,7 @@ class GameStatus(str, Enum):
     WANT_TO_PLAY = "want_to_play"
     PLAYING = "playing"
     PLAYED = "played"
+    IN_LIST = "in_list"
 
 class UserGame(Base):
     __tablename__ = "user_games"
