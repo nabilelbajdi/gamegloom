@@ -427,3 +427,142 @@ export const fetchUserActivities = async (limit = 10) => {
     return { activities: [] };
   }
 };
+
+// User List API Functions
+export const createUserList = async (name, description = null) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      name,
+      description
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create list");
+  }
+
+  return await response.json();
+};
+
+export const getUserLists = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch lists");
+  }
+
+  return await response.json();
+};
+
+export const getUserList = async (listId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch list");
+  }
+
+  return await response.json();
+};
+
+export const updateUserList = async (listId, name = null, description = null) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      name,
+      description
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update list");
+  }
+
+  return await response.json();
+};
+
+export const deleteUserList = async (listId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete list");
+  }
+
+  return await response.json();
+};
+
+export const addGameToList = async (listId, gameId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists/${listId}/games`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      game_id: gameId
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to add game to list");
+  }
+
+  return await response.json();
+};
+
+export const removeGameFromList = async (listId, gameId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-lists/${listId}/games/${gameId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to remove game from list");
+  }
+
+  return await response.json();
+};
