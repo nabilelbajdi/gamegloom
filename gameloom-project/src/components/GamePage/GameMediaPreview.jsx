@@ -11,7 +11,7 @@ const GameMediaPreview = ({ screenshots = [], trailer }) => {
   useEffect(() => {
     if (trailer) {
       const url = new URL(trailer);
-      url.searchParams.set("autoplay", "1");
+      url.searchParams.set("autoplay", "0");
       url.searchParams.set("mute", "1");
       setTrailerUrl(url.toString());
     }
@@ -36,9 +36,8 @@ const GameMediaPreview = ({ screenshots = [], trailer }) => {
             height="400"
             src={trailerUrl}
             title="Game Trailer"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            autoPlay
             muted
             className="rounded-lg shadow-md border-0"
           ></iframe>
@@ -56,9 +55,8 @@ const GameMediaPreview = ({ screenshots = [], trailer }) => {
                 height="100%"
                 src={trailerUrl}
                 title="Game Trailer"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                autoPlay
                 muted
                 className="rounded-lg shadow-md h-full border-0"
               ></iframe>

@@ -1,6 +1,7 @@
 // src/components/GamePage/GameSticky.jsx
 import React, { useState, useEffect } from "react";
 import { Edit, Trash2, List } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 import useReviewStore from "../../store/useReviewStore";
@@ -273,43 +274,32 @@ const GameSticky = ({ game }) => {
         lists={lists}
       />
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div ref={deleteModalRef} className="bg-surface-dark p-5 rounded-lg max-w-sm w-full">
-            <h3 className="text-base font-bold mb-3">Delete Rating</h3>
-            <p className="text-sm text-gray-300 mb-4">
-              Are you sure you want to delete your rating for this game?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteReview}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Review Modal */}
       {showReviewModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div ref={reviewModalRef} className="bg-surface-dark p-5 rounded-lg max-w-lg w-full">
+        <motion.div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <motion.div 
+            ref={reviewModalRef} 
+            className="bg-surface-dark p-4 rounded-lg max-w-lg w-full border border-gray-800/50 shadow-xl"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold">Your Review</h3>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit className="w-5 h-5 text-primary" />
+                Your Review
+              </h3>
               <button 
                 onClick={() => setShowReviewModal(false)}
-                className="p-1 rounded-full hover:bg-gray-800"
+                className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
               >
-                <Trash2 className="h-5 w-5 text-gray-400" />
+                &times;
               </button>
             </div>
             
@@ -346,12 +336,15 @@ const GameSticky = ({ game }) => {
                   )}
                 </div>
                 
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Share what you think about this game..."
-                  className="w-full h-32 p-3 bg-gray-900 text-gray-100 border border-gray-800 rounded-md text-sm"
-                />
+                <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Share what you think about this game..."
+                    className="flex-1 bg-transparent border-none text-sm text-white placeholder-gray-500 focus:outline-none resize-none"
+                    rows="4"
+                  />
+                </div>
               </div>
               
               {error && (
@@ -363,28 +356,76 @@ const GameSticky = ({ game }) => {
                 </div>
               )}
               
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-5">
                 <button
                   type="button"
                   onClick={() => setShowReviewModal(false)}
-                  className="px-4 py-2 text-sm font-medium"
+                  className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!userRating || isSubmitting}
-                  className={`
-                    px-4 py-2 bg-primary hover:bg-primary/90 text-black text-sm font-medium rounded-md
-                    ${(!userRating || isSubmitting) && "opacity-60 cursor-not-allowed"}
-                  `}
+                  className={`text-xs font-semibold ${!userRating || isSubmitting ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:text-primary/90 cursor-pointer'}`}
                 >
                   {isSubmitting ? "Saving..." : "Save Review"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <motion.div 
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <motion.div 
+            ref={deleteModalRef} 
+            className="bg-surface-dark p-4 rounded-lg max-w-sm w-full border border-gray-800/50 shadow-xl"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-[var(--color-want)]" />
+                Delete Rating
+              </h3>
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-300 mb-4">
+              Are you sure you want to delete your rating for this game?
+            </p>
+            
+            <div className="flex justify-end gap-5">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteReview}
+                className="text-xs font-semibold text-[var(--color-want)] hover:text-[var(--color-want)]/90 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );
