@@ -1,5 +1,6 @@
 import React from "react";
 import { createSlug } from "../../utils/stringUtils";
+import { ChevronRight } from "lucide-react";
 
 export const TABS = [
   { id: "all", label: "All Games", color: "primary" },
@@ -9,6 +10,10 @@ export const TABS = [
 ];
 
 const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists, setSelectedList, selectedList }) => {
+  // Get selected list name if any
+  const selectedListName = selectedList ? 
+    myLists.find(list => list.id === selectedList)?.name : null;
+    
   return (
     <div className="flex items-center overflow-x-auto hide-scrollbar flex-shrink-0 md:flex-nowrap">
       {TABS.map(tab => (
@@ -22,17 +27,29 @@ const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists,
           setActiveTab={setActiveTab}
         />
       ))}
-      <TabButton 
-        id="my_lists"
-        label="My Lists"
-        count={myLists.length}
-        color="primary"
-        activeTab={activeTab}
-        setActiveTab={(id) => {
-          setActiveTab(id);
-          setSelectedList(null);
-        }}
-      />
+      <div className="flex items-center">
+        <TabButton 
+          id="my_lists"
+          label="My Lists"
+          count={myLists.length}
+          color="primary"
+          activeTab={activeTab}
+          setActiveTab={(id) => {
+            setActiveTab(id);
+            setSelectedList(null);
+          }}
+        />
+        
+        {/* Show selected list name if any */}
+        {activeTab === "my_lists" && selectedListName && (
+          <div className="flex items-center text-gray-300 ml-2">
+            <ChevronRight className="h-4 w-4 text-gray-500" />
+            <span className="max-w-[150px] truncate text-sm ml-1" title={selectedListName}>
+              {selectedListName}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -111,7 +111,9 @@ export const EmptyListGames = ({ listName }) => {
       <div className="w-16 h-16 bg-surface-dark/60 rounded-full flex items-center justify-center mb-4">
         <Heart className="w-8 h-8 text-light/70" />
       </div>
-      <h3 className="text-2xl font-semibold text-light mb-2">No Games in {listName}</h3>
+      <h3 className="text-2xl font-semibold text-light mb-2">
+        No Games in <span className="inline-block max-w-[250px] truncate align-bottom" title={listName}>{listName}</span>
+      </h3>
       <p className="text-light/70 max-w-md mb-6">
         Add games to this list from any game page.
       </p>

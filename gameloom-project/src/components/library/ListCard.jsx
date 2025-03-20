@@ -191,7 +191,7 @@ const ListCard = ({
         onClick={() => onSelectList(list.id)}
       >
         <div className="flex items-center justify-between">
-          <h4 className="font-bold text-light text-lg group-hover:text-primary transition-colors">
+          <h4 className="font-bold text-light text-lg group-hover:text-primary transition-colors truncate max-w-[75%]" title={list.name}>
             {list.name}
           </h4>
           <div className="flex items-center gap-1">
