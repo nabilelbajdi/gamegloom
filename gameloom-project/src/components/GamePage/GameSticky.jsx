@@ -1,5 +1,5 @@
 // src/components/GamePage/GameSticky.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Edit, Trash2, List } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
@@ -7,6 +7,7 @@ import useReviewStore from "../../store/useReviewStore";
 import useUserListStore from "../../store/useUserListStore";
 import GameCover from "../game/GameCover";
 import ListSelectionModal from "../game/ListSelectionModal";
+import useClickOutside from "../../hooks/useClickOutside";
 
 const GameSticky = ({ game }) => {
   const [userRating, setUserRating] = useState(0);
@@ -18,6 +19,8 @@ const GameSticky = ({ game }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [content, setContent] = useState("");
   const [showListsModal, setShowListsModal] = useState(false);
+  const reviewModalRef = useClickOutside(() => setShowReviewModal(false));
+  const deleteModalRef = useClickOutside(() => setShowDeleteConfirm(false));
   
   const { user } = useAuth();
   const { getGameStatus } = useUserGameStore();
@@ -273,7 +276,7 @@ const GameSticky = ({ game }) => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-surface-dark p-5 rounded-lg max-w-sm w-full">
+          <div ref={deleteModalRef} className="bg-surface-dark p-5 rounded-lg max-w-sm w-full">
             <h3 className="text-base font-bold mb-3">Delete Rating</h3>
             <p className="text-sm text-gray-300 mb-4">
               Are you sure you want to delete your rating for this game?
@@ -299,7 +302,7 @@ const GameSticky = ({ game }) => {
       {/* Review Modal */}
       {showReviewModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-surface-dark p-5 rounded-lg max-w-lg w-full">
+          <div ref={reviewModalRef} className="bg-surface-dark p-5 rounded-lg max-w-lg w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold">Your Review</h3>
               <button 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useUserListStore from '../../store/useUserListStore';
 import { createSlug } from '../../utils/stringUtils';
+import useClickOutside from '../../hooks/useClickOutside';
 
 const ListSelectionModal = ({ 
   isOpen, 
@@ -14,6 +15,8 @@ const ListSelectionModal = ({
   const [newListName, setNewListName] = useState('');
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [listActionLoading, setListActionLoading] = useState(false);
+  
+  const modalRef = useClickOutside(onClose);
   
   const { addGame, removeGame, createList } = useUserListStore();
   
@@ -70,6 +73,7 @@ const ListSelectionModal = ({
       transition={{ duration: 0.15 }}
     >
       <motion.div 
+        ref={modalRef}
         className="bg-surface-dark rounded-lg max-w-md w-full p-4 shadow-xl border border-gray-800/50"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
@@ -101,7 +105,7 @@ const ListSelectionModal = ({
                   className="flex-1 bg-transparent border-none text-sm text-white placeholder-gray-500 focus:outline-none"
                   autoFocus
                 />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-5">
                   <button
                     onClick={() => setIsCreatingList(false)}
                     className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
@@ -158,7 +162,7 @@ const ListSelectionModal = ({
                           <ListPlus className="w-5 h-5" />
                         )}
                       </div>
-                      <span className="text-sm font-semibold text-gray-200">{list.name}</span>
+                      <span className="text-sm font-semibold text-gray-200 truncate max-w-[220px]" title={list.name}>{list.name}</span>
                     </button>
                     <Link 
                       to={`/library?tab=my_lists&list=${listSlug}`}

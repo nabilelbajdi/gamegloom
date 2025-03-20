@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import useUserListStore from '../../store/useUserListStore';
 import ListCard from './ListCard';
 import { createSlug } from '../../utils/stringUtils';
+import useClickOutside from '../../hooks/useClickOutside';
 
 const UserLists = ({ onSelectList }) => {
   const { lists, createList, updateList, deleteList, isLoading } = useUserListStore();
@@ -237,6 +238,8 @@ const UserLists = ({ onSelectList }) => {
 
 // Modal for creating and editing lists
 const ListModal = ({ title, name, setName, description, setDescription, onSubmit, onCancel, submitText }) => {
+  const modalRef = useClickOutside(onCancel);
+  
   return (
     <motion.div 
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
@@ -246,6 +249,7 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
       transition={{ duration: 0.15 }}
     >
       <motion.div 
+        ref={modalRef}
         className="bg-surface-dark p-4 rounded-lg max-w-md w-full border border-gray-800/50 shadow-xl"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
@@ -315,6 +319,8 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
 
 // Delete confirmation modal
 const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
+  const modalRef = useClickOutside(onCancel);
+  
   return (
     <motion.div 
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
@@ -324,6 +330,7 @@ const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
       transition={{ duration: 0.15 }}
     >
       <motion.div 
+        ref={modalRef}
         className="bg-surface-dark p-4 rounded-lg max-w-sm w-full border border-gray-800/50 shadow-xl"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
