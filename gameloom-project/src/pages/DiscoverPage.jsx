@@ -53,7 +53,8 @@ const DiscoverPage = () => {
       setLoadingGenres(true);
       const results = {};
       
-      for (let i = 0; i < 4; i++) {
+      // Fetch data for the first 5 genres (ones that will be initially visible)
+      for (let i = 0; i < 5; i++) {
         if (i < genres.length) {
           const games = await fetchTopGamesForGenre(genres[i].slug, 3);
           results[genres[i].slug] = games;
@@ -72,7 +73,8 @@ const DiscoverPage = () => {
       setLoadingThemes(true);
       const results = {};
       
-      for (let i = 0; i < 4; i++) {
+      // Fetch data for the first 5 themes (ones that will be initially visible)
+      for (let i = 0; i < 5; i++) {
         if (i < themes.length) {
           const games = await fetchTopGamesForTheme(themes[i].slug, 3);
           results[themes[i].slug] = games;
@@ -87,8 +89,8 @@ const DiscoverPage = () => {
   }, [fetchTopGamesForTheme]);
 
   const handleGenreSlideChange = async (currentSlide) => {
-    const startIdx = currentSlide * 4;
-    const endIdx = Math.min(startIdx + 4, genres.length);
+    const startIdx = currentSlide * 5;
+    const endIdx = Math.min(startIdx + 5, genres.length);
     
     for (let i = startIdx; i < endIdx; i++) {
       const genreSlug = genres[i].slug;
@@ -104,8 +106,8 @@ const DiscoverPage = () => {
   };
   
   const handleThemeSlideChange = async (currentSlide) => {
-    const startIdx = currentSlide * 4;
-    const endIdx = Math.min(startIdx + 4, themes.length);
+    const startIdx = currentSlide * 5;
+    const endIdx = Math.min(startIdx + 5, themes.length);
     
     for (let i = startIdx; i < endIdx; i++) {
       const themeSlug = themes[i].slug;
@@ -133,9 +135,8 @@ const DiscoverPage = () => {
           {/* Genre Carousel */}
           <GenreCarousel
             title="Popular Genres"
-            genres={genres}
+            categories={genres}
             games={genreGames}
-            slidesToShow={4}
             viewAllLink="/genres"
             type="genre"
             loading={loadingGenres}
@@ -145,9 +146,8 @@ const DiscoverPage = () => {
           {/* Theme Carousel */}
           <GenreCarousel
             title="Popular Themes"
-            genres={themes}
+            categories={themes}
             games={themeGames}
-            slidesToShow={4}
             viewAllLink="/themes"
             type="theme"
             loading={loadingThemes}
