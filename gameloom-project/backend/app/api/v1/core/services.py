@@ -552,8 +552,7 @@ def get_games_by_genre(db: Session, genre_slug: str, limit: int = None):
     name_pattern = f"%{genre_name}%"
     
     query = db.query(Game).filter(
-        (Game.genres.ilike(search_pattern) | Game.genres.ilike(name_pattern)) &
-        Game.total_rating.is_not(None)
+        (Game.genres.ilike(search_pattern) | Game.genres.ilike(name_pattern))
     ).order_by(Game.total_rating.desc().nulls_last())
     
     if limit:
@@ -625,28 +624,21 @@ def get_games_by_ids(db: Session, game_ids: list):
     return db.query(Game).filter(Game.id.in_(game_ids)).all()
 
 def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
-    """Get games with a specific theme."""
-    theme_id = get_theme_id_by_slug(theme_slug)
-    if not theme_id:
-        return []
+    """Get games that match a specific theme slug"""
+    from ..models.game import Game
     
-    query = f"{IGDB_GAME_FIELDS} where themes = ({theme_id}) & version_parent = null & cover != null; limit {limit or 100};"
+    search_pattern = f"%{theme_slug}%"
+    theme_name = " ".join(word.capitalize() for word in theme_slug.replace("-", " ").split())
+    name_pattern = f"%{theme_name}%"
     
-    try:
-        # Sync with IGDB
-        asyncio.run(sync_games_from_igdb(db, query))
+    query = db.query(Game).filter(
+        (Game.themes.ilike(search_pattern) | Game.themes.ilike(name_pattern))
+    ).order_by(Game.total_rating.desc().nulls_last())
+    
+    if limit:
+        query = query.limit(limit)
         
-        # Query games with this theme from the database
-        theme_name = next((theme['name'] for theme in THEME_CACHE if theme['id'] == theme_id), None)
-        if theme_name:
-            stmt = select(game.Game).where(game.Game.themes.like(f"%{theme_name}%")).order_by(game.Game.first_release_date.desc())
-            if limit:
-                stmt = stmt.limit(limit)
-            return db.execute(stmt).scalars().all()
-        return []
-    except Exception as e:
-        logger.error(f"Error fetching games by theme: {str(e)}")
-        return []
+    return query.all()
 
 def fetch_time_to_beat(game_id: int) -> dict | None:
     """Fetch time to beat data from IGDB for a specific game ID."""
