@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useUserGameStore from "../store/useUserGameStore";
+import useUserListStore from "../store/useUserListStore";
 import LibraryHeader from "../components/library/LibraryHeader";
 import LibraryTabs from "../components/library/LibraryTabs";
 import GameLibraryGrid from "../components/library/GameLibraryGrid";
 import LoadingState from "../components/library/LoadingState";
-import { EmptyLibrary } from "../components/library/EmptyState";
+import { EmptyLibrary, EmptyListGames } from "../components/library/EmptyState";
+import UserLists from "../components/library/UserLists";
 import ScrollToTop from "../components/common/ScrollToTop";
 import SearchInput from "../components/common/SearchInput";
 import SortDropdown from "../components/common/SortDropdown";
@@ -15,10 +17,12 @@ import FilterPanel from "../components/common/FilterPanel";
 import ViewToggle from "../components/common/ViewToggle";
 import ActiveFilters from "../components/common/ActiveFilters";
 import { gamePassesAllFilters } from "../utils/filterUtils";
+import { createSlug } from "../utils/stringUtils";
 
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
   const { collection, fetchCollection, isLoading } = useUserGameStore();
+  const { lists, fetchLists, listsLoading } = useUserListStore();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -27,7 +31,6 @@ const MyLibraryPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("default");
   const [viewMode, setViewMode] = useState("grid");
-  const [myLists, setMyLists] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
   
   // Filter states
@@ -44,7 +47,17 @@ const MyLibraryPage = () => {
     if (tabParam && ['all', 'want_to_play', 'playing', 'played', 'my_lists'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
-  }, [location.search]);
+    
+    // Handle list selection from URL parameter using slug
+    const listSlugParam = params.get('list');
+    if (listSlugParam && tabParam === 'my_lists' && lists.length > 0) {
+      // Find the list by comparing slugs
+      const foundList = lists.find(list => createSlug(list.name) === listSlugParam);
+      if (foundList) {
+        setSelectedList(foundList.id);
+      }
+    }
+  }, [location.search, lists]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -56,12 +69,25 @@ const MyLibraryPage = () => {
     }
   };
 
-  // Fetch user collection on mount
+  // Function to handle list selection with URL update
+  const handleListSelect = (listId) => {
+    setSelectedList(listId);
+    
+    // Find the list name and create a slug
+    const selectedList = lists.find(list => list.id === listId);
+    if (selectedList) {
+      const listSlug = createSlug(selectedList.name);
+      navigate(`/library?tab=my_lists&list=${listSlug}`, { replace: true });
+    }
+  };
+
+  // Fetch user collection and lists on mount
   useEffect(() => {
     if (user) {
       fetchCollection();
+      fetchLists();
     }
-  }, [user, fetchCollection]);
+  }, [user, fetchCollection, fetchLists]);
 
   // Calculate total games count
   const totalGames = collection ? (
@@ -184,7 +210,7 @@ const MyLibraryPage = () => {
   }
 
   // Loading state
-  if (loading || isLoading) {
+  if (loading || isLoading || listsLoading) {
     return <LoadingState />;
   }
 
@@ -209,7 +235,7 @@ const MyLibraryPage = () => {
         break;
       case "my_lists":
         if (selectedList) {
-          const list = myLists.find(list => list.id === selectedList);
+          const list = lists.find(list => list.id === selectedList);
           baseGames = list ? list.games || [] : [];
         }
         break;
@@ -248,6 +274,15 @@ const MyLibraryPage = () => {
     return baseGames.length;
   };
 
+  // Get the current list name if a list is selected
+  const getSelectedListName = () => {
+    if (selectedList) {
+      const list = lists.find(list => list.id === selectedList);
+      return list ? list.name : "";
+    }
+    return "";
+  };
+
   return (
     <div className="min-h-screen bg-dark flex flex-col">
       <LibraryHeader />
@@ -260,8 +295,9 @@ const MyLibraryPage = () => {
             setActiveTab={handleTabChange}
             collection={collection}
             totalGames={totalGames}
-            myLists={myLists}
-            setSelectedList={setSelectedList}
+            myLists={lists}
+            setSelectedList={handleListSelect}
+            selectedList={selectedList}
           />
         </div>
       </div>
@@ -269,7 +305,7 @@ const MyLibraryPage = () => {
       {/* Main Content Area */}
       <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
         <div className="container mx-auto px-4 py-6">
-          {totalGames === 0 ? (
+          {totalGames === 0 && activeTab !== "my_lists" ? (
             <EmptyLibrary />
           ) : (
             <div className="flex flex-col lg:flex-row gap-6">
@@ -277,94 +313,104 @@ const MyLibraryPage = () => {
               <div className="flex-1">
                 {/* Card Container */}
                 <div className="bg-surface-dark/90 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800/30 overflow-hidden">
-                  <div className="p-4 border-b border-gray-800/30">
-                    {/* Controls Section */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      {/* Games Count and Search Input */}
-                      <div className="flex items-center gap-3 order-1 sm:order-none">
-                        <div className="text-light/70 text-sm">
-                          <span className="font-semibold text-light">{getActiveGamesCount()}</span> Games
+                  {activeTab === "my_lists" && !selectedList ? (
+                    <div className="p-5">
+                      <UserLists onSelectList={handleListSelect} />
+                    </div>
+                  ) : activeTab === "my_lists" && selectedList && lists.find(list => list.id === selectedList)?.games?.length === 0 ? (
+                    <EmptyListGames listName={getSelectedListName()} />
+                  ) : (
+                    <>
+                      <div className="p-4 border-b border-gray-800/30">
+                        {/* Controls Section */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                          {/* Games Count and Search Input */}
+                          <div className="flex items-center gap-3 order-1 sm:order-none">
+                            <div className="text-light/70 text-sm">
+                              <span className="font-semibold text-light">{getActiveGamesCount()}</span> Games
+                            </div>
+                            
+                            {/* Search Input */}
+                            <SearchInput 
+                              value={searchQuery}
+                              onChange={setSearchQuery}
+                            />
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 order-0 sm:order-none">
+                            {/* Filter Dropdown - Only visible on mobile */}
+                            <div className="lg:hidden">
+                              <FilterDropdown
+                                allGenres={allGenres}
+                                allThemes={allThemes}
+                                allPlatforms={allPlatforms}
+                                allGameModes={allGameModes}
+                                allPlayerPerspectives={allPlayerPerspectives}
+                                activeGenres={genreFilters}
+                                activeThemes={themeFilters}
+                                activePlatforms={platformFilters}
+                                activeGameModes={gameModeFilters}
+                                activePlayerPerspectives={perspectiveFilters}
+                                minRating={minRatingFilter}
+                                onFilterChange={handleFilterChange}
+                              />
+                            </div>
+
+                            {/* Sort Dropdown */}
+                            <SortDropdown
+                              sortOption={sortOption}
+                              onSortChange={setSortOption}
+                            />
+
+                            {/* View Toggle */}
+                            <ViewToggle
+                              viewMode={viewMode}
+                              onViewChange={setViewMode}
+                            />
+                          </div>
                         </div>
                         
-                        {/* Search Input */}
-                        <SearchInput 
-                          value={searchQuery}
-                          onChange={setSearchQuery}
+                        {/* Active Filters Display */}
+                        <ActiveFilters
+                          genreFilters={genreFilters}
+                          themeFilters={themeFilters}
+                          platformFilters={platformFilters}
+                          gameModeFilters={gameModeFilters}
+                          perspectiveFilters={perspectiveFilters}
+                          minRating={minRatingFilter}
+                          onRemoveGenre={handleRemoveGenre}
+                          onRemoveTheme={handleRemoveTheme}
+                          onRemovePlatform={handleRemovePlatform}
+                          onRemoveGameMode={handleRemoveGameMode}
+                          onRemovePerspective={handleRemovePerspective}
+                          onRemoveRating={handleRemoveRating}
+                          onClearAll={handleClearAllFilters}
                         />
                       </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-2 order-0 sm:order-none">
-                        {/* Filter Dropdown - Only visible on mobile */}
-                        <div className="lg:hidden">
-                          <FilterDropdown
-                            allGenres={allGenres}
-                            allThemes={allThemes}
-                            allPlatforms={allPlatforms}
-                            allGameModes={allGameModes}
-                            allPlayerPerspectives={allPlayerPerspectives}
-                            activeGenres={genreFilters}
-                            activeThemes={themeFilters}
-                            activePlatforms={platformFilters}
-                            activeGameModes={gameModeFilters}
-                            activePlayerPerspectives={perspectiveFilters}
-                            minRating={minRatingFilter}
-                            onFilterChange={handleFilterChange}
-                          />
-                        </div>
-
-                        {/* Sort Dropdown */}
-                        <SortDropdown
-                          sortOption={sortOption}
-                          onSortChange={setSortOption}
-                        />
-
-                        {/* View Toggle */}
-                        <ViewToggle
+                      
+                      {/* Games Display */}
+                      <div className="p-5">
+                        <GameLibraryGrid 
+                          collection={collection}
+                          activeTab={activeTab}
+                          selectedList={selectedList}
+                          myLists={lists}
+                          searchQuery={searchQuery}
                           viewMode={viewMode}
-                          onViewChange={setViewMode}
+                          sortOption={sortOption}
+                          activeFilters={{
+                            genres: genreFilters,
+                            themes: themeFilters,
+                            platforms: platformFilters,
+                            gameModes: gameModeFilters,
+                            playerPerspectives: perspectiveFilters,
+                            minRating: minRatingFilter
+                          }}
                         />
                       </div>
-                    </div>
-                    
-                    {/* Active Filters Display */}
-                    <ActiveFilters
-                      genreFilters={genreFilters}
-                      themeFilters={themeFilters}
-                      platformFilters={platformFilters}
-                      gameModeFilters={gameModeFilters}
-                      perspectiveFilters={perspectiveFilters}
-                      minRating={minRatingFilter}
-                      onRemoveGenre={handleRemoveGenre}
-                      onRemoveTheme={handleRemoveTheme}
-                      onRemovePlatform={handleRemovePlatform}
-                      onRemoveGameMode={handleRemoveGameMode}
-                      onRemovePerspective={handleRemovePerspective}
-                      onRemoveRating={handleRemoveRating}
-                      onClearAll={handleClearAllFilters}
-                    />
-                  </div>
-                  
-                  {/* Games Display */}
-                  <div className="p-5">
-                    <GameLibraryGrid 
-                      collection={collection}
-                      activeTab={activeTab}
-                      selectedList={selectedList}
-                      myLists={myLists}
-                      searchQuery={searchQuery}
-                      viewMode={viewMode}
-                      sortOption={sortOption}
-                      activeFilters={{
-                        genres: genreFilters,
-                        themes: themeFilters,
-                        platforms: platformFilters,
-                        gameModes: gameModeFilters,
-                        playerPerspectives: perspectiveFilters,
-                        minRating: minRatingFilter
-                      }}
-                    />
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
               

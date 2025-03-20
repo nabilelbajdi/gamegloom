@@ -1,6 +1,6 @@
 import React from "react";
+import { createSlug } from "../../utils/stringUtils";
 
-// Define tabs for navigation
 export const TABS = [
   { id: "all", label: "All Games", color: "primary" },
   { id: "want_to_play", label: "Want to Play", color: "primary" },
@@ -8,7 +8,7 @@ export const TABS = [
   { id: "played", label: "Completed", color: "primary" }
 ];
 
-const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists, setSelectedList }) => {
+const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists, setSelectedList, selectedList }) => {
   return (
     <div className="flex items-center overflow-x-auto hide-scrollbar flex-shrink-0 md:flex-nowrap">
       {TABS.map(tab => (
@@ -22,17 +22,17 @@ const LibraryTabs = ({ activeTab, setActiveTab, collection, totalGames, myLists,
           setActiveTab={setActiveTab}
         />
       ))}
-      <button
-        onClick={() => {
-          setActiveTab("my_lists");
+      <TabButton 
+        id="my_lists"
+        label="My Lists"
+        count={myLists.length}
+        color="primary"
+        activeTab={activeTab}
+        setActiveTab={(id) => {
+          setActiveTab(id);
           setSelectedList(null);
         }}
-        className={`px-2.5 py-1.5 whitespace-nowrap text-sm font-semibold transition-colors cursor-pointer ${activeTab === "my_lists" 
-          ? "text-primary border-b-2 border-primary" 
-          : "text-gray-400 hover:text-gray-300"}`}
-      >
-        My Lists {myLists.length > 0 && <span className="ml-1 text-xs opacity-70">({myLists.length})</span>}
-      </button>
+      />
     </div>
   );
 };

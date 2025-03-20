@@ -145,19 +145,32 @@ const useGameStore = create((set, get) => ({
   },
 
   // Fetch Single Game Details
-  fetchGameDetails: async (igdbId) => {
-    if (get().gameDetails[igdbId]) return;
+  fetchGameDetails: async (identifier) => {
+    const gameDetails = get().gameDetails;
+    
+    // If identifier is a number (IGDB ID), check if we already have it
+    if (!isNaN(identifier)) {
+      const numericId = parseInt(identifier);
+      if (gameDetails[numericId]) return;
+    } else {
+      // If identifier is a slug, check if we have any game with this slug
+      const foundGame = Object.values(gameDetails).find(g => g.slug === identifier);
+      if (foundGame) return;
+    }
 
     try {
-      const data = await fetchGameDetails(igdbId);
+      const data = await fetchGameDetails(identifier);
       if (data) {
         const transformedData = transformGameData(data);
         set((state) => ({
-          gameDetails: { ...state.gameDetails, [igdbId]: transformedData },
+          gameDetails: { 
+            ...state.gameDetails, 
+            [data.igdb_id]: transformedData 
+          },
         }));
       }
     } catch (error) {
-      console.error(`Error fetching game ${igdbId} details:`, error);
+      console.error(`Error fetching game ${identifier} details:`, error);
     }
   },
 }));
