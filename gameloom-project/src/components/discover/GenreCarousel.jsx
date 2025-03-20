@@ -1,17 +1,14 @@
-import React, { memo, useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
-import GenreCard from "../../pages/discover/GenreCard";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getSliderSettings } from "../../utils/sliderConfig";
-import { ChevronLeft, ChevronRight, ChevronRight as ArrowRight } from "lucide-react";
+import GenreListCard from "./GenreListCard";
 
-const GenreCarousel = memo(({ 
-  genres, 
+const GenreCarousel = ({ 
   title, 
-  viewAllLink, 
-  maxGenres = 16,
-  slidesToShow = 4,
+  categories = [],
   games = {},
   type = "genre",
   loading = false,
@@ -20,10 +17,10 @@ const GenreCarousel = memo(({
   const sliderRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   
-  if (!genres || genres.length === 0) return null;
+  if (!categories || categories.length === 0) return null;
 
-  const displayedGenres = genres?.slice(0, maxGenres) ?? [];
-  const totalSlides = Math.ceil(displayedGenres.length / slidesToShow);
+  const slidesToShow = 5;
+  const totalSlides = Math.ceil(categories.length / slidesToShow);
   
   const handleAfterChange = useCallback((current) => {
     const newSlideIndex = Math.floor(current / slidesToShow);
@@ -32,7 +29,7 @@ const GenreCarousel = memo(({
   }, [slidesToShow, onSlideChange]);
   
   const settings = {
-    ...getSliderSettings(displayedGenres.length, slidesToShow),
+    ...getSliderSettings(categories.length, slidesToShow),
     arrows: false,
     dots: false,
     afterChange: handleAfterChange,
@@ -64,24 +61,13 @@ const GenreCarousel = memo(({
   };
 
   return (
-    <section className="mt-8">
-      {/* Section Title with Custom Navigation */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-light">{title}</h2>
-          {viewAllLink && (
-            <a 
-              href={viewAllLink} 
-              className="flex items-center text-xs text-gray-400 hover:text-primary transition-colors ml-3 mt-1 font-semibold"
-            >
-              <span>View all</span>
-              <ArrowRight size={14} className="ml-1" />
-            </a>
-          )}
-        </div>
+    <section className="mt-10">
+      {/* Section Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-light">{title}</h2>
         
-        {/* Custom Navigation Arrows */}
         <div className="flex items-center gap-2">
+          {/* Custom Navigation Arrows */}
           <button 
             onClick={handlePrev}
             className="w-8 h-8 rounded-full bg-surface-dark/60 backdrop-blur-sm flex items-center justify-center text-gray-200 hover:text-white hover:bg-primary/20 transition-all duration-200 shadow-sm cursor-pointer"
@@ -98,18 +84,18 @@ const GenreCarousel = memo(({
           </button>
         </div>
       </div>
-
+      
       {/* Slick Slider */}
       <div className="-mx-2">
         <Slider ref={sliderRef} {...settings}>
-          {displayedGenres.map((genre) => (
-            <div key={genre.slug} className="px-2">
-              <GenreCard 
-                title={genre.title} 
-                genreSlug={genre.slug} 
-                games={games[genre.slug] || []} 
+          {categories.map((category) => (
+            <div key={category.slug} className="px-2">
+              <GenreListCard 
+                title={category.title} 
+                slug={category.slug} 
+                games={games[category.slug] || []} 
                 type={type}
-                loading={loading || !games[genre.slug]}
+                loading={loading || !games[category.slug]}
               />
             </div>
           ))}
@@ -126,6 +112,6 @@ const GenreCarousel = memo(({
       )}
     </section>
   );
-});
+};
 
 export default GenreCarousel; 
