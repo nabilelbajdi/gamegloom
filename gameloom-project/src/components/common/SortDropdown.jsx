@@ -3,16 +3,14 @@ import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 
 const SORT_OPTIONS = [
   { value: "default", label: "Default" },
-  { value: "name-asc", label: "Name (A-Z)" },
-  { value: "name-desc", label: "Name (Z-A)" },
-  { value: "rating-high", label: "Rating (High to Low)" },
-  { value: "rating-low", label: "Rating (Low to High)" },
-  { value: "release-new", label: "Release Date (Newest)" },
-  { value: "release-old", label: "Release Date (Oldest)" },
+  { value: "name_asc", label: "Name (A-Z)" },
+  { value: "rating_high", label: "Rating (High to Low)" },
+  { value: "release_new", label: "Release Date (Newest)" },
+  { value: "added_new", label: "Date Added (Newest)" }
 ];
 
 const SortDropdown = ({
-  sortOption,
+  sortOption = "default",
   onSortChange
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +52,7 @@ const SortDropdown = ({
         <ArrowUpDown className="w-3.5 h-3.5" />
         <span>Sort by: {getCurrentSortLabel()}</span>
         <ChevronDown 
-          className={`w-3 h-3 ${isOpen ? "text-white" : "text-gray-500"} transition-transform ${isOpen ? "rotate-180" : ""}`} 
+          className={`w-3 h-3 ${isOpen ? "text-white" : "text-gray-500"} transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 

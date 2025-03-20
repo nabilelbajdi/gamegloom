@@ -28,7 +28,10 @@ export const getActiveGames = (collection, activeTab, selectedList, myLists, sea
     case "my_lists":
       if (selectedList) {
         const list = myLists.find(list => list.id === selectedList);
-        return list ? filterGamesBySearch(list.games || [], searchQuery) : [];
+        if (list && list.games) {
+          return filterGamesBySearch(list.games, searchQuery);
+        }
+        return [];
       }
       return [];
     default:
@@ -38,6 +41,8 @@ export const getActiveGames = (collection, activeTab, selectedList, myLists, sea
 
 // Sort games based on sort option
 export const sortGames = (games, sortOption) => {
+  if (!games) return [];
+
   switch (sortOption) {
     case "name-asc":
     case "name_asc":
@@ -47,16 +52,22 @@ export const sortGames = (games, sortOption) => {
       return [...games].sort((a, b) => b.name.localeCompare(a.name));
     case "rating-high":
     case "rating_high":
-      return [...games].sort((a, b) => (b.rating === "N/A" ? -1 : b.rating) - (a.rating === "N/A" ? -1 : a.rating));
+      return [...games].sort((a, b) => (b.rating || 0) - (a.rating || 0));
     case "rating-low":
     case "rating_low":
-      return [...games].sort((a, b) => (a.rating === "N/A" ? -1 : a.rating) - (b.rating === "N/A" ? -1 : b.rating));
+      return [...games].sort((a, b) => (a.rating || 0) - (b.rating || 0));
     case "release-old":
     case "release_old":
       return [...games].sort((a, b) => new Date(a.first_release_date || 0) - new Date(b.first_release_date || 0));
     case "release-new":
     case "release_new":
       return [...games].sort((a, b) => new Date(b.first_release_date || 0) - new Date(a.first_release_date || 0));
+    case "added-new":
+    case "added_new":
+      return [...games].sort((a, b) => new Date(b.added_at || 0) - new Date(a.added_at || 0));
+    case "added-old":
+    case "added_old":
+      return [...games].sort((a, b) => new Date(a.added_at || 0) - new Date(b.added_at || 0));
     default:
       return games;
   }

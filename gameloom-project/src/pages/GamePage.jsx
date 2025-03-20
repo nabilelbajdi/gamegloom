@@ -13,15 +13,21 @@ import ReviewList from "../components/reviews/ReviewList";
 const GamePage = () => {
   const { gameId } = useParams();
   const { gameDetails, fetchGameDetails } = useGameStore();
-  const { fetchCollection } = useUserGameStore();
+  const { fetchCollection, collection } = useUserGameStore();
+  const isLoggedIn = localStorage.getItem("token") !== null;
 
   useEffect(() => {
+    // Always fetch game details
     fetchGameDetails(gameId);
-    fetchCollection();
-  }, [fetchGameDetails, gameId, fetchCollection]);
+    
+    // Only fetch collection if the user is logged in
+    if (isLoggedIn) {
+      fetchCollection();
+    }
+  }, [fetchGameDetails, gameId, fetchCollection, isLoggedIn]);
 
-  const isNumber = !isNaN(gameId);
-  const game = isNumber
+  const isNumericId = !isNaN(gameId);
+  const game = isNumericId
     ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
     : Object.values(gameDetails).find(g => g.slug === gameId);
     

@@ -1,10 +1,12 @@
 // src/components/GamePage/GameSticky.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, List } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 import useReviewStore from "../../store/useReviewStore";
+import useUserListStore from "../../store/useUserListStore";
 import GameCover from "../game/GameCover";
+import ListSelectionModal from "../game/ListSelectionModal";
 
 const GameSticky = ({ game }) => {
   const [userRating, setUserRating] = useState(0);
@@ -15,14 +17,18 @@ const GameSticky = ({ game }) => {
   const [hasUserReview, setHasUserReview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [content, setContent] = useState("");
+  const [showListsModal, setShowListsModal] = useState(false);
   
   const { user } = useAuth();
   const { getGameStatus } = useUserGameStore();
   const { addReview, fetchUserReviewForGame, userReviews, updateReview, deleteReview } = useReviewStore();
+  const { lists, fetchLists } = useUserListStore();
+  
   const gameStatus = getGameStatus(game.id);
   
   useEffect(() => {
     if (user) {
+      fetchLists();
       const fetchUserReview = async () => {
         const userReview = await fetchUserReviewForGame(game.igdb_id);
         if (userReview) {
@@ -33,7 +39,7 @@ const GameSticky = ({ game }) => {
       
       fetchUserReview();
     }
-  }, [user, game.igdb_id]);
+  }, [user, game.igdb_id, fetchLists]);
 
   useEffect(() => {
     const currentReview = userReviews[game.igdb_id];
@@ -151,6 +157,10 @@ const GameSticky = ({ game }) => {
       setIsSubmitting(false);
     }
   };
+  
+  const isInAnyList = lists.some(list => 
+    list.games?.some(g => g.id === game.id)
+  );
 
   const ratingLabels = {
     1: "Poor",
@@ -161,7 +171,7 @@ const GameSticky = ({ game }) => {
   };
 
   return (
-    <div className="sticky top-24 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-6 mt-24 sm:mt-0 flex flex-col items-center">
+    <div className="sticky top-12 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-2 mt-12 sm:mt-0 flex flex-col items-center">
       {/* Game Cover */}
       <div className="w-full">
         <GameCover game={game} />
@@ -240,6 +250,25 @@ const GameSticky = ({ game }) => {
           </div>
         </div>
       </div>
+
+      {/* Lists Section */}
+      <div className="mt-2 pt-2 w-full border-t border-gray-800/30">
+        <button
+          onClick={() => user ? setShowListsModal(true) : null}
+          className={`w-full py-2 px-1 rounded-md text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${user ? 'bg-surface-dark text-primary hover:bg-surface-dark/90 cursor-pointer' : 'bg-gray-800/50 text-gray-400 cursor-not-allowed'}`}
+        >
+          <List className="w-3.5 h-3.5" />
+          {isInAnyList ? 'Manage Lists' : 'Add to List'}
+        </button>
+      </div>
+
+      {/* List Selection Modal */}
+      <ListSelectionModal
+        isOpen={showListsModal}
+        onClose={() => setShowListsModal(false)}
+        game={game}
+        lists={lists}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

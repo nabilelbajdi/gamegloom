@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Plus, Sparkles, FolderPlus } from "lucide-react";
+import { Plus, Library, List, Heart, Search } from "lucide-react";
 
 // Base empty state component
 const EmptyState = ({ title, description, icon: Icon, actionLabel, actionLink }) => (
@@ -22,15 +22,25 @@ const EmptyState = ({ title, description, icon: Icon, actionLabel, actionLink })
 );
 
 // Empty library component
-export const EmptyLibrary = () => (
-  <EmptyState 
-    title="Your library is empty"
-    description="Start building your game collection by discovering new games and adding them to your library."
-    icon={Sparkles}
-    actionLabel="Discover Games"
-    actionLink="/discover"
-  />
-);
+export const EmptyLibrary = () => {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-16 h-16 bg-surface-dark/60 rounded-full flex items-center justify-center mb-4">
+        <Library className="w-8 h-8 text-light/70" />
+      </div>
+      <h3 className="text-2xl font-semibold text-light mb-2">Your library is empty</h3>
+      <p className="text-light/70 max-w-md mb-6">
+        Start building your collection by adding games to your library.
+      </p>
+      <Link 
+        to="/discover" 
+        className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
+      >
+        Browse Games
+      </Link>
+    </div>
+  );
+};
 
 // Empty card component
 export const EmptyCard = () => (
@@ -52,15 +62,67 @@ export const EmptyCard = () => (
   </Link>
 );
 
-// Empty lists component
-export const EmptyLists = () => (
-  <EmptyState 
-    title="No Custom Lists Yet"
-    description="Create custom lists to organize your games in your own way."
-    icon={FolderPlus}
-    actionLabel="Create List"
-    actionLink="#"
-  />
-);
+// Empty search results 
+export const EmptySearch = ({ query }) => {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-16 h-16 bg-surface-dark/60 rounded-full flex items-center justify-center mb-4">
+        <Search className="w-8 h-8 text-light/70" />
+      </div>
+      <h3 className="text-xl font-semibold text-light mb-2">No games found</h3>
+      {query ? (
+        <p className="text-light/70 max-w-md">
+          We couldn't find any games matching "<span className="text-primary">{query}</span>".
+        </p>
+      ) : (
+        <p className="text-light/70 max-w-md">
+          No games match your current filters.
+        </p>
+      )}
+    </div>
+  );
+};
+
+// Empty lists state
+export const EmptyLists = () => {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-16 h-16 bg-surface-dark/60 rounded-full flex items-center justify-center mb-4">
+        <List className="w-8 h-8 text-light/70" />
+      </div>
+      <h3 className="text-2xl font-semibold text-light mb-2">No Lists Created</h3>
+      <p className="text-light/70 max-w-md mb-6">
+        Create your first list to organize your games however you want.
+      </p>
+      <button 
+        className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors flex items-center gap-2"
+      >
+        <Plus size={18} />
+        Create a List
+      </button>
+    </div>
+  );
+};
+
+// Empty list games state
+export const EmptyListGames = ({ listName }) => {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="w-16 h-16 bg-surface-dark/60 rounded-full flex items-center justify-center mb-4">
+        <Heart className="w-8 h-8 text-light/70" />
+      </div>
+      <h3 className="text-2xl font-semibold text-light mb-2">No Games in {listName}</h3>
+      <p className="text-light/70 max-w-md mb-6">
+        Add games to this list from any game page.
+      </p>
+      <Link 
+        to="/discover" 
+        className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
+      >
+        Browse Games
+      </Link>
+    </div>
+  );
+};
 
 export default EmptyState; 
