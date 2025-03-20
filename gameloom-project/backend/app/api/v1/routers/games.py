@@ -49,33 +49,41 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
                     raise HTTPException(status_code=404, detail=f"Game with slug '{slug}' not found")
                 raise HTTPException(status_code=500, detail=str(e))
     
-    if db_game and db_game.similar_games:
+    needs_update = True
+    if db_game and db_game.updated_at:
+        last_update = db_game.updated_at
+        current_time = datetime.utcnow()
+        time_difference = current_time - last_update
+        # Skip background updates if updated in the last 24 hours
+        if time_difference.total_seconds() < 86400:
+            needs_update = False
+    
+    # Only run background update tasks if needed
+    if needs_update:
+        if db_game and db_game.similar_games:
+            try:
+                asyncio.create_task(services.sync_similar_games(db, db_game.id))
+            except Exception as e:
+                logger.error(f"Error starting similar games sync: {str(e)}")
+        
         try:
-            asyncio.create_task(services.sync_similar_games(db, db_game.id))
+            asyncio.create_task(services.fetch_related_game_types(db, db_game.id))
         except Exception as e:
-            logger.error(f"Error starting similar games sync: {str(e)}")
-    
-    # Fetch episodes, seasons and packs in the background
-    try:
-        asyncio.create_task(services.fetch_related_game_types(db, db_game.id))
-    except Exception as e:
-        logger.error(f"Error starting related game types fetch: {str(e)}")
-    
-    # Fetch game editions and bundles that include this game
-    try:
-        asyncio.create_task(services.fetch_game_editions_and_bundles(db, db_game.id))
-    except Exception as e:
-        logger.error(f"Error starting editions and bundles fetch: {str(e)}")
-    
-    # Fetch time to beat data
-    try:
-        time_to_beat = services.fetch_time_to_beat(db_game.igdb_id)
-        if time_to_beat:
-            db_game.time_to_beat = time_to_beat
-            db.commit()
-            db.refresh(db_game)
-    except Exception as e:
-        logger.error(f"Error fetching time to beat data: {str(e)}")
+            logger.error(f"Error starting related game types fetch: {str(e)}")
+        
+        try:
+            asyncio.create_task(services.fetch_game_editions_and_bundles(db, db_game.id))
+        except Exception as e:
+            logger.error(f"Error starting editions and bundles fetch: {str(e)}")
+        
+        try:
+            time_to_beat = services.fetch_time_to_beat(db_game.igdb_id)
+            if time_to_beat:
+                db_game.time_to_beat = time_to_beat
+                db.commit()
+                db.refresh(db_game)
+        except Exception as e:
+            logger.error(f"Error fetching time to beat data: {str(e)}")
     
     return db_game
 
