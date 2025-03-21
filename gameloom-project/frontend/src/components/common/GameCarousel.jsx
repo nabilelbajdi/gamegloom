@@ -17,17 +17,17 @@ const GameCarousel = memo(({
 }) => {
   const sliderRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const handleAfterChange = useCallback((current) => {
+    const newSlideIndex = Math.floor(current / slidesToShow);
+    setCurrentSlide(newSlideIndex);
+  }, [slidesToShow]);
 
   if (!games) return null;
   if (games.length === 0) return null;
 
   const displayedGames = games?.slice(0, maxGames) ?? [];
   const totalSlides = Math.ceil(displayedGames.length / slidesToShow);
-  
-  const handleAfterChange = useCallback((current) => {
-    const newSlideIndex = Math.floor(current / slidesToShow);
-    setCurrentSlide(newSlideIndex);
-  }, [slidesToShow]);
   
   const settings = {
     ...getSliderSettings(displayedGames.length, slidesToShow),

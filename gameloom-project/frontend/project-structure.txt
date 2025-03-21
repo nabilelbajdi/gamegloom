@@ -1,0 +1,166 @@
+.
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── project-structure.txt
+├── public
+│   ├── images
+│   │   ├── avatars
+│   │   │   ├── 50c28ad6663f488daf3d733786efce60.JPG
+│   │   │   ├── cd8ad467d7b24f29bcb7fae6dd81bde3.png
+│   │   │   ├── fc5ae84b51cc4b68b9844e7a2207a161.webp
+│   │   │   └── ffe4e86b5bc748cdab270d0ecf60622f.jpg
+│   │   ├── default-avatar.svg
+│   │   ├── emerald.jpg
+│   │   ├── fallback.jpg
+│   │   └── logo.svg
+│   └── videos
+│       ├── hero-video-dark.mp4
+│       └── hero-video-light.mp4
+├── src
+│   ├── App.jsx
+│   ├── api.js
+│   ├── assets
+│   │   ├── icons
+│   │   │   ├── favicon.png
+│   │   │   ├── globe.svg
+│   │   │   └── search.svg
+│   │   └── images
+│   │       ├── avatars
+│   │       │   ├── diablo-avatar.jpg
+│   │       │   ├── raven.jpeg
+│   │       │   ├── tyrande.png
+│   │       │   └── winton.png
+│   │       └── game-covers
+│   │           ├── baldurs-gate-3.png
+│   │           ├── cyberpunk2077.jpg
+│   │           ├── elden-ring.jpg
+│   │           ├── gta6.png
+│   │           ├── last-of-us-2.png
+│   │           ├── marvel-rivals.jpg
+│   │           ├── overwatch.jpg
+│   │           ├── poe2.jpg
+│   │           ├── resident-evil-4.jpg
+│   │           └── witcher3.jpg
+│   ├── components
+│   │   ├── GamePage
+│   │   │   ├── GameDetails.jsx
+│   │   │   ├── GameMedia.jsx
+│   │   │   ├── GameMediaPreview.jsx
+│   │   │   ├── GameSticky.jsx
+│   │   │   ├── RelatedContent.jsx
+│   │   │   ├── RelatedGameCover.jsx
+│   │   │   └── SimilarGames.jsx
+│   │   ├── UI
+│   │   │   ├── Button.jsx
+│   │   │   ├── Icon.jsx
+│   │   │   ├── Logo.jsx
+│   │   │   └── StarRating.jsx
+│   │   ├── common
+│   │   │   ├── ActiveFilters.jsx
+│   │   │   ├── FilterDropdown.jsx
+│   │   │   ├── FilterPanel.jsx
+│   │   │   ├── GameCarousel.jsx
+│   │   │   ├── GameGrid.jsx
+│   │   │   ├── GameListCard.jsx
+│   │   │   ├── GamesList.jsx
+│   │   │   ├── ImageGallery.jsx
+│   │   │   ├── ScrollToTop.jsx
+│   │   │   ├── SearchInput.jsx
+│   │   │   ├── SortDropdown.jsx
+│   │   │   ├── TabNavigation.jsx
+│   │   │   ├── TruncatedText.jsx
+│   │   │   └── ViewToggle.jsx
+│   │   ├── discover
+│   │   │   ├── CategoryHeader.jsx
+│   │   │   ├── GamesGrid.jsx
+│   │   │   ├── GenreCarousel.jsx
+│   │   │   └── GenreListCard.jsx
+│   │   ├── game
+│   │   │   ├── ActivityFeedGameCover.jsx
+│   │   │   ├── GameCard.jsx
+│   │   │   ├── GameCardSimple.jsx
+│   │   │   ├── GameCardStatus.jsx
+│   │   │   ├── GameCover.jsx
+│   │   │   ├── GridGameCard.jsx
+│   │   │   └── ListSelectionModal.jsx
+│   │   ├── home
+│   │   │   ├── AnticipatedGames.jsx
+│   │   │   ├── GameSection.jsx
+│   │   │   ├── HeroSection.jsx
+│   │   │   ├── HighlyRatedGames.jsx
+│   │   │   ├── JoinCommunity.jsx
+│   │   │   ├── LatestGames.jsx
+│   │   │   ├── RecentReviewCard.jsx
+│   │   │   ├── ReviewedGames.jsx
+│   │   │   └── TrendingGames.jsx
+│   │   ├── layout
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   └── Navbar.jsx
+│   │   ├── library
+│   │   │   ├── EmptyState.jsx
+│   │   │   ├── GameLibraryGrid.jsx
+│   │   │   ├── LibraryHeader.jsx
+│   │   │   ├── LibraryTabs.jsx
+│   │   │   ├── LibraryUtils.jsx
+│   │   │   ├── ListCard.jsx
+│   │   │   ├── LoadingState.jsx
+│   │   │   └── UserLists.jsx
+│   │   ├── profile
+│   │   │   ├── ActivityFeed.jsx
+│   │   │   ├── AvatarUpload.jsx
+│   │   │   ├── GameProgress.jsx
+│   │   │   ├── ProfileBio.jsx
+│   │   │   ├── ProfileHeader.jsx
+│   │   │   └── RecommendedGames.jsx
+│   │   ├── reviews
+│   │   │   ├── ReviewItem.jsx
+│   │   │   └── ReviewList.jsx
+│   │   └── search
+│   │       └── SearchResults.jsx
+│   ├── context
+│   │   └── AuthContext.jsx
+│   ├── hooks
+│   │   ├── useClickOutside.js
+│   │   ├── useRouteLoadingBar.js
+│   │   └── useStatusDropdown.js
+│   ├── index.css
+│   ├── main.jsx
+│   ├── pages
+│   │   ├── ArticlesPage.jsx
+│   │   ├── CommunityPage.jsx
+│   │   ├── DiscoverPage.jsx
+│   │   ├── GamePage.jsx
+│   │   ├── HomePage.jsx
+│   │   ├── LoginPage.jsx
+│   │   ├── MyLibraryPage.jsx
+│   │   ├── NotFoundPage.jsx
+│   │   ├── ProfilePage.jsx
+│   │   ├── SignUpPage.jsx
+│   │   ├── StatsPage.jsx
+│   │   └── discover
+│   │       ├── AnticipatedGamesPage.jsx
+│   │       ├── GameCategoryPage.jsx
+│   │       ├── GenreCard.jsx
+│   │       ├── GenrePage.jsx
+│   │       ├── HighlyRatedGamesPage.jsx
+│   │       ├── LatestReleasesPage.jsx
+│   │       ├── RecommendationsPage.jsx
+│   │       ├── ThemePage.jsx
+│   │       └── TrendingGamesPage.jsx
+│   ├── store
+│   │   ├── useGameStore.js
+│   │   ├── useReviewStore.js
+│   │   ├── useUserGameStore.js
+│   │   └── useUserListStore.js
+│   └── utils
+│       ├── filterUtils.js
+│       ├── gameCardUtils.js
+│       ├── sliderConfig.js
+│       ├── stringUtils.js
+│       └── transformGameData.js
+└── vite.config.js
+
+29 directories, 135 files
