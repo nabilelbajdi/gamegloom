@@ -15,8 +15,8 @@ const TrendingGames = () => {
       title="Trending Games"
       viewAllLink="/discover/trending"
       games={trendingGames}
-      maxGames={20}
-      slidesToShow={5}
+      maxGames={24}
+      slidesToShow={6}
     />
   );
 };

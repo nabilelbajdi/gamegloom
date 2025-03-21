@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Check, Loader2, ZoomIn, ZoomOut, Upload, AlertCircle } from 'lucide-react';
+import { Upload, ZoomIn, ZoomOut, Loader2, Check, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { uploadAvatar } from '../../api';
+import useClickOutside from '../../hooks/useClickOutside';
 
 const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -15,6 +17,28 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const previewContainerRef = useRef(null);
+  const modalRef = useRef(null);
+  
+  // Use the click outside hook correctly
+  const handleClose = () => {
+    if (!isUploading) {
+      onClose();
+    }
+  };
+  
+  // Initialize the useClickOutside hook correctly
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUploading]);
 
   // Preload the current avatar
   useEffect(() => {
@@ -216,22 +240,44 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
     }
   };
 
+  const formatFileSize = (size) => {
+    if (size < 1024) {
+      return size + ' B';
+    } else if (size < 1024 * 1024) {
+      return Math.round(size / 1024) + ' kB';
+    } else {
+      return Math.round(size / (1024 * 1024)) + ' MB';
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-      <div 
-        className="bg-surface-dark rounded-xl w-full max-w-md shadow-2xl overflow-hidden" 
-        onClick={(e) => e.stopPropagation()}
+    <motion.div 
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
+      <motion.div 
+        ref={modalRef}
+        className="bg-surface-dark rounded-lg w-full max-w-md border border-gray-800/50 shadow-xl overflow-hidden" 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-5 border-b border-gray-800">
-          <h3 className="text-lg font-semibold text-white">Update Profile Picture</h3>
+        <div className="flex items-center justify-between mb-0 p-4 border-b border-gray-800/30">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Upload className="w-5 h-5 text-primary" />
+            Update Profile Picture
+          </h3>
           <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors rounded-full p-1 hover:bg-gray-800"
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
             disabled={isUploading}
             aria-label="Close"
           >
-            <X className="h-5 w-5" />
+            &times;
           </button>
         </div>
 
@@ -240,7 +286,7 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
           <div className="relative mb-6">
             <div 
               ref={previewContainerRef}
-              className="w-48 h-48 rounded-full overflow-hidden bg-gray-800 mb-4 flex items-center justify-center border-2 border-gray-700/50"
+              className="w-48 h-48 rounded-full overflow-hidden bg-gray-800 mb-4 flex items-center justify-center border-2 border-gray-800/30"
               onMouseDown={handleMouseDown}
               style={{ cursor: selectedFile ? 'grab' : 'default' }}
             >
@@ -272,16 +318,16 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
             
             {/* Zoom controls */}
             {selectedFile && (
-              <div className="flex items-center justify-center gap-4 mb-2">
+              <div className="flex items-center justify-center gap-3 mb-2 mt-3">
                 <button 
                   onClick={handleZoomOut}
-                  className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+                  className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 text-gray-300 transition-colors cursor-pointer"
                   disabled={zoom <= 0.5}
                 >
-                  <ZoomOut className="h-4 w-4" />
+                  <ZoomOut className="h-3.5 w-3.5" />
                 </button>
                 
-                <div className="flex-1 max-w-[120px]">
+                <div className="flex-1 max-w-[100px] flex items-center">
                   <input 
                     type="range" 
                     min="0.5" 
@@ -289,16 +335,16 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
                     step="0.1" 
                     value={zoom}
                     onChange={(e) => setZoom(parseFloat(e.target.value))}
-                    className="w-full accent-primary cursor-pointer"
+                    className="w-full h-1 accent-primary cursor-pointer bg-gray-700/30 rounded-full appearance-none"
                   />
                 </div>
                 
                 <button 
                   onClick={handleZoomIn}
-                  className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+                  className="p-1.5 rounded-full bg-black/10 hover:bg-black/20 text-gray-300 transition-colors cursor-pointer"
                   disabled={zoom >= 3}
                 >
-                  <ZoomIn className="h-4 w-4" />
+                  <ZoomIn className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
@@ -313,14 +359,16 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
           {/* Upload controls */}
           <div className="w-full space-y-4">
             {/* File input button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 px-4 flex items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-gray-300 text-sm font-medium transition-colors"
-              disabled={isUploading}
-            >
-              <Upload className="h-4 w-4" />
-              {selectedFile ? 'Choose a different photo' : 'Select a photo'}
-            </button>
+            <div className="flex-1 flex items-center gap-3 py-2 px-2 bg-black/10 hover:bg-black/15 rounded transition-colors">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 py-1.5 flex items-center justify-center gap-2 text-sm text-gray-300 hover:text-gray-100 transition-colors cursor-pointer"
+                disabled={isUploading}
+              >
+                <Upload className="h-4 w-4 text-primary" />
+                {selectedFile ? 'Choose a different photo' : 'Select a photo'}
+              </button>
+            </div>
             
             {/* Hidden file input */}
             <input
@@ -333,24 +381,27 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
             />
 
             {error && (
-              <div className="flex items-center gap-2 text-red-500 text-sm bg-red-500/10 p-3 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-red-400 text-xs bg-red-900/10 p-3 border border-red-900/30 rounded text-center">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
             {selectedFile && (
-              <p className="text-gray-400 text-xs">
-                {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+              <p className="text-gray-400 text-xs text-center">
+                {selectedFile.name.length > 25 
+                  ? `${selectedFile.name.substring(0, 22)}...` 
+                  : selectedFile.name
+                } • {formatFileSize(selectedFile.size)}
               </p>
             )}
           </div>
         </div>
 
-        <div className="p-5 flex justify-end gap-3 bg-gray-800/30 border-t border-gray-800">
+        <div className="p-4 flex justify-end gap-5 border-t border-gray-800/30">
           <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800 text-sm transition-colors"
+            onClick={handleClose}
+            className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
             disabled={isUploading}
           >
             Cancel
@@ -358,8 +409,8 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
           <button
             onClick={handleUpload}
             disabled={!selectedFile || isUploading}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-              !selectedFile ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 text-dark'
+            className={`text-xs font-semibold flex items-center gap-2 ${
+              !selectedFile || isUploading ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:text-primary/90 cursor-pointer'
             }`}
           >
             {isUploading ? (
@@ -375,8 +426,8 @@ const AvatarUpload = ({ currentAvatar, onAvatarUpdate, onClose }) => {
             )}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

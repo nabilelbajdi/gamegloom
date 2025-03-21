@@ -15,8 +15,8 @@ const LatestGames = () => {
       title="Latest Games"
       viewAllLink="/discover/latest-releases"
       games={latestGames}
-      maxGames={20}
-      slidesToShow={5}
+      maxGames={24}
+      slidesToShow={6}
     />
   );
 };

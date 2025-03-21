@@ -270,7 +270,9 @@ export default function Navbar() {
                 className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center focus:outline-none cursor-pointer"
               >
                 <Icon name="user" className="icon pointer-events-none mr-2" />
-                <span>{user.username}</span>
+                <Link to="/profile" className="hover:text-primary transition-colors">
+                  <span>{user.username}</span>
+                </Link>
                 <Icon name="chevron-down" className="icon ml-1 w-3 h-3" />
               </button>
 

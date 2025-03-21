@@ -37,11 +37,13 @@ const HomePage = () => {
   return (
     <>
       <Hero />
-      <div className="bg-dark py-8">
-        <TrendingGames />
-        <AnticipatedGames />
-        <HighlyRatedGames />
-        <LatestGames />
+      <div className="bg-gradient-to-b from-dark/95 to-dark">
+        <div className="container mx-auto px-4 py-6">
+          <TrendingGames />
+          <AnticipatedGames />
+          <HighlyRatedGames />
+          <LatestGames />
+        </div>
       </div>
       <ReviewedGames />
       <JoinCommunity />

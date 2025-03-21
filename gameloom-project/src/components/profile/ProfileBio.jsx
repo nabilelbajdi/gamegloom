@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Edit, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Edit } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { updateUserProfile } from '../../api';
+import useClickOutside from '../../hooks/useClickOutside';
 
 const ProfileBio = ({ user, bio, onBioUpdate }) => {
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -8,6 +10,15 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [isExpandedBio, setIsExpandedBio] = useState(false);
+  
+  const modalRef = useRef(null);
+  const closeModal = () => {
+    if (!isSaving) {
+      setIsEditingBio(false);
+    }
+  };
+  
+  useClickOutside(modalRef, closeModal);
 
   const handleSaveBio = async () => {
     try {
@@ -63,48 +74,65 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
 
           {/* Bio Edit Modal */}
           {isEditingBio && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-              <div className="bg-surface-dark rounded-lg w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center p-4">
-                  <h3 className="text-base font-medium text-white">Edit Bio</h3>
+            <motion.div 
+              className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <motion.div 
+                ref={modalRef}
+                className="bg-surface-dark p-4 rounded-lg w-full max-w-md border border-gray-800/50 shadow-xl"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Edit className="w-5 h-5 text-primary" />
+                    Edit Bio
+                  </h3>
                   <button 
-                    onClick={() => setIsEditingBio(false)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
                   >
-                    <X className="h-4 w-4" />
+                    &times;
                   </button>
                 </div>
-                <div className="px-4 pb-4">
-                  <textarea
-                    value={editedBio}
-                    onChange={(e) => setEditedBio(e.target.value)}
-                    className="w-full p-3 bg-surface-darker text-white border border-gray-700/30 rounded focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/30"
-                    rows={4}
-                    placeholder="Write something about yourself..."
-                  />
+                <div className="mb-4">
+                  <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
+                    <textarea
+                      value={editedBio}
+                      onChange={(e) => setEditedBio(e.target.value)}
+                      className="flex-1 bg-transparent border-none text-sm text-white placeholder-gray-500 focus:outline-none resize-none"
+                      rows={4}
+                      placeholder="Write something about yourself..."
+                    />
+                  </div>
                   {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                 </div>
-                <div className="p-4 flex justify-end gap-2 bg-surface-darker/50 rounded-b-lg">
+                <div className="flex justify-end gap-5">
                   <button
                     onClick={() => {
                       setEditedBio(bio || '');
                       setIsEditingBio(false);
                       setError('');
                     }}
-                    className="px-3 py-1.5 bg-gray-700/30 hover:bg-gray-700/50 rounded text-gray-300 text-sm transition-colors"
+                    className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveBio}
                     disabled={isSaving}
-                    className="px-3 py-1.5 bg-primary hover:bg-primary/90 rounded text-dark text-sm font-medium transition-colors"
+                    className={`text-xs font-semibold ${isSaving ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:text-primary/90 cursor-pointer'}`}
                   >
                     {isSaving ? 'Saving...' : 'Save'}
                   </button>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </div>
