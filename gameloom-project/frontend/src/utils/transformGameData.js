@@ -27,6 +27,7 @@ export const transformGameData = (game) => {
       storyline: game.storyline,
       platforms: game.platforms,
       firstReleaseDate: game.first_release_date || game.firstReleaseDate,
+      hypes: game.hypes || 0,
       similarGames: game.similar_games?.map(similar => ({
         id: similar.id,
         igdb_id: similar.id,

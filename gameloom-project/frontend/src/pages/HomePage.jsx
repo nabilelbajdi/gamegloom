@@ -8,6 +8,7 @@ import JoinCommunity from "../components/home/JoinCommunity";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import LatestGames from "../components/home/LatestGames";
 import TrendingGames from "../components/home/TrendingGames";
+import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGames";
 
 const HomePage = () => {
   const { loading } = useAuth();
@@ -39,6 +40,7 @@ const HomePage = () => {
       <Hero />
       <div className="bg-gradient-to-b from-dark/95 to-dark">
         <div className="container mx-auto px-4 py-6">
+          <FeaturedAnticipatedGames />
           <TrendingGames />
           <AnticipatedGames />
           <HighlyRatedGames />

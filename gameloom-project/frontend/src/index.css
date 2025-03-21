@@ -11,6 +11,7 @@
   --color-secondary: #7A5C95; /* Purple */
   --color-want: #B24A4A; /* Red */
   --color-completed: #4A855C; /* Green */
+  --color-flame: #e25822; /* Flame orange */
   --color-dark: #0A0E17; /* Dark background */
   --color-light: #E2E8F0; /* Light text color */
   --color-surface-dark: #1A1A1C; /* Dark component background */
@@ -341,4 +342,15 @@
 /* Glow effect for star ratings */
 .drop-shadow-glow {
   filter: drop-shadow(0 0 6px rgba(var(--color-primary-rgb), 0.6));
+}
+
+/* Pulse animation for countdown timer */
+@keyframes subtlePulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+.animate-pulse-subtle {
+  animation: subtlePulse 2s infinite ease-in-out;
 }
