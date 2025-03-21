@@ -33,4 +33,4 @@ scripts/data_management/fetch_progress.json
 scripts/**/*.log
 
 # User uploaded content
-public/images/avatars/
+frontend/public/images/avatars/

@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Ensure avatar directory exists
-os.makedirs("public/images/avatars", exist_ok=True)
+os.makedirs("frontend/public/images/avatars", exist_ok=True)
 
 # Startup and shutdown events
 @asynccontextmanager
@@ -68,4 +68,4 @@ app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(user_lists_router, prefix="/api/v1")
 
 # Mount static files
-app.mount("/images", StaticFiles(directory="public/images"), name="images")
+app.mount("/images", StaticFiles(directory="frontend/public/images"), name="images")

@@ -104,7 +104,7 @@ async def upload_avatar(
         )
     
     # Ensure avatars directory exists
-    avatars_dir = Path("public/images/avatars")
+    avatars_dir = Path("frontend/public/images/avatars")
     os.makedirs(avatars_dir, exist_ok=True)
     
     # Generate unique filename
@@ -127,7 +127,7 @@ async def upload_avatar(
         
         # Clean up old avatar if it's not the default
         if current_user.avatar and '/images/default-avatar.svg' not in current_user.avatar:
-            old_avatar_path = Path("public") / current_user.avatar.lstrip('/')
+            old_avatar_path = Path("frontend/public") / current_user.avatar.lstrip('/')
             if os.path.exists(old_avatar_path):
                 try:
                     os.remove(old_avatar_path)
