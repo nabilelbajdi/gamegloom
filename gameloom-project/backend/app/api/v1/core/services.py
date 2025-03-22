@@ -1,6 +1,6 @@
 # services.py
 from datetime import datetime, timedelta
-from sqlalchemy import select
+from sqlalchemy import select, or_, case
 from sqlalchemy.orm import Session
 
 from ..models import game
@@ -9,6 +9,7 @@ from ...settings import settings
 import requests
 import logging
 import asyncio
+from difflib import SequenceMatcher
 
 logger = logging.getLogger(__name__)
 
@@ -532,16 +533,122 @@ def get_latest_games(db: Session, limit: int = 100) -> list[game.Game]:
         .limit(limit)
     ))
 
-def search_games_in_db(db: Session, query: str, limit: int = 6) -> list[game.Game]:
-    """Search for games in database matching the query"""
-    return list(db.scalars(
-        select(game.Game)
-        .where(
-            game.Game.name.ilike(f"%{query}%")
+def string_similarity(a, b):
+    """Calculate similarity ratio between two strings"""
+    if not a or not b:
+        return 0
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+def search_games_in_db(db: Session, query: str, limit: int = 6, category: str = "all") -> list[game.Game]:
+    """
+    Search for games in database matching the query.
+    
+    Parameters:
+    - query: The search term
+    - limit: Maximum number of results to return
+    - category: Category to search in. Options: "all", "games", "developers", "platforms"
+    """
+    from sqlalchemy import or_, case
+    search_pattern = f"%{query}%"
+    category = category.lower()
+    
+    # Build where clause based on category
+    if category == "games":
+        where_clause = game.Game.name.ilike(search_pattern)
+    elif category == "developers":
+        where_clause = game.Game.developers.ilike(search_pattern)
+    elif category == "platforms":
+        where_clause = game.Game.platforms.ilike(search_pattern)
+    else:  # "all" or any other value
+        where_clause = or_(
+            game.Game.name.ilike(search_pattern),
+            game.Game.summary.ilike(search_pattern),
+            game.Game.storyline.ilike(search_pattern),
+            game.Game.genres.ilike(search_pattern),
+            game.Game.themes.ilike(search_pattern),
+            game.Game.developers.ilike(search_pattern)
         )
-        .order_by(game.Game.total_rating.desc().nulls_last())
+    
+    # Exact matching
+    exact_matches = list(db.scalars(
+        select(game.Game)
+        .where(where_clause)
+        .order_by(
+            # Prioritize name matches first, then other fields
+            case(
+                (game.Game.name.ilike(search_pattern), 0),
+                else_=1
+            ),
+            game.Game.total_rating.desc().nulls_last()
+        )
         .limit(limit)
     ))
+    
+    if len(exact_matches) >= limit or category != "all":
+        return exact_matches
+    
+    # Fuzzy matching
+    all_games = list(db.scalars(
+        select(game.Game)
+        .where(game.Game.total_rating.is_not(None))
+        .order_by(game.Game.total_rating.desc())
+        .limit(200)
+    ))
+    
+    query_lower = query.lower()
+    fuzzy_matches = []
+    for g in all_games:
+        if g in exact_matches:
+            continue
+            
+        # If the query isn't in the name at all, use a lower threshold
+        name_lower = (g.name or "").lower()
+        if query_lower in name_lower:
+            name_score = 0.9  # Give high score for substring matches
+        else:
+            # Only calculate full similarity if needed
+            name_score = string_similarity(query, g.name or "") * 1.5  # Extra weight for name
+        
+        # Only check other fields if name score isn't high enough
+        if name_score < 0.7:
+            # Process other fields
+            fields_to_check = [
+                g.summary, 
+                g.storyline, 
+                g.genres, 
+                g.themes, 
+                g.developers
+            ]
+            
+            # Get best score from all fields
+            best_field_score = 0
+            for field in fields_to_check:
+                if field and query_lower in field.lower():
+                    best_field_score = max(best_field_score, 0.75)  # Substring match in any field
+            
+            if best_field_score == 0 and name_score < 0.6:
+                # Only do expensive similarity on promising candidates
+                for field in fields_to_check:
+                    if field:
+                        score = string_similarity(query, field)
+                        best_field_score = max(best_field_score, score)
+            
+            best_score = max(name_score, best_field_score)
+        else:
+            best_score = name_score
+        
+        # If score is good enough, add to fuzzy matches
+        threshold = 0.6 if len(query) > 3 else 0.75  # Higher threshold for short queries
+        if best_score > threshold:
+            fuzzy_matches.append((g, best_score))
+    
+    # Sort fuzzy matches by score and take top results
+    fuzzy_matches.sort(key=lambda x: x[1], reverse=True)
+    remaining_slots = limit - len(exact_matches)
+    additional_matches = [match[0] for match in fuzzy_matches[:remaining_slots]]
+    
+    # Return combined results
+    return exact_matches + additional_matches
 
 def get_games_by_genre(db: Session, genre_slug: str, limit: int = None):
     """Get games that match a specific genre slug"""

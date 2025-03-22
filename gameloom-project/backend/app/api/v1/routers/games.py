@@ -236,26 +236,46 @@ async def update_similar_games(db: Session = Depends(get_db)):
         )
 
 @router.get("/search")
-async def search_games(query: str, db: Session = Depends(get_db)):
-    """Search for games using IGDB API"""
+async def search_games(
+    query: str, 
+    category: str = "all",
+    db: Session = Depends(get_db)
+):
+    """
+    Search for games using both exact and fuzzy matching techniques.
+    
+    First searches the database using pattern matching (LIKE), then uses
+    fuzzy string matching for any remaining slots if needed. Finally,
+    falls back to IGDB API if not enough results are found.
+    
+    Searches across: name, summary, storyline, genres, themes, and developers.
+    
+    Parameters:
+    - query: The search term
+    - category: Category to search in. Options: "all", "games", "developers", "platforms"
+    """
     # First check if we have matching games in our database
-    db_games = services.search_games_in_db(db, query)
+    db_games = services.search_games_in_db(db, query, category=category)
     if len(db_games) >= 6:
         return db_games[:6]
 
-    # If not enough results in database, search IGDB
-    search_query = f"""
-        {services.IGDB_GAME_FIELDS}
-        search "{query}";
-        where version_parent = null & cover != null;
-        limit 6;
-    """
+    # If not enough results and searching all categories, search IGDB
+    if category.lower() == "all":
+        search_query = f"""
+            {services.IGDB_GAME_FIELDS}
+            search "{query}";
+            where version_parent = null & cover != null;
+            limit 6;
+        """
+        
+        try:
+            await services.sync_games_from_igdb(db, search_query)
+            return services.search_games_in_db(db, query, category=category)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
     
-    try:
-        await services.sync_games_from_igdb(db, search_query)
-        return services.search_games_in_db(db, query)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # For specific categories, just return what we have
+    return db_games
 
 @router.get("/games", response_model=List[schemas.Game])
 async def get_games(
