@@ -6,7 +6,8 @@ import Icon from "../UI/Icon";
 import SearchResults from "../search/SearchResults";
 import debounce from "lodash/debounce";
 import useUserGameStore from "../../store/useUserGameStore";
-import { LogOut } from "lucide-react";
+import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor } from "lucide-react";
+import { searchGames } from "../../api";
 
 const NAV_ITEMS = [
   { name: "My Library", path: "/library" },
@@ -67,11 +68,23 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchCategory, setSearchCategory] = useState("all");
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const searchContainerRef = useRef(null);
+  const categoryButtonRef = useRef(null);
+  const categoryDropdownRef = useRef(null);
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
   const { collection, fetchCollection } = useUserGameStore();
+
+  // Search categories
+  const SEARCH_CATEGORIES = [
+    { id: "all", label: "All", icon: SearchIcon },
+    { id: "games", label: "Titles", icon: Gamepad2 },
+    { id: "developers", label: "Developers", icon: Users },
+    { id: "platforms", label: "Platforms", icon: Monitor }
+  ];
 
   // Fetch collection when user is logged in
   useEffect(() => {
@@ -80,20 +93,79 @@ export default function Navbar() {
     }
   }, [user]);
 
+  // Handle click outside for both search and category dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Handle category dropdown click outside
+      if (
+        categoryDropdownOpen && 
+        categoryButtonRef.current && 
+        categoryDropdownRef.current && 
+        !categoryButtonRef.current.contains(event.target) && 
+        !categoryDropdownRef.current.contains(event.target)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+      
+      // Handle search container click outside
+      if (
+        searchContainerRef.current && 
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    };
+    
+    // Handle escape key
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        if (categoryDropdownOpen) {
+          setCategoryDropdownOpen(false);
+        }
+        if (searchResults.length > 0 || searchQuery) {
+          setSearchQuery("");
+          setSearchResults([]);
+        }
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscKey);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [categoryDropdownOpen, searchResults.length, searchQuery]);
+
+  // Toggle dropdown and position it
+  const toggleCategoryDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCategoryDropdownOpen(!categoryDropdownOpen);
+  };
+
+  // Position the dropdown when it's opened
+  useEffect(() => {
+    if (categoryDropdownOpen && categoryButtonRef.current && categoryDropdownRef.current) {
+      const buttonRect = categoryButtonRef.current.getBoundingClientRect();
+      categoryDropdownRef.current.style.top = `${buttonRect.bottom + 4}px`;
+      categoryDropdownRef.current.style.left = `${buttonRect.left}px`;
+    }
+  }, [categoryDropdownOpen]);
+
   // Debounced search function
   const debouncedSearch = useCallback(
-    debounce(async (query) => {
+    debounce(async (query, category) => {
       if (!query.trim()) {
         setSearchResults([]);
         return;
       }
 
       try {
-        const response = await fetch(
-          `http://localhost:8000/api/v1/search?query=${encodeURIComponent(query)}`
-        );
-        if (!response.ok) throw new Error("Search failed");
-        const data = await response.json();
+        setIsSearching(true);
+        const data = await searchGames(query, category);
         setSearchResults(data);
       } catch (error) {
         console.error("Search error:", error);
@@ -117,7 +189,17 @@ export default function Navbar() {
     }
     
     setIsSearching(true);
-    debouncedSearch(query);
+    debouncedSearch(query, searchCategory);
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    setSearchCategory(category);
+    setCategoryDropdownOpen(false);
+    
+    if (searchQuery.trim()) {
+      debouncedSearch(searchQuery, category);
+    }
   };
 
   // Handle search result selection
@@ -125,19 +207,6 @@ export default function Navbar() {
     setSearchQuery("");
     setSearchResults([]);
   };
-
-  // Handle click outside of search container
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
-        setSearchQuery("");
-        setSearchResults([]);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleLogout = () => {
     loadingBar.start();
@@ -196,12 +265,55 @@ export default function Navbar() {
         <form onSubmit={(e) => e.preventDefault()} className="flex items-center flex-grow max-w-md px-2">
           <div className="relative w-full" ref={searchContainerRef}>
             <div className="flex items-center w-full bg-white rounded-md overflow-hidden shadow-sm">
-              <div className="flex items-center border-r border-gray-300 h-8">
-                <button type="button" className="flex items-center px-3 hover:bg-gray-100 h-full">
-                  <span className="text-xs text-gray-700">All</span>
-                  <Icon name="chevron-down" className="icon ml-1.5 w-3 h-3 text-gray-600" />
+              {/* Category selector button */}
+              <div className="relative" ref={categoryButtonRef}>
+                <button 
+                  type="button" 
+                  className="flex items-center h-8 px-3 hover:bg-gray-100 border-r border-gray-300 cursor-pointer"
+                  onClick={toggleCategoryDropdown}
+                  aria-haspopup="true"
+                  aria-expanded={categoryDropdownOpen}
+                  aria-label={`Search category: ${SEARCH_CATEGORIES.find(c => c.id === searchCategory)?.label}`}
+                >
+                  <span className="text-xs text-gray-700">
+                    {SEARCH_CATEGORIES.find(c => c.id === searchCategory)?.label}
+                  </span>
+                  <ChevronDown 
+                    size={14} 
+                    className={`ml-1 text-gray-600 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`} 
+                  />
                 </button>
+                
+                {/* Category Dropdown */}
+                {categoryDropdownOpen && (
+                  <div 
+                    ref={categoryDropdownRef}
+                    className="fixed w-36 z-50 rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden"
+                    role="menu"
+                  >
+                    <div className="py-1.5">
+                      {SEARCH_CATEGORIES.map(category => {
+                        const IconComponent = category.icon;
+                        return (
+                          <button
+                            key={category.id}
+                            type="button"
+                            className="block w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5 cursor-pointer"
+                            onClick={() => handleCategorySelect(category.id)}
+                            role="menuitem"
+                          >
+                            <div className="flex items-center gap-2">
+                              <IconComponent size={14} className="text-gray-400" />
+                              {category.label}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
+              
               <div className="relative flex-grow flex items-center">
                 <div className="absolute left-3 flex items-center justify-center h-full">
                   {isSearching ? (
@@ -212,7 +324,7 @@ export default function Navbar() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Search game..."
+                  placeholder={`Search ${searchCategory !== 'all' ? SEARCH_CATEGORIES.find(c => c.id === searchCategory)?.label.toLowerCase() : 'game'}...`}
                   value={searchQuery}
                   onChange={handleSearchInput}
                   className="w-full h-8 pl-10 pr-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
@@ -227,6 +339,7 @@ export default function Navbar() {
                     setSearchResults([]);
                     setIsSearching(false);
                   }}
+                  aria-label="Clear search"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -237,11 +350,12 @@ export default function Navbar() {
             </div>
 
             {/* Search Results Dropdown */}
-            <div className="absolute left-0 right-0 top-full mt-2">
+            <div className="absolute left-0 right-0 top-full mt-2 z-10">
               {searchResults.length > 0 && (
                 <SearchResults
                   results={searchResults}
                   onSelect={handleSearchSelect}
+                  category={searchCategory}
                 />
               )}
             </div>

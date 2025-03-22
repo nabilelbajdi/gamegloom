@@ -566,3 +566,18 @@ export const removeGameFromList = async (listId, gameId) => {
 
   return await response.json();
 };
+
+// Search API
+export const searchGames = async (query, category = "all") => {
+  try {
+    const url = `${BASE_URL}/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error searching games:`, error);
+    return [];
+  }
+};
