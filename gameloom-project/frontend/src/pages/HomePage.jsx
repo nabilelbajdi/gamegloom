@@ -38,7 +38,7 @@ const HomePage = () => {
   return (
     <>
       <Hero />
-      <div className="bg-gradient-to-b from-dark/95 to-dark">
+      <div className="bg-gradient-to-b from-black/95 to-black">
         <div className="container mx-auto px-4 py-6">
           <FeaturedAnticipatedGames />
           <TrendingGames />
@@ -46,9 +46,9 @@ const HomePage = () => {
           <HighlyRatedGames />
           <LatestGames />
         </div>
+        <ReviewedGames />
+        <JoinCommunity />
       </div>
-      <ReviewedGames />
-      <JoinCommunity />
     </>
   );
 };

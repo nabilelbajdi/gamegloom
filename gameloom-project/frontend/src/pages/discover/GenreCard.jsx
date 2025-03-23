@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const GenreCardSkeleton = () => (
-  <div className="relative w-full max-w-[320px] rounded-lg overflow-hidden bg-dark animate-pulse">
+  <div className="relative w-full max-w-[320px] rounded-lg overflow-hidden bg-black animate-pulse">
     <div className="relative flex gap-2 p-2 overflow-hidden">
       {[...Array(3)].map((_, i) => (
         <div 
@@ -11,7 +11,7 @@ const GenreCardSkeleton = () => (
         />
       ))}
     </div>
-    <div className="absolute bottom-0 left-0 right-0 p-3 bg-dark/80">
+    <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/80">
       <div className="h-5 bg-gray-800 rounded w-3/4 mx-auto"></div>
     </div>
   </div>
@@ -40,7 +40,7 @@ const GenreCard = ({
 
   return (
     <div
-      className="relative w-full max-w-[320px] rounded-lg overflow-hidden bg-dark cursor-pointer"
+      className="relative w-full max-w-[320px] rounded-lg overflow-hidden bg-black cursor-pointer"
       onClick={handleNavigation}
     >
       {/* Game Covers */}
@@ -59,7 +59,7 @@ const GenreCard = ({
       </div>
       
       {/* Genre/Theme Title */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-dark/80 text-white text-center font-semibold">
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/80 text-white text-center font-semibold">
         {title}
       </div>
     </div>

@@ -78,7 +78,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="mt-14">
+    <div className="mt-14 bg-black">
       <ProfileHeader 
         user={user} 
         stats={stats} 

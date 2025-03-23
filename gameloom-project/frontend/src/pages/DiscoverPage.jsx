@@ -123,14 +123,14 @@ const DiscoverPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       <CategoryHeader 
         title="Discover Games"
         description="Explore our vast collection of games across different categories and find your next favorite title."
       />
       
       {/* Main content */}
-      <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
+      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
         <div className="container mx-auto px-4 py-6">
           {/* Genre Carousel */}
           <GenreCarousel

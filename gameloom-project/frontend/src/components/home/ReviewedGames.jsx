@@ -26,7 +26,7 @@ const ReviewedGames = () => {
 
   if (loading) {
     return (
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-12 bg-transparent">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-light">Recently Reviewed</h2>
         </div>
@@ -65,7 +65,7 @@ const ReviewedGames = () => {
 
   if (error) {
     return (
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-12 bg-transparent">
         <div className="text-center text-red-500">
           Error loading reviews: {error}
         </div>
@@ -74,7 +74,7 @@ const ReviewedGames = () => {
   }
 
   return (
-    <section className="container mx-auto px-4 py-12">
+    <section className="container mx-auto px-4 py-12 bg-transparent">
       {/* Section Title */}
       <div className="flex justify-between items-center mb-8">
         <div>
