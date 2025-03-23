@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from ..core import schemas
-from ..models.user_list import UserList
+from ..models.user_list import UserList, user_list_games
 from ..models.game import Game
 from ..models.user import User
 from ...db_setup import get_db
@@ -15,6 +15,57 @@ router = APIRouter(
     prefix="/user-lists",
     tags=["user-lists"]
 )
+
+# Helper function to build game info with proper timestamps
+def build_games_info(db: Session, user_list: UserList, list_id: int, newly_added_game_id: Optional[int] = None):
+    """
+    Build list of GameBasicInfo objects with proper timestamps for all games in a list.
+    
+    Args:
+        db: Database session
+        user_list: UserList object
+        list_id: ID of the list
+        newly_added_game_id: Optional ID of a newly added game
+    
+    Returns:
+        List of GameBasicInfo objects
+    """
+    current_time = datetime.now(timezone.utc)
+    games_info = []
+    
+    for game in user_list.games:
+        if newly_added_game_id and game.igdb_id == newly_added_game_id:
+            game_added_at = current_time
+        else:
+            game_in_list = db.query(user_list_games).filter(
+                and_(
+                    user_list_games.c.user_list_id == list_id,
+                    user_list_games.c.game_id == game.id
+                )
+            ).first()
+            game_added_at = game_in_list.added_at if game_in_list else current_time
+        
+        games_info.append(
+            schemas.GameBasicInfo(
+                id=game.igdb_id,
+                igdb_id=game.igdb_id,
+                name=game.name,
+                slug=game.slug,
+                coverImage=game.cover_image,
+                genres=game.genres,
+                themes=game.themes,
+                platforms=game.platforms,
+                game_modes=game.game_modes,
+                player_perspectives=game.player_perspectives,
+                rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
+                first_release_date=game.first_release_date,
+                added_at=game_added_at,
+                updated_at=current_time,
+                status="in_list"
+            )
+        )
+    
+    return games_info
 
 @router.post("", response_model=schemas.UserList)
 async def create_user_list(
@@ -87,29 +138,7 @@ async def get_user_list(
             detail="List not found"
         )
     
-    current_time = datetime.now(timezone.utc)
-    
-    games_info = []
-    for game in user_list.games:
-        games_info.append(
-            schemas.GameBasicInfo(
-                id=game.igdb_id,
-                igdb_id=game.igdb_id,
-                name=game.name,
-                slug=game.slug,
-                coverImage=game.cover_image,
-                genres=game.genres,
-                themes=game.themes,
-                platforms=game.platforms,
-                game_modes=game.game_modes,
-                player_perspectives=game.player_perspectives,
-                rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
-                first_release_date=game.first_release_date,
-                added_at=current_time,
-                updated_at=current_time,
-                status="in_list"
-            )
-        )
+    games_info = build_games_info(db, user_list, list_id)
     
     return schemas.UserList(
         id=user_list.id,
@@ -150,29 +179,7 @@ async def update_user_list(
     db.commit()
     db.refresh(user_list)
     
-    current_time = datetime.now(timezone.utc)
-    
-    games_info = []
-    for game in user_list.games:
-        games_info.append(
-            schemas.GameBasicInfo(
-                id=game.igdb_id,
-                igdb_id=game.igdb_id,
-                name=game.name,
-                slug=game.slug,
-                coverImage=game.cover_image,
-                genres=game.genres,
-                themes=game.themes,
-                platforms=game.platforms,
-                game_modes=game.game_modes,
-                player_perspectives=game.player_perspectives,
-                rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
-                first_release_date=game.first_release_date,
-                added_at=current_time,
-                updated_at=current_time,
-                status="in_list"
-            )
-        )
+    games_info = build_games_info(db, user_list, list_id)
     
     return schemas.UserList(
         id=user_list.id,
@@ -246,29 +253,7 @@ async def add_game_to_list(
     db.commit()
     db.refresh(user_list)
     
-    current_time = datetime.now(timezone.utc)
-    
-    games_info = []
-    for game in user_list.games:
-        games_info.append(
-            schemas.GameBasicInfo(
-                id=game.igdb_id,
-                igdb_id=game.igdb_id,
-                name=game.name,
-                slug=game.slug,
-                coverImage=game.cover_image,
-                genres=game.genres,
-                themes=game.themes,
-                platforms=game.platforms,
-                game_modes=game.game_modes,
-                player_perspectives=game.player_perspectives,
-                rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
-                first_release_date=game.first_release_date,
-                added_at=current_time,
-                updated_at=current_time,
-                status="in_list"
-            )
-        )
+    games_info = build_games_info(db, user_list, list_id, game.igdb_id)
     
     return schemas.UserList(
         id=user_list.id,
@@ -318,29 +303,7 @@ async def remove_game_from_list(
     db.commit()
     db.refresh(user_list)
     
-    current_time = datetime.now(timezone.utc)
-    
-    games_info = []
-    for game in user_list.games:
-        games_info.append(
-            schemas.GameBasicInfo(
-                id=game.igdb_id,
-                igdb_id=game.igdb_id,
-                name=game.name,
-                slug=game.slug,
-                coverImage=game.cover_image,
-                genres=game.genres,
-                themes=game.themes,
-                platforms=game.platforms,
-                game_modes=game.game_modes,
-                player_perspectives=game.player_perspectives,
-                rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
-                first_release_date=game.first_release_date,
-                added_at=current_time,
-                updated_at=current_time,
-                status="in_list"
-            )
-        )
+    games_info = build_games_info(db, user_list, list_id)
     
     return schemas.UserList(
         id=user_list.id,
