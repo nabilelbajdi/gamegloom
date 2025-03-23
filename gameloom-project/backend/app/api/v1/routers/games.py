@@ -239,6 +239,7 @@ async def update_similar_games(db: Session = Depends(get_db)):
 async def search_games(
     query: str, 
     category: str = "all",
+    limit: int = 6,
     db: Session = Depends(get_db)
 ):
     """
@@ -253,29 +254,89 @@ async def search_games(
     Parameters:
     - query: The search term
     - category: Category to search in. Options: "all", "games", "developers", "platforms"
+    - limit: Maximum number of results to return (default: 6)
     """
     # First check if we have matching games in our database
-    db_games = services.search_games_in_db(db, query, category=category)
-    if len(db_games) >= 6:
-        return db_games[:6]
-
-    # If not enough results and searching all categories, search IGDB
-    if category.lower() == "all":
-        search_query = f"""
-            {services.IGDB_GAME_FIELDS}
-            search "{query}";
-            where version_parent = null & cover != null;
-            limit 6;
-        """
+    db_games = services.search_games_in_db(db, query, category=category, limit=limit)
+    
+    # Check if we need to fetch from IGDB
+    fetch_from_igdb = False
+    
+    # Case 1: No results at all
+    if len(db_games) == 0:
+        fetch_from_igdb = True
+    
+    # Case 2: We have results, but check if the exact game title exists
+    elif (category.lower() == "all" or category.lower() == "games"):
+        query_lower = query.lower().strip()
+        exact_match_found = False
         
+        for game in db_games:
+            game_name_lower = game.name.lower() if game.name else ""
+            if game_name_lower == query_lower or game_name_lower.startswith(query_lower + " "):
+                exact_match_found = True
+                break
+                
+            # Check alternative names
+            if game.alternative_names and isinstance(game.alternative_names, list):
+                for alt_name in game.alternative_names:
+                    alt_name_lower = alt_name.lower() if alt_name else ""
+                    if alt_name_lower == query_lower or alt_name_lower.startswith(query_lower + " "):
+                        exact_match_found = True
+                        break
+                if exact_match_found:
+                    break
+        
+        # If no exact match found, fetch from IGDB
+        if not exact_match_found:
+            fetch_from_igdb = True
+    
+    if fetch_from_igdb and (category.lower() == "all" or category.lower() == "games"):
         try:
+            search_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                search "{query}";
+                where version_parent = null & cover != null;
+                limit {limit};
+            """
+            
             await services.sync_games_from_igdb(db, search_query)
-            return services.search_games_in_db(db, query, category=category)
+            
+            # Search again after importing from IGDB
+            new_db_games = services.search_games_in_db(db, query, category=category, limit=limit)
+            
+            # If new results, use them, otherwise keep the original results
+            if new_db_games:
+                db_games = new_db_games
+        except Exception as e:
+            # Log the error but continue with the original results
+            print(f"Error fetching from IGDB for game title: {str(e)}")
+    
+    # If enough results, return them
+    if len(db_games) >= limit and (category.lower() == "all" or category.lower() == "games"):
+        return db_games[:limit]
+    
+    # If still not enough results and searching all categories, try normal IGDB search
+    if len(db_games) < limit and category.lower() == "all":
+        try:
+            search_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                search "{query}";
+                where version_parent = null & cover != null;
+                limit {limit};
+            """
+            
+            await services.sync_games_from_igdb(db, search_query)
+            
+            # Try searching one more time
+            final_db_games = services.search_games_in_db(db, query, category=category, limit=limit)
+            if len(final_db_games) > 0:
+                return final_db_games[:limit]
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
-    # For specific categories, just return what we have
-    return db_games
+    # Return whatever results is left
+    return db_games[:limit] if len(db_games) > 0 else []
 
 @router.get("/games", response_model=List[schemas.Game])
 async def get_games(

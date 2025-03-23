@@ -1,6 +1,6 @@
 # services.py
 from datetime import datetime, timedelta
-from sqlalchemy import select, or_, case
+from sqlalchemy import select, or_, case, String
 from sqlalchemy.orm import Session
 
 from ..models import game
@@ -546,7 +546,7 @@ def search_games_in_db(db: Session, query: str, limit: int = 6, category: str = 
     Parameters:
     - query: The search term
     - limit: Maximum number of results to return
-    - category: Category to search in. Options: "all", "games", "developers", "platforms"
+    - category: Category to search in. Options: "all", "games", "developers", "platforms", "keywords"
     """
     from sqlalchemy import or_, case
     search_pattern = f"%{query}%"
@@ -554,19 +554,26 @@ def search_games_in_db(db: Session, query: str, limit: int = 6, category: str = 
     
     # Build where clause based on category
     if category == "games":
-        where_clause = game.Game.name.ilike(search_pattern)
+        where_clause = or_(
+            game.Game.name.ilike(search_pattern),
+            game.Game.alternative_names.cast(String).ilike(search_pattern)
+        )
     elif category == "developers":
         where_clause = game.Game.developers.ilike(search_pattern)
     elif category == "platforms":
         where_clause = game.Game.platforms.ilike(search_pattern)
-    else:  # "all" or any other value
+    elif category == "keywords":
+        where_clause = game.Game.keywords.cast(String).ilike(search_pattern)
+    else:
         where_clause = or_(
             game.Game.name.ilike(search_pattern),
+            game.Game.alternative_names.cast(String).ilike(search_pattern),
             game.Game.summary.ilike(search_pattern),
             game.Game.storyline.ilike(search_pattern),
             game.Game.genres.ilike(search_pattern),
             game.Game.themes.ilike(search_pattern),
-            game.Game.developers.ilike(search_pattern)
+            game.Game.developers.ilike(search_pattern),
+            game.Game.keywords.cast(String).ilike(search_pattern)
         )
     
     # Exact matching
@@ -619,6 +626,14 @@ def search_games_in_db(db: Session, query: str, limit: int = 6, category: str = 
                 g.themes, 
                 g.developers
             ]
+            
+            if g.keywords and isinstance(g.keywords, list):
+                keywords_text = ", ".join(g.keywords)
+                fields_to_check.append(keywords_text)
+            
+            if g.alternative_names and isinstance(g.alternative_names, list):
+                alt_names_text = ", ".join(g.alternative_names)
+                fields_to_check.append(alt_names_text)
             
             # Get best score from all fields
             best_field_score = 0
