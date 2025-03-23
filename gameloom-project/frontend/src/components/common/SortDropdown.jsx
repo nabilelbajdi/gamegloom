@@ -1,20 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 
-const SORT_OPTIONS = [
-  { value: "default", label: "Default" },
+const LIBRARY_SORT_OPTIONS = [
+  { value: "added_new", label: "Date Added (Newest)" },
   { value: "name_asc", label: "Name (A-Z)" },
   { value: "rating_high", label: "Rating (High to Low)" },
-  { value: "release_new", label: "Release Date (Newest)" },
-  { value: "added_new", label: "Date Added (Newest)" }
+  { value: "release_new", label: "Release Date (Newest)" }
+];
+
+const SEARCH_SORT_OPTIONS = [
+  { value: "relevance", label: "Relevance" },
+  { value: "exact_match", label: "Exact Matches" },
+  { value: "rating_high", label: "Rating (High to Low)" },
+  { value: "name_asc", label: "Name (A-Z)" },
+  { value: "release_new", label: "Release Date (Newest)" }
 ];
 
 const SortDropdown = ({
-  sortOption = "default",
-  onSortChange
+  sortOption = "added_new",
+  onSortChange,
+  isSearchPage = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  
+  // Choose the appropriate sort options based on whether this is a search page
+  const SORT_OPTIONS = isSearchPage ? SEARCH_SORT_OPTIONS : LIBRARY_SORT_OPTIONS;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -36,7 +47,7 @@ const SortDropdown = ({
 
   const getCurrentSortLabel = () => {
     const option = SORT_OPTIONS.find(opt => opt.value === sortOption);
-    return option ? option.label : "Default";
+    return option ? option.label : isSearchPage ? "Relevance" : "Date Added (Newest)";
   };
 
   return (

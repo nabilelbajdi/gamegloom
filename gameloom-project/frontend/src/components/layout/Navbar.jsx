@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLoadingBar } from "../../App";
 import Icon from "../UI/Icon";
 import SearchResults from "../search/SearchResults";
 import debounce from "lodash/debounce";
 import useUserGameStore from "../../store/useUserGameStore";
-import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor } from "lucide-react";
+import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor, Tags } from "lucide-react";
 import { searchGames } from "../../api";
 
 const NAV_ITEMS = [
@@ -71,9 +71,11 @@ export default function Navbar() {
   const [searchCategory, setSearchCategory] = useState("all");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const searchContainerRef = useRef(null);
+  const searchDropdownRef = useRef(null);
   const categoryButtonRef = useRef(null);
   const categoryDropdownRef = useRef(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
   const { collection, fetchCollection } = useUserGameStore();
@@ -83,7 +85,8 @@ export default function Navbar() {
     { id: "all", label: "All", icon: SearchIcon },
     { id: "games", label: "Titles", icon: Gamepad2 },
     { id: "developers", label: "Developers", icon: Users },
-    { id: "platforms", label: "Platforms", icon: Monitor }
+    { id: "platforms", label: "Platforms", icon: Monitor },
+    { id: "keywords", label: "Keywords", icon: Tags }
   ];
 
   // Fetch collection when user is logged in
@@ -107,13 +110,23 @@ export default function Navbar() {
         setCategoryDropdownOpen(false);
       }
       
-      // Handle search container click outside
-      if (
-        searchContainerRef.current && 
-        !searchContainerRef.current.contains(event.target)
-      ) {
-        setSearchQuery("");
-        setSearchResults([]);
+      if (searchResults.length > 0 || searchQuery) {
+        const clickedOutsideSearchArea = (
+          searchContainerRef.current && 
+          !searchContainerRef.current.contains(event.target) && 
+          searchDropdownRef.current && 
+          !searchDropdownRef.current.contains(event.target)
+        );
+        
+        if (clickedOutsideSearchArea) {
+          const isSearchInput = event.target.closest('input[type="text"]');
+          const isSearchForm = event.target.closest('form');
+          
+          if (!isSearchInput && (!isSearchForm || !isSearchForm.contains(searchContainerRef.current))) {
+            setSearchQuery("");
+            setSearchResults([]);
+          }
+        }
       }
     };
     
@@ -160,12 +173,13 @@ export default function Navbar() {
     debounce(async (query, category) => {
       if (!query.trim()) {
         setSearchResults([]);
+        setIsSearching(false);
         return;
       }
 
       try {
         setIsSearching(true);
-        const data = await searchGames(query, category);
+        const data = await searchGames(query, category, 6);
         setSearchResults(data);
       } catch (error) {
         console.error("Search error:", error);
@@ -190,6 +204,32 @@ export default function Navbar() {
     
     setIsSearching(true);
     debouncedSearch(query, searchCategory);
+  };
+
+  // Handle search form submit (on Enter key)
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    
+    if (searchQuery.trim()) {
+      // Cancel any pending searches by clearing the debounce
+      debouncedSearch.cancel();
+      setIsSearching(false);
+      
+      // Navigate to search page (or update search params if already there)
+      const searchPath = `/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(searchCategory)}`;
+      
+      if (window.location.pathname === '/search') {
+        const newParams = new URLSearchParams();
+        newParams.set('query', searchQuery);
+        newParams.set('category', searchCategory);
+        setSearchParams(newParams);
+      } else {
+        navigate(searchPath);
+      }
+      
+      setSearchQuery("");
+      setSearchResults([]);
+    }
   };
 
   // Handle category selection
@@ -262,7 +302,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="flex items-center flex-grow max-w-md px-2">
+        <form onSubmit={handleSearchSubmit} className="flex items-center flex-grow max-w-md px-2">
           <div className="relative w-full" ref={searchContainerRef}>
             <div className="flex items-center w-full bg-white rounded-md overflow-hidden shadow-sm">
               {/* Category selector button */}
@@ -288,7 +328,7 @@ export default function Navbar() {
                 {categoryDropdownOpen && (
                   <div 
                     ref={categoryDropdownRef}
-                    className="fixed w-36 z-50 rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden"
+                    className="fixed w-36 z-[60] rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden"
                     role="menu"
                   >
                     <div className="py-1.5">
@@ -319,12 +359,27 @@ export default function Navbar() {
                   {isSearching ? (
                     <div className="w-4 h-4 border-2 border-gray-400 border-t-primary rounded-full animate-spin"></div>
                   ) : (
-                    <Icon name="search" className="icon w-4 h-4 text-gray-500 cursor-default pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={handleSearchSubmit}
+                      className="flex items-center justify-center cursor-pointer"
+                      aria-label="Search"
+                    >
+                      <SearchIcon className="w-4 h-4 text-gray-500 hover:text-gray-700 transition-colors" />
+                    </button>
                   )}
                 </div>
                 <input
                   type="text"
-                  placeholder={`Search ${searchCategory !== 'all' ? SEARCH_CATEGORIES.find(c => c.id === searchCategory)?.label.toLowerCase() : 'game'}...`}
+                  placeholder={(() => {
+                    switch(searchCategory) {
+                      case "games": return "Search titles...";
+                      case "developers": return "Search developers...";
+                      case "platforms": return "Search platforms...";
+                      case "keywords": return "Search keywords...";
+                      default: return "Search games, developers, keywords...";
+                    }
+                  })()}
                   value={searchQuery}
                   onChange={handleSearchInput}
                   className="w-full h-8 pl-10 pr-3 text-xs text-gray-700 placeholder-gray-500 focus:outline-none"
@@ -350,15 +405,20 @@ export default function Navbar() {
             </div>
 
             {/* Search Results Dropdown */}
-            <div className="absolute left-0 right-0 top-full mt-2 z-10">
-              {searchResults.length > 0 && (
+            {searchQuery && (
+              <div
+                className="absolute top-full left-0 right-0 mt-2 z-50"
+                ref={searchDropdownRef}
+              >
                 <SearchResults
                   results={searchResults}
                   onSelect={handleSearchSelect}
                   category={searchCategory}
+                  isLoading={isSearching}
+                  searchQuery={searchQuery}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </form>
 

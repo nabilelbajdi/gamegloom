@@ -37,7 +37,7 @@ const GameCategoryPage = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
-  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating-high" : "default");
+  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating-high" : "added_new");
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
   const [platformFilters, setPlatformFilters] = useState([]);
@@ -169,10 +169,6 @@ const GameCategoryPage = ({
 
   // Sort games
   const sortGames = (filteredGames) => {
-    if (sortOption === 'default') {
-      return filteredGames;
-    }
-
     return [...filteredGames].sort((a, b) => {
       switch (sortOption) {
         case "name-asc":
@@ -187,6 +183,9 @@ const GameCategoryPage = ({
           return new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0);
         case "release-old":
           return new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0);
+        case "added-new":
+        case "added_new":
+          return new Date(b.added_at || 0) - new Date(a.added_at || 0);
         default:
           return a.originalIndex - b.originalIndex;
       }

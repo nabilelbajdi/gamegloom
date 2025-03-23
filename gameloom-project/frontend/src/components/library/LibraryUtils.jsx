@@ -69,6 +69,6 @@ export const sortGames = (games, sortOption) => {
     case "added_old":
       return [...games].sort((a, b) => new Date(a.added_at || 0) - new Date(b.added_at || 0));
     default:
-      return games;
+      return [...games].sort((a, b) => new Date(b.added_at || 0) - new Date(a.added_at || 0));
   }
 }; 

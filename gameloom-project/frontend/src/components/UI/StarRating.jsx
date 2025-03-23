@@ -14,7 +14,8 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount, firstRele
   // Check if game is unreleased
   const isUnreleased = firstReleaseDate && new Date(firstReleaseDate) > new Date();
 
-  if (!rating || rating === "N/A") {
+  // Hndle invalid ratings
+  if (!rating || rating === "N/A" || isNaN(parseFloat(rating))) {
     return (
       <div className="flex justify-end pt-1">
         {isUnreleased ? (
@@ -30,17 +31,22 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount, firstRele
     );
   }
 
-  const numericRating = parseFloat(rating);
+  // Parse the rating to a number
+  const numericRating = Math.min(Math.max(parseFloat(rating) || 0, 0), 5);
   const fullStars = Math.floor(numericRating);
   const decimalPart = numericRating - fullStars;
-  const emptyStars = 5 - Math.ceil(numericRating);
+  const emptyStars = Math.max(0, 5 - Math.ceil(numericRating));
+
+  // Create arrays for star rendering with safeguards
+  const fullStarsArray = fullStars > 0 ? Array.from({ length: fullStars }) : [];
+  const emptyStarsArray = emptyStars > 0 ? Array.from({ length: emptyStars }) : [];
 
   return (
     <div className="pt-1">
       {/* Stars and numeric rating */}
       <div className="flex items-center">
         <div className="text-3xl flex gap-1">
-          {[...Array(fullStars)].map((_, i) => (
+          {fullStarsArray.map((_, i) => (
             <span key={`full-${i}`} className="text-primary scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">★</span>
           ))}
           {decimalPart > 0 && (
@@ -54,13 +60,13 @@ const StarRating = ({ rating, totalRatingCount, aggregatedRatingCount, firstRele
               </span>
             </span>
           )}
-          {[...Array(emptyStars)].map((_, i) => (
+          {emptyStarsArray.map((_, i) => (
             <span key={`empty-${i}`} className="text-gray-500">★</span>
           ))}
         </div>
         <div className="flex items-baseline ml-3">
           <span className="text-2xl font-bold text-white drop-shadow-[0_0_8px_rgba(251,191,36,0.2)]">
-            {Number(rating).toFixed(1)}
+            {numericRating.toFixed(1)}
           </span>
           <span className="text-sm text-gray-500 ml-1">/5</span>
         </div>

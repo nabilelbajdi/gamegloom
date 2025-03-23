@@ -29,7 +29,7 @@ const MyLibraryPage = () => {
   // Component state
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("default");
+  const [sortOption, setSortOption] = useState("added_new");
   const [viewMode, setViewMode] = useState("grid");
   const [selectedList, setSelectedList] = useState(null);
   

@@ -4,8 +4,17 @@ import { Search, X } from "lucide-react";
 const SearchInput = ({
   value,
   onChange,
+  onSubmit,
+  placeholder = "Filter by title...",
   compact = false
 }) => {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && onSubmit) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
   return (
     <div className="relative shrink-0">
       <div className={`flex items-center ${compact ? 'w-48' : 'w-64'} bg-white rounded-xl overflow-hidden shadow-sm`}>
@@ -17,7 +26,8 @@ const SearchInput = ({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Search games..."
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
             className={`w-full ${compact ? 'h-7' : 'h-8'} pl-10 pr-3 text-xs font-semibold text-gray-700 placeholder-gray-500 focus:outline-none`}
           />
         </div>
