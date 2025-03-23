@@ -1,7 +1,7 @@
 // src/components/game/GameCard.jsx
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { formatGenres } from "../../utils/gameCardUtils";
+import { formatGenres, formatRating } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
 
@@ -60,7 +60,12 @@ const GameCard = ({ game }) => {
           <div className="flex items-center gap-1">
             <span className="text-primary text-xs">★</span>
             <span className="text-xs text-muted">
-              {game.rating !== "N/A" ? game.rating : "N/A"}
+              {game.rating === "N/A" 
+                ? "N/A"
+                : typeof game.rating === 'number' || !isNaN(parseFloat(game.rating))
+                  ? parseFloat(game.rating).toFixed(1)
+                  : "N/A"
+              }
             </span>
           </div>
         </div>

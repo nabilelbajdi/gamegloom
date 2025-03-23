@@ -69,9 +69,12 @@ const GameCardSimple = ({ game }) => {
         <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md">
           <Star className="h-5 w-5 text-primary fill-primary" />
           <span className="text-base font-medium text-light">
-            {game.rating !== undefined && game.rating !== null && game.rating !== "N/A" 
-              ? Math.round(game.rating * 10) / 10 
-              : "N/A"}
+            {game.rating === "N/A" 
+              ? "N/A"
+              : typeof game.rating === 'number' || !isNaN(parseFloat(game.rating))
+                ? parseFloat(game.rating).toFixed(1)
+                : "N/A"
+            }
           </span>
         </div>
       </div>

@@ -51,10 +51,10 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
             {starRating ? (
               starRating
             ) : (
-              game.rating !== "N/A" && (
+              game.rating !== "N/A" && game.rating !== undefined && game.rating !== null && !isNaN(parseFloat(game.rating)) && (
                 <div className="flex items-center">
                   <span className="text-primary">★</span>
-                  <span className="text-xs text-gray-300 ml-1">{game.rating}</span>
+                  <span className="text-xs text-gray-300 ml-1">{parseFloat(game.rating).toFixed(1)}</span>
                 </div>
               )
             )}
