@@ -86,7 +86,8 @@ async def get_user_collection(
             first_release_date=game.first_release_date,
             added_at=user_game.added_at,
             updated_at=user_game.updated_at,
-            status=user_game.status
+            status=user_game.status,
+            game_type_name=game.game_type_name
         )
         
         if user_game.status == GameStatus.WANT_TO_PLAY:

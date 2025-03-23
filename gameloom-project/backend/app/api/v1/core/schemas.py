@@ -181,6 +181,7 @@ class GameBasicInfo(BaseModel):
     added_at: datetime
     updated_at: datetime
     status: GameStatus
+    game_type_name: str | None = None
 
     class Config:
         from_attributes = True
