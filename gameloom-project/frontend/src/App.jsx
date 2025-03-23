@@ -16,6 +16,7 @@ import ArticlesPage from "./pages/ArticlesPage";
 import SignUpPage from "./pages/SignUpPage";
 import GamePage from "./pages/GamePage";
 import ProfilePage from "./pages/ProfilePage";
+import SearchPage from "./pages/SearchPage";
 import TrendingGamesPage from "./pages/discover/TrendingGamesPage";
 import AnticipatedGamesPage from "./pages/discover/AnticipatedGamesPage";
 import HighlyRatedGamesPage from "./pages/discover/HighlyRatedGamesPage";
@@ -51,6 +52,7 @@ function AppContent() {
         <Route path="/discover/recommendations" element={<RecommendationsPage />} />
         <Route path="/genre/:genreSlug" element={<GenrePage />} />
         <Route path="/theme/:themeSlug" element={<ThemePage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/community" element={<CommunityPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/login" element={<LoginPage />} />
