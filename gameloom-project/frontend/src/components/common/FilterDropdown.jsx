@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Filter, Check, ChevronDown, Gamepad2, Tags, X, Star, Monitor, Users, Eye } from "lucide-react";
+import { Filter, Check, ChevronDown, Gamepad2, Tags, X, Star, Monitor, Users, Eye, BookCopy } from "lucide-react";
 
 const FilterModal = ({
   allGenres,
@@ -8,11 +8,13 @@ const FilterModal = ({
   allPlatforms = [],
   allGameModes = [],
   allPlayerPerspectives = [],
+  allContentTypes = [],
   activeGenres,
   activeThemes,
   activePlatforms = [],
   activeGameModes = [],
   activePlayerPerspectives = [],
+  activeContentTypes = [],
   minRating = 0,
   onFilterChange,
   isOpen,
@@ -23,12 +25,14 @@ const FilterModal = ({
   const [platformsExpanded, setPlatformsExpanded] = useState(true);
   const [gameModesExpanded, setGameModesExpanded] = useState(true);
   const [perspectivesExpanded, setPerspectivesExpanded] = useState(true);
+  const [contentTypesExpanded, setContentTypesExpanded] = useState(true);
   const [ratingExpanded, setRatingExpanded] = useState(true);
   const [showAllGenres, setShowAllGenres] = useState(false);
   const [showAllThemes, setShowAllThemes] = useState(false);
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
   const [showAllGameModes, setShowAllGameModes] = useState(false);
   const [showAllPerspectives, setShowAllPerspectives] = useState(false);
+  const [showAllContentTypes, setShowAllContentTypes] = useState(false);
   const [rating, setRating] = useState(minRating);
   const modalRef = useRef(null);
 
@@ -57,6 +61,7 @@ const FilterModal = ({
       setShowAllPlatforms(false);
       setShowAllGameModes(false);
       setShowAllPerspectives(false);
+      setShowAllContentTypes(false);
     }
   }, [isOpen]);
 
@@ -78,6 +83,7 @@ const FilterModal = ({
         platforms: activePlatforms,
         gameModes: activeGameModes,
         playerPerspectives: activePlayerPerspectives,
+        contentTypes: activeContentTypes,
         minRating: rating
       });
     } else if (type === "theme") {
@@ -91,6 +97,7 @@ const FilterModal = ({
         platforms: activePlatforms,
         gameModes: activeGameModes,
         playerPerspectives: activePlayerPerspectives,
+        contentTypes: activeContentTypes,
         minRating: rating
       });
     } else if (type === "platform") {
@@ -104,6 +111,7 @@ const FilterModal = ({
         platforms: updatedPlatforms,
         gameModes: activeGameModes,
         playerPerspectives: activePlayerPerspectives,
+        contentTypes: activeContentTypes,
         minRating: rating
       });
     } else if (type === "gameMode") {
@@ -117,6 +125,7 @@ const FilterModal = ({
         platforms: activePlatforms,
         gameModes: updatedGameModes,
         playerPerspectives: activePlayerPerspectives,
+        contentTypes: activeContentTypes,
         minRating: rating
       });
     } else if (type === "perspective") {
@@ -130,6 +139,21 @@ const FilterModal = ({
         platforms: activePlatforms,
         gameModes: activeGameModes,
         playerPerspectives: updatedPerspectives,
+        contentTypes: activeContentTypes,
+        minRating: rating
+      });
+    } else if (type === "contentType") {
+      const updatedContentTypes = activeContentTypes.includes(value)
+        ? activeContentTypes.filter((item) => item !== value)
+        : [...activeContentTypes, value];
+      
+      onFilterChange({
+        genres: activeGenres,
+        themes: activeThemes,
+        platforms: activePlatforms,
+        gameModes: activeGameModes,
+        playerPerspectives: activePlayerPerspectives,
+        contentTypes: updatedContentTypes,
         minRating: rating
       });
     }
@@ -145,6 +169,7 @@ const FilterModal = ({
       platforms: activePlatforms,
       gameModes: activeGameModes,
       playerPerspectives: activePlayerPerspectives,
+      contentTypes: activeContentTypes,
       minRating: newRating
     });
   };
@@ -157,6 +182,7 @@ const FilterModal = ({
       platforms: [],
       gameModes: [],
       playerPerspectives: [],
+      contentTypes: [],
       minRating: 0
     });
   };
@@ -181,6 +207,10 @@ const FilterModal = ({
     setPerspectivesExpanded(!perspectivesExpanded);
   };
 
+  const toggleContentTypesSection = () => {
+    setContentTypesExpanded(!contentTypesExpanded);
+  };
+
   const toggleRatingSection = () => {
     setRatingExpanded(!ratingExpanded);
   };
@@ -199,6 +229,9 @@ const FilterModal = ({
 
   const visiblePerspectives = showAllPerspectives ? allPlayerPerspectives : allPlayerPerspectives.slice(0, 9);
   const hasMorePerspectives = allPlayerPerspectives.length > 9;
+
+  const visibleContentTypes = showAllContentTypes ? allContentTypes : allContentTypes.slice(0, 9);
+  const hasMoreContentTypes = allContentTypes.length > 9;
 
   if (!isOpen) return null;
   
@@ -456,6 +489,65 @@ const FilterModal = ({
             </div>
           )}
 
+          {/* Content Type Section */}
+          {allContentTypes.length > 0 && (
+            <div className="border-b border-gray-800/50">
+              <div 
+                className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-surface/30 transition-colors" 
+                onClick={toggleContentTypesSection}
+              >
+                <div className="flex items-center gap-2.5">
+                  <BookCopy className="w-4 h-4 text-gray-400" />
+                  <h4 className="text-xs font-semibold text-white">Content Type</h4>
+                </div>
+                <ChevronDown 
+                  className={`w-4 h-4 text-gray-400 transition-transform ${contentTypesExpanded ? 'rotate-180' : ''}`} 
+                />
+              </div>
+              
+              {contentTypesExpanded && (
+                <div className="px-4 py-3">
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-2.5">
+                    {visibleContentTypes.map((contentType) => (
+                      <button
+                        key={contentType}
+                        onClick={() => toggleFilter('contentType', contentType)}
+                        className="flex items-center text-xs hover:text-white transition-all py-0.5 cursor-pointer"
+                      >
+                        <div 
+                          className={`w-3.5 h-3.5 rounded-full flex-shrink-0 mr-2 flex items-center justify-center
+                            ${activeContentTypes.includes(contentType) 
+                              ? 'bg-primary border-0' 
+                              : 'border border-gray-600 bg-transparent'
+                            }`}
+                        >
+                          {activeContentTypes.includes(contentType) && (
+                            <Check className="w-2 h-2 text-dark" />
+                          )}
+                        </div>
+                        <span className={`truncate font-semibold ${activeContentTypes.includes(contentType) ? 'text-primary' : 'text-gray-400'}`}>
+                          {contentType}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {hasMoreContentTypes && (
+                    <button 
+                      onClick={() => setShowAllContentTypes(!showAllContentTypes)}
+                      className="mt-3 text-xs text-primary/80 hover:text-primary font-semibold flex items-center cursor-pointer"
+                    >
+                      {showAllContentTypes ? 'Show Less' : `Show All (${allContentTypes.length})`}
+                      <ChevronDown 
+                        className={`w-3.5 h-3.5 ml-1.5 ${showAllContentTypes ? 'rotate-180' : ''} transition-transform`} 
+                      />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Genres Section */}
           <div className="border-b border-gray-800/50">
             <div 
@@ -598,21 +690,25 @@ const FilterDropdown = ({
   allPlatforms = [],
   allGameModes = [],
   allPlayerPerspectives = [],
+  allContentTypes = [],
   activeGenres,
   activeThemes,
   activePlatforms = [],
   activeGameModes = [],
   activePlayerPerspectives = [],
+  activeContentTypes = [],
   minRating = 0,
   onFilterChange
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const hasActiveFilters = activeGenres.length > 0 || activeThemes.length > 0 || 
                           activePlatforms.length > 0 || activeGameModes.length > 0 || 
-                          activePlayerPerspectives.length > 0 || minRating > 0;
+                          activePlayerPerspectives.length > 0 || activeContentTypes.length > 0 ||
+                          minRating > 0;
   const activeFiltersCount = activeGenres.length + activeThemes.length + 
                             activePlatforms.length + activeGameModes.length + 
-                            activePlayerPerspectives.length + (minRating > 0 ? 1 : 0);
+                            activePlayerPerspectives.length + activeContentTypes.length +
+                            (minRating > 0 ? 1 : 0);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -646,11 +742,13 @@ const FilterDropdown = ({
           allPlatforms={allPlatforms}
           allGameModes={allGameModes}
           allPlayerPerspectives={allPlayerPerspectives}
+          allContentTypes={allContentTypes}
           activeGenres={activeGenres}
           activeThemes={activeThemes}
           activePlatforms={activePlatforms}
           activeGameModes={activeGameModes}
           activePlayerPerspectives={activePlayerPerspectives}
+          activeContentTypes={activeContentTypes}
           minRating={minRating}
           onFilterChange={onFilterChange}
           isOpen={isOpen}
