@@ -10,7 +10,6 @@ import LoadingState from "../components/library/LoadingState";
 import { EmptyLibrary, EmptyListGames } from "../components/library/EmptyState";
 import UserLists from "../components/library/UserLists";
 import ScrollToTop from "../components/common/ScrollToTop";
-import SearchInput from "../components/common/SearchInput";
 import SortDropdown from "../components/common/SortDropdown";
 import FilterDropdown from "../components/common/FilterDropdown";
 import FilterPanel from "../components/common/FilterPanel";
@@ -40,6 +39,7 @@ const MyLibraryPage = () => {
   const [gameModeFilters, setGameModeFilters] = useState([]);
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
+  const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -98,7 +98,7 @@ const MyLibraryPage = () => {
 
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
   const extractFilterOptions = () => {
-    if (!collection) return { allGenres: [], allThemes: [], allPlatforms: [], allGameModes: [], allPlayerPerspectives: [] };
+    if (!collection) return { allGenres: [], allThemes: [], allPlatforms: [], allGameModes: [], allPlayerPerspectives: [], allContentTypes: [] };
     
     const allGames = [
       ...(collection.want_to_play || []),
@@ -156,10 +156,20 @@ const MyLibraryPage = () => {
       })
     )].sort();
 
-    return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives };
+    const allContentTypes = [...new Set(allGames
+      .filter(game => game.game_type_name)
+      .map(game => {
+        if (game.game_type_name === "Main Game") {
+          return "Base Game";
+        }
+        return game.game_type_name;
+      })
+    )].sort();
+
+    return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes };
   };
 
-  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives } = extractFilterOptions();
+  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes } = extractFilterOptions();
 
   // Filter handlers
   const handleFilterChange = (filters) => {
@@ -169,6 +179,7 @@ const MyLibraryPage = () => {
     setGameModeFilters(filters.gameModes || []);
     setPerspectiveFilters(filters.playerPerspectives || []);
     setMinRatingFilter(filters.minRating || 0);
+    setContentTypeFilters(filters.contentTypes || []);
   };
 
   const handleRemoveGenre = (genre) => {
@@ -191,6 +202,10 @@ const MyLibraryPage = () => {
     setPerspectiveFilters(prev => prev.filter(p => p !== perspective));
   };
 
+  const handleRemoveContentType = (contentType) => {
+    setContentTypeFilters(prev => prev.filter(ct => ct !== contentType));
+  };
+
   const handleRemoveRating = () => {
     setMinRatingFilter(0);
   };
@@ -202,6 +217,7 @@ const MyLibraryPage = () => {
     setGameModeFilters([]);
     setPerspectiveFilters([]);
     setMinRatingFilter(0);
+    setContentTypeFilters([]);
   };
 
   // Auth redirect
@@ -254,6 +270,16 @@ const MyLibraryPage = () => {
       );
     }
 
+    // Apply content type filter
+    if (contentTypeFilters.length > 0) {
+      baseGames = baseGames.filter(game => 
+        game.game_type_name && (
+          contentTypeFilters.includes(game.game_type_name) ||
+          (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
+        )
+      );
+    }
+
     // Apply other filters
     if (genreFilters.length > 0 || themeFilters.length > 0 || 
         platformFilters.length > 0 || gameModeFilters.length > 0 || 
@@ -284,11 +310,11 @@ const MyLibraryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       <LibraryHeader />
 
       {/* Tabs Navigation */}
-      <div className="sticky top-12 z-30 bg-dark/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
+      <div className="sticky top-12 z-30 bg-black/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
         <div className="container mx-auto px-4 py-2">
           <LibraryTabs 
             activeTab={activeTab}
@@ -303,7 +329,7 @@ const MyLibraryPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
+      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
         <div className="container mx-auto px-4 py-6">
           {totalGames === 0 && activeTab !== "my_lists" ? (
             <EmptyLibrary />
@@ -324,34 +350,30 @@ const MyLibraryPage = () => {
                       <div className="p-4 border-b border-gray-800/30">
                         {/* Controls Section */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                          {/* Games Count and Search Input */}
+                          {/* Games Count */}
                           <div className="flex items-center gap-3 order-1 sm:order-none">
                             <div className="text-light/70 text-sm">
                               <span className="font-semibold text-light">{getActiveGamesCount()}</span> Games
                             </div>
-                            
-                            {/* Search Input */}
-                            <SearchInput 
-                              value={searchQuery}
-                              onChange={setSearchQuery}
-                            />
                           </div>
 
                           {/* Action Buttons */}
                           <div className="flex items-center gap-2 order-0 sm:order-none">
                             {/* Filter Dropdown - Only visible on mobile */}
                             <div className="lg:hidden">
-                              <FilterDropdown
+                              <FilterDropdown 
                                 allGenres={allGenres}
                                 allThemes={allThemes}
                                 allPlatforms={allPlatforms}
                                 allGameModes={allGameModes}
                                 allPlayerPerspectives={allPlayerPerspectives}
+                                allContentTypes={allContentTypes}
                                 activeGenres={genreFilters}
                                 activeThemes={themeFilters}
                                 activePlatforms={platformFilters}
                                 activeGameModes={gameModeFilters}
                                 activePlayerPerspectives={perspectiveFilters}
+                                activeContentTypes={contentTypeFilters}
                                 minRating={minRatingFilter}
                                 onFilterChange={handleFilterChange}
                               />
@@ -378,18 +400,20 @@ const MyLibraryPage = () => {
                           platformFilters={platformFilters}
                           gameModeFilters={gameModeFilters}
                           perspectiveFilters={perspectiveFilters}
+                          contentTypeFilters={contentTypeFilters}
                           minRating={minRatingFilter}
                           onRemoveGenre={handleRemoveGenre}
                           onRemoveTheme={handleRemoveTheme}
                           onRemovePlatform={handleRemovePlatform}
                           onRemoveGameMode={handleRemoveGameMode}
                           onRemovePerspective={handleRemovePerspective}
+                          onRemoveContentType={handleRemoveContentType}
                           onRemoveRating={handleRemoveRating}
                           onClearAll={handleClearAllFilters}
                         />
                       </div>
                       
-                      {/* Games Display */}
+                      {/* Game Grid Display */}
                       <div className="p-5">
                         <GameLibraryGrid 
                           collection={collection}
@@ -405,6 +429,7 @@ const MyLibraryPage = () => {
                             platforms: platformFilters,
                             gameModes: gameModeFilters,
                             playerPerspectives: perspectiveFilters,
+                            contentTypes: contentTypeFilters,
                             minRating: minRatingFilter
                           }}
                         />
@@ -422,13 +447,17 @@ const MyLibraryPage = () => {
                   allPlatforms={allPlatforms}
                   allGameModes={allGameModes}
                   allPlayerPerspectives={allPlayerPerspectives}
+                  allContentTypes={allContentTypes}
                   activeGenres={genreFilters}
                   activeThemes={themeFilters}
                   activePlatforms={platformFilters}
                   activeGameModes={gameModeFilters}
                   activePlayerPerspectives={perspectiveFilters}
+                  activeContentTypes={contentTypeFilters}
                   minRating={minRatingFilter}
+                  titleFilter={searchQuery}
                   onFilterChange={handleFilterChange}
+                  onTitleFilterChange={(value) => setSearchQuery(value)}
                 />
               </div>
             </div>

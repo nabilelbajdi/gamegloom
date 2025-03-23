@@ -5,7 +5,6 @@ import { useAuth } from "../../context/AuthContext";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
 import GamesList from "../../components/common/GamesList";
-import SearchInput from "../../components/common/SearchInput";
 import FilterDropdown from "../../components/common/FilterDropdown";
 import FilterPanel from "../../components/common/FilterPanel";
 import SortDropdown from "../../components/common/SortDropdown";
@@ -37,13 +36,14 @@ const GameCategoryPage = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
-  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating-high" : "added_new");
+  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating-high" : "added-new");
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
   const [platformFilters, setPlatformFilters] = useState([]);
   const [gameModeFilters, setGameModeFilters] = useState([]);
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
+  const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
   const getGamesForCategory = () => {
     switch (categoryType) {
@@ -140,10 +140,20 @@ const GameCategoryPage = ({
       })
     )].sort();
 
-    return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives };
+    const allContentTypes = [...new Set(gamesWithIndex
+      .filter(game => game.game_type_name)
+      .map(game => {
+        if (game.game_type_name === "Main Game") {
+          return "Base Game";
+        }
+        return game.game_type_name;
+      })
+    )].sort();
+
+    return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes };
   };
 
-  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives } = extractFilterOptions();
+  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes } = extractFilterOptions();
 
   // Filter games based on search query, genres, themes, platforms, game modes, player perspectives, and minimum rating
   const filterGames = () => {
@@ -153,6 +163,13 @@ const GameCategoryPage = ({
         game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (game.description && game.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
+      // Content type filter
+      const matchesContentType = contentTypeFilters.length === 0 || 
+        (game.game_type_name && (
+          contentTypeFilters.includes(game.game_type_name) ||
+          (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
+        ));
+        
       // Apply all other filters
       const passesOtherFilters = gamePassesAllFilters(game, {
         genres: genreFilters,
@@ -163,7 +180,7 @@ const GameCategoryPage = ({
         minRating: minRatingFilter
       });
       
-      return matchesSearch && passesOtherFilters;
+      return matchesSearch && matchesContentType && passesOtherFilters;
     });
   };
 
@@ -203,6 +220,7 @@ const GameCategoryPage = ({
     setGameModeFilters(filters.gameModes || []);
     setPerspectiveFilters(filters.playerPerspectives || []);
     setMinRatingFilter(filters.minRating || 0);
+    setContentTypeFilters(filters.contentTypes || []);
   };
 
   const handleRemoveGenre = (genre) => {
@@ -225,6 +243,10 @@ const GameCategoryPage = ({
     setPerspectiveFilters(prev => prev.filter(p => p !== perspective));
   };
 
+  const handleRemoveContentType = (contentType) => {
+    setContentTypeFilters(prev => prev.filter(ct => ct !== contentType));
+  };
+
   const handleRemoveRating = () => {
     setMinRatingFilter(0);
   };
@@ -236,10 +258,11 @@ const GameCategoryPage = ({
     setGameModeFilters([]);
     setPerspectiveFilters([]);
     setMinRatingFilter(0);
+    setContentTypeFilters([]);
   };
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       {/* Header Section */}
       <CategoryHeader 
         title={title} 
@@ -247,7 +270,7 @@ const GameCategoryPage = ({
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 bg-gradient-to-b from-dark/95 to-dark pb-12">
+      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
         <div className="container mx-auto px-4 -mt-8">
           {/* Two-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">
@@ -258,17 +281,11 @@ const GameCategoryPage = ({
                 <div className="p-4 border-b border-gray-800/30">
                   {/* Controls Section */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    {/* Games Count and Search Input */}
+                    {/* Games Count */}
                     <div className="flex items-center gap-3 order-1 sm:order-none">
                       <div className="text-light/70 text-sm">
                         <span className="font-semibold text-light">{sortedGames.length}</span> Games
                       </div>
-                      
-                      {/* Search Input */}
-                      <SearchInput 
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                      />
                     </div>
 
                     {/* Action Buttons */}
@@ -281,11 +298,13 @@ const GameCategoryPage = ({
                           allPlatforms={allPlatforms}
                           allGameModes={allGameModes}
                           allPlayerPerspectives={allPlayerPerspectives}
+                          allContentTypes={allContentTypes}
                           activeGenres={genreFilters}
                           activeThemes={themeFilters}
                           activePlatforms={platformFilters}
                           activeGameModes={gameModeFilters}
                           activePlayerPerspectives={perspectiveFilters}
+                          activeContentTypes={contentTypeFilters}
                           minRating={minRatingFilter}
                           onFilterChange={handleFilterChange}
                         />
@@ -312,12 +331,14 @@ const GameCategoryPage = ({
                     platformFilters={platformFilters}
                     gameModeFilters={gameModeFilters}
                     perspectiveFilters={perspectiveFilters}
+                    contentTypeFilters={contentTypeFilters}
                     minRating={minRatingFilter}
                     onRemoveGenre={handleRemoveGenre}
                     onRemoveTheme={handleRemoveTheme}
                     onRemovePlatform={handleRemovePlatform}
                     onRemoveGameMode={handleRemoveGameMode}
                     onRemovePerspective={handleRemovePerspective}
+                    onRemoveContentType={handleRemoveContentType}
                     onRemoveRating={handleRemoveRating}
                     onClearAll={handleClearAllFilters}
                   />
@@ -348,13 +369,17 @@ const GameCategoryPage = ({
                 allPlatforms={allPlatforms}
                 allGameModes={allGameModes}
                 allPlayerPerspectives={allPlayerPerspectives}
+                allContentTypes={allContentTypes}
                 activeGenres={genreFilters}
                 activeThemes={themeFilters}
                 activePlatforms={platformFilters}
                 activeGameModes={gameModeFilters}
                 activePlayerPerspectives={perspectiveFilters}
+                activeContentTypes={contentTypeFilters}
                 minRating={minRatingFilter}
+                titleFilter={searchQuery}
                 onFilterChange={handleFilterChange}
+                onTitleFilterChange={(value) => setSearchQuery(value)}
               />
             </div>
           </div>
