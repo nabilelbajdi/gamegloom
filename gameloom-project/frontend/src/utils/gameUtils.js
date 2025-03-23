@@ -105,4 +105,74 @@ export const getUpcomingFeaturedGames = (games, count = 4) => {
   }
   
   return result;
+};
+
+/**
+ * Normalizes game data to ensure consistent structure across the application
+ * Especially useful for search results and API responses with inconsistent field names
+ * 
+ * @param {Object} game - The game object to normalize
+ * @returns {Object} - A normalized game object with consistent field names
+ */
+export const normalizeGameData = (game) => {
+  if (!game) return null;
+  
+  return {
+    ...game,
+    id: game.igdb_id || game.id,
+    igdb_id: game.igdb_id || game.id,
+    coverImage: game.coverImage || game.cover_image || game.cover,
+    rating: formatRating(game.rating || game.total_rating || "N/A"),
+    releaseDate: game.releaseDate || game.first_release_date || game.release_date,
+    genres: game.genres || "Unknown Genre",
+    platforms: game.platforms || "",
+    themes: game.themes || "",
+    developers: game.developers || "",
+    publisher: game.publisher || game.publishers || "",
+    gameModes: game.gameModes || game.game_modes || "",
+    playerPerspectives: game.playerPerspectives || game.player_perspectives || ""
+  };
+};
+
+/**
+ * Formats a rating value to display in a consistent format across the application
+ * 
+ * @param {number|string|null|undefined} rating - The raw rating value
+ * @returns {string} - Formatted rating value on a 5-point scale or "N/A"
+ */
+export const formatRating = (rating) => {
+  if (rating === null || rating === undefined || rating === 0 || rating === "" || rating === "N/A") {
+    return "N/A";
+  }
+  
+  const numRating = typeof rating === 'string' ? parseFloat(rating) : rating;
+  
+  if (isNaN(numRating) || numRating <= 0) {
+    return "N/A";
+  }
+  
+  // Determine the scale and convert to a 5-point scale
+  try {
+    if (numRating > 10) {
+      return (numRating / 20).toFixed(1);
+    } else if (numRating > 5) {
+      return (numRating / 2).toFixed(1);
+    } else {
+      return numRating.toFixed(1);
+    }
+  } catch (e) {
+    console.error("Error formatting rating:", e, "Rating value:", rating);
+    return "N/A";
+  }
+};
+
+/**
+ * Normalizes an array of game data
+ * 
+ * @param {Array} games - Array of game objects to normalize
+ * @returns {Array} - Array of normalized game objects
+ */
+export const normalizeGamesData = (games) => {
+  if (!games || !Array.isArray(games)) return [];
+  return games.map(normalizeGameData);
 }; 

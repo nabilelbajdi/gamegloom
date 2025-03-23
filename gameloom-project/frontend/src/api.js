@@ -1,4 +1,6 @@
 // src/api.js
+import { normalizeGameData, normalizeGamesData } from './utils/gameUtils';
+
 const BASE_URL = "http://localhost:8000/api/v1"; 
 
 // Centralized Fetch Games
@@ -8,7 +10,9 @@ async function fetchGames(endpoint) {
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    // Normalize the game data before returning it
+    return Array.isArray(data) ? normalizeGamesData(data) : normalizeGameData(data);
   } catch (error) {
     console.error(`Error fetching ${endpoint}:`, error);
     return null;
@@ -568,16 +572,48 @@ export const removeGameFromList = async (listId, gameId) => {
 };
 
 // Search API
-export const searchGames = async (query, category = "all") => {
+export const searchGames = async (query, category = "all", limit = 6) => {
   try {
-    const url = `${BASE_URL}/search?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
-    const response = await fetch(url);
+    // Handle common platform abbreviations when searching in the platforms category
+    let searchQuery = query;
+    
+    if (category === "platforms") {
+      // Map of common abbreviations to full platform names
+      const platformAbbreviations = {
+        "ps5": "PlayStation 5",
+        "ps4": "PlayStation 4",
+        "ps3": "PlayStation 3",
+        "ps2": "PlayStation 2",
+        "ps1": "PlayStation",
+        "xsx": "Xbox Series X|S",
+        "xbone": "Xbox One",
+        "xb360": "Xbox 360",
+        "xbox": "Xbox",
+        "switch": "Nintendo Switch",
+        "wiiu": "Wii U",
+        "3ds": "Nintendo 3DS",
+        "pc": "PC (Microsoft Windows)"
+      };
+      
+      // Convert query to lowercase for case-insensitive matching
+      const queryLower = query.toLowerCase();
+      
+      // Replace abbreviation with full name if it exists in mapping
+      if (platformAbbreviations[queryLower]) {
+        searchQuery = platformAbbreviations[queryLower];
+      }
+    }
+    
+    const response = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}`);
+    
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    return normalizeGamesData(data);
   } catch (error) {
-    console.error(`Error searching games:`, error);
+    console.error("Error searching games:", error);
     return [];
   }
 };

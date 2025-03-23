@@ -30,10 +30,34 @@ const useUserGameStore = create((set, get) => ({
     }));
     
     try {
-      await addGameToCollection(gameId, status);
-      await get().fetchCollection();
-
+      const response = await addGameToCollection(gameId, status);
+      
+      // Update the local state without fetching the entire collection
+      const { collection } = get();
+      const updatedCollection = { ...collection };
+      
+      // Ensure the status array exists
+      if (!updatedCollection[status]) {
+        updatedCollection[status] = [];
+      }
+      
+      // If no game details, fetch them
+      const gameDetailsFromResponse = response.game || null;
+      const gameDetails = gameDetailsFromResponse || await fetchGameDetails(gameId);
+      
+      // Add the normalized game to the collection
+      if (gameDetails) {
+        const gameToAdd = {
+          ...gameDetails,
+          status,
+          added_at: new Date().toISOString()
+        };
+        
+        updatedCollection[status] = [...updatedCollection[status], gameToAdd];
+      }
+      
       set(state => ({ 
+        collection: updatedCollection,
         loadingGameIds: state.loadingGameIds.filter(id => id !== gameId)
       }));
     } catch (error) {

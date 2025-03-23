@@ -1,4 +1,5 @@
 // Utility functions for game cards
+import { formatRating } from './gameUtils';
 
 // Format genres for display
 export const formatGenres = (genres, maxCount = 3) => {
@@ -21,4 +22,6 @@ export const formatGenres = (genres, maxCount = 3) => {
   }
   
   return genreArray.slice(0, maxCount).join(', ');
-}; 
+};
+
+export { formatRating }; 
