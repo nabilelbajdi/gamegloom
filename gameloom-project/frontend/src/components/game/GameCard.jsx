@@ -1,5 +1,6 @@
 // src/components/game/GameCard.jsx
 import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { formatGenres, formatRating } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
@@ -58,7 +59,7 @@ const GameCard = ({ game }) => {
         {/* Rating & Actions */}
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <span className="text-primary text-xs">★</span>
+            <Star className="w-3 h-3 text-primary fill-primary" />
             <span className="text-xs text-muted">
               {game.rating === "N/A" 
                 ? "N/A"

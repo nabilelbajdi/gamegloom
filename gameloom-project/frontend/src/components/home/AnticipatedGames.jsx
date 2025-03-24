@@ -8,7 +8,7 @@ const AnticipatedGames = () => {
 
   useEffect(() => {
     fetchGames("anticipated");
-  }, []);
+  }, [fetchGames]);
 
   return (
     <GameCarousel

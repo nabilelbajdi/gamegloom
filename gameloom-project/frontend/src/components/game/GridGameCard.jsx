@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { formatGenres } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
@@ -53,7 +54,7 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
             ) : (
               game.rating !== "N/A" && game.rating !== undefined && game.rating !== null && !isNaN(parseFloat(game.rating)) && (
                 <div className="flex items-center">
-                  <span className="text-primary">★</span>
+                  <Star className="w-3 h-3 text-primary fill-primary" />
                   <span className="text-xs text-gray-300 ml-1">{parseFloat(game.rating).toFixed(1)}</span>
                 </div>
               )

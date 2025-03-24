@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 
 const GenreListCardSkeleton = () => (
   <div className="relative w-full rounded-lg overflow-hidden bg-dark animate-pulse">
-    <div className="relative h-[180px] p-3 overflow-hidden">
+    <div className="relative h-[220px] p-3 overflow-hidden">
       {[...Array(3)].map((_, i) => (
         <div 
           key={i} 
-          className={`absolute w-[45%] h-[150px] rounded-md bg-gray-800 shadow-lg ${
+          className={`absolute w-[45%] h-[180px] rounded-md bg-gray-800 shadow-lg ${
             i === 0 ? "top-4 left-4 rotate-[-5deg]" :
             i === 1 ? "top-4 left-[25%] rotate-[3deg] z-10" :
             "top-6 left-[45%] rotate-[8deg] z-20"
@@ -61,7 +61,7 @@ const GenreListCard = ({
     >
       {/* Covers Collage */}
       <div 
-        className="relative h-[180px] bg-gray-900/50 overflow-hidden"
+        className="relative h-[220px] bg-gray-900/50 overflow-hidden"
         onMouseLeave={() => setHoveredGameId(null)}
       >
         {/* Background image - using first game cover or fallback */}
@@ -82,9 +82,9 @@ const GenreListCard = ({
           <motion.div
             key={game.id}
             className={`absolute rounded-md overflow-hidden shadow-lg cursor-pointer ${
-              index === 0 ? "w-[45%] h-[150px] top-4 left-4 rotate-[-5deg] z-5" :
-              index === 1 ? "w-[45%] h-[150px] top-4 left-[25%] rotate-[3deg] z-10" :
-              "w-[45%] h-[150px] top-6 left-[45%] rotate-[8deg] z-20"
+              index === 0 ? "w-[45%] h-[180px] top-4 left-4 rotate-[-5deg] z-5" :
+              index === 1 ? "w-[45%] h-[180px] top-4 left-[25%] rotate-[3deg] z-10" :
+              "w-[45%] h-[180px] top-6 left-[45%] rotate-[8deg] z-20"
             }`}
             style={{ 
               filter: hoveredGameId && hoveredGameId !== game.id ? 'blur(1px)' : 'none',
@@ -114,19 +114,7 @@ const GenreListCard = ({
           <h4 className="font-bold text-light text-lg group-hover:text-primary transition-colors">
             {title}
           </h4>
-        </div>
-        
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-gray-400">
-            {displayGames.length}+ games
-          </p>
-          
-          {/* View All Button */}
-          <motion.div
-            className="flex items-center text-xs text-primary font-medium cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            View all <ChevronRight className="h-3 w-3 ml-1" />
-          </motion.div>
+          <ChevronRight className="h-5 w-5 text-primary group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </motion.div>
