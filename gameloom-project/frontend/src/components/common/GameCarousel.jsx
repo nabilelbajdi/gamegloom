@@ -1,8 +1,9 @@
 // src/components/common/GameCarousel.jsx
 import React, { useRef, useState, useCallback, memo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import Slider from "react-slick";
 import GameCard from "../game/GameCard";
+import SectionHeader from "./SectionHeader";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getSliderSettings } from "../../utils/sliderConfig";
@@ -13,7 +14,8 @@ const GameCarousel = memo(({
   title, 
   viewAllLink, 
   maxGames = 6, 
-  slidesToShow = 6 
+  slidesToShow = 6,
+  onSlideChange
 }) => {
   const sliderRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -21,7 +23,11 @@ const GameCarousel = memo(({
   const handleAfterChange = useCallback((current) => {
     const newSlideIndex = Math.floor(current / slidesToShow);
     setCurrentSlide(newSlideIndex);
-  }, [slidesToShow]);
+    
+    if (onSlideChange) {
+      onSlideChange(newSlideIndex);
+    }
+  }, [slidesToShow, onSlideChange]);
 
   if (!games) return null;
   if (games.length === 0) return null;
@@ -61,22 +67,22 @@ const GameCarousel = memo(({
     return indicators;
   };
 
+  const sectionIcon = title === "Trending Now" ? (
+    <TrendingUp size={22} className="text-primary fill-primary" />
+  ) : null;
+
   return (
-    <section className="mt-10">
+    <section className={title === "Trending Now" ? "mt-4" : "mt-10"}>
       {/* Section Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-light">{title}</h2>
+        <SectionHeader 
+          title={title}
+          viewAllLink={viewAllLink}
+          icon={sectionIcon}
+          showGradient={true}
+        />
         
         <div className="flex items-center gap-2">
-          {viewAllLink && (
-            <Link 
-              to={viewAllLink} 
-              className="text-primary hover:text-primary-dark transition-colors text-sm mr-2"
-            >
-              View All
-            </Link>
-          )}
-          
           {/* Custom Navigation Arrows */}
           <button 
             onClick={handlePrev}

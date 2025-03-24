@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { getRecentReviews } from "../../api";
 import RecentReviewCard from "./RecentReviewCard";
+import SectionHeader from "../common/SectionHeader";
 
 const ReviewedGames = () => {
   const [reviews, setReviews] = useState([]);
@@ -75,19 +76,18 @@ const ReviewedGames = () => {
 
   return (
     <section className="container mx-auto px-4 py-12 bg-transparent">
-      {/* Section Title */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-light">Recently Reviewed</h2>
-          <p className="text-gray-400 mt-1">Latest game reviews from our community</p>
-        </div>
-        <button className="text-sm flex items-center text-primary hover:text-primary/80 transition-colors">
-          View All <ChevronRight className="ml-1 w-4 h-4" />
-        </button>
+      {/* Section Title with Gradient Underline */}
+      <div className="mb-2">
+        <SectionHeader 
+          title="Recently Reviewed" 
+          viewAllLink="/reviews" 
+          showGradient={true}
+        />
+        <p className="text-gray-400 mt-3 ml-1">Latest game reviews from our community</p>
       </div>
 
       {/* Reviews Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {reviews.map((review) => (
           <RecentReviewCard key={review.id} review={review} />
         ))}

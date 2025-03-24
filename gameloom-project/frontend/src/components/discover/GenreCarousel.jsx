@@ -5,6 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getSliderSettings } from "../../utils/sliderConfig";
 import GenreListCard from "./GenreListCard";
+import SectionHeader from "../common/SectionHeader";
 
 const GenreCarousel = ({ 
   title, 
@@ -19,7 +20,7 @@ const GenreCarousel = ({
   
   if (!categories || categories.length === 0) return null;
 
-  const slidesToShow = 5;
+  const slidesToShow = 4;
   const totalSlides = Math.ceil(categories.length / slidesToShow);
   
   const handleAfterChange = useCallback((current) => {
@@ -61,10 +62,14 @@ const GenreCarousel = ({
   };
 
   return (
-    <section className="mt-10">
+    <section className="mt-1">
       {/* Section Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-light">{title}</h2>
+        <SectionHeader 
+          title={title}
+          viewAllLink={type === "genre" ? "/genres" : "/themes"}
+          showGradient={true}
+        />
         
         <div className="flex items-center gap-2">
           {/* Custom Navigation Arrows */}
@@ -102,7 +107,7 @@ const GenreCarousel = ({
         </Slider>
       </div>
 
-      {/* Subtle Slide Indicators */}
+      {/* Slide Indicators */}
       {totalSlides > 1 && (
         <div className="flex justify-center mt-4">
           <div className="flex items-center">

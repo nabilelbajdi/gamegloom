@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Star, ThumbsUp } from 'lucide-react';
 import useGameStore from '../../store/useGameStore';
 import { useAuth } from "../../context/AuthContext";
 import GameCardStatus from "../game/GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
 import { formatGenres } from "../../utils/gameCardUtils";
+import SectionHeader from "../common/SectionHeader";
 
 // Custom Star Rating
 const CustomStarRating = ({ rating }) => (
@@ -89,17 +90,12 @@ const RecommendedGames = () => {
 
   return (
     <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden shadow-md">
-      <div className="px-6 py-5 border-b border-gray-800/30 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white flex items-center">
-          Recommended For You
-        </h2>
-        <Link 
-          to="/discover/recommendations" 
-          className="text-primary text-sm hover:text-primary-light flex items-center gap-1"
-        >
-          View All
-          <ChevronRight className="h-4 w-4" />
-        </Link>
+      <div className="px-6 py-5 border-b border-gray-800/30">
+        <SectionHeader
+          title="Games For You"
+          viewAllLink="/discover/recommendations"
+          showGradient={true}
+        />
       </div>
       
       <div className="p-4">

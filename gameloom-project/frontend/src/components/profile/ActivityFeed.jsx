@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import ActivityFeedGameCover from '../game/ActivityFeedGameCover';
 import TruncatedText from '../common/TruncatedText';
+import SectionHeader from '../common/SectionHeader';
 
 const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, isLoadingMore, onLoadMore, user }) => {
   const getActivityText = (activity) => {
@@ -117,12 +118,10 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
   return (
     <div className="mb-0">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-primary/10">
-            <Timer className="h-4 w-4 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
-        </div>
+        <SectionHeader
+          title="Recent Activity"
+          showGradient={true}
+        />
       </div>
       
       <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden">

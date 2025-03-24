@@ -191,9 +191,12 @@ const ListCard = ({
         onClick={() => onSelectList(list.id)}
       >
         <div className="flex items-center justify-between">
-          <h4 className="font-bold text-light text-lg group-hover:text-primary transition-colors truncate max-w-[75%]" title={list.name}>
-            {list.name}
-          </h4>
+          <div className="flex items-center gap-1.5 max-w-[75%]">
+            <h4 className="font-bold text-light text-lg group-hover:text-primary transition-colors truncate" title={list.name}>
+              {list.name}
+            </h4>
+            <ChevronRight className="h-4 w-4 text-primary group-hover:translate-x-0.5 transition-transform" />
+          </div>
           <div className="flex items-center gap-1">
             <motion.button 
               onClick={(e) => {
@@ -222,21 +225,10 @@ const ListCard = ({
           </div>
         </div>
         
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2">
           <p className="text-xs text-gray-400">
             {list.games?.length || 0} games
           </p>
-          
-          {/* View Full List Button */}
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectList(list.id);
-            }}
-            className="flex items-center text-xs text-primary font-medium cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            View list <ChevronRight className="h-3 w-3 ml-1" />
-          </motion.button>
         </div>
       </div>
     </motion.div>
