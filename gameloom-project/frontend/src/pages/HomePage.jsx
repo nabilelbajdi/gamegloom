@@ -7,7 +7,6 @@ import ReviewedGames from "../components/home/ReviewedGames";
 import JoinCommunity from "../components/home/JoinCommunity";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import LatestGames from "../components/home/LatestGames";
-import TrendingGames from "../components/home/TrendingGames";
 import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGames";
 
 const HomePage = () => {
@@ -41,7 +40,6 @@ const HomePage = () => {
       <div className="bg-gradient-to-b from-black/95 to-black">
         <div className="container mx-auto px-4 py-6">
           <FeaturedAnticipatedGames />
-          <TrendingGames />
           <AnticipatedGames />
           <HighlyRatedGames />
           <LatestGames />

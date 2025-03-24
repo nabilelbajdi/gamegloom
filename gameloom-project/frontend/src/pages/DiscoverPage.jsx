@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
 import useGameStore from "../store/useGameStore";
-import CategoryHeader from "../components/discover/CategoryHeader";
 import GenreCarousel from "../components/discover/GenreCarousel";
+import HeroSection from "../components/discover/HeroSection";
+import GameOfTheYear from "../components/discover/GameOfTheYear";
+import MostAnticipatedGame from "../components/discover/MostAnticipatedGame";
+import TrendingGames from "../components/home/TrendingGames";
+import GameListSection from "../components/discover/GameListSection";
 
 const DiscoverPage = () => {
-  const { fetchTopGamesForGenre, fetchTopGamesForTheme } = useGameStore();
+  const { fetchTopGamesForGenre, fetchTopGamesForTheme, fetchGames, highlyRatedGames } = useGameStore();
   const [genreGames, setGenreGames] = useState({});
   const [themeGames, setThemeGames] = useState({});
   const [loadingGenres, setLoadingGenres] = useState(true);
   const [loadingThemes, setLoadingThemes] = useState(true);
+  const [loadingHighlyRated, setLoadingHighlyRated] = useState(true);
+  const [featuredGame, setFeaturedGame] = useState(null);
 
   const genres = [
     { title: "Adventure", slug: "adventure" },
@@ -53,8 +59,8 @@ const DiscoverPage = () => {
       setLoadingGenres(true);
       const results = {};
       
-      // Fetch data for the first 5 genres (ones that will be initially visible)
-      for (let i = 0; i < 5; i++) {
+      // Fetch data for the first 4 genres (ones that will be initially visible)
+      for (let i = 0; i < 4; i++) {
         if (i < genres.length) {
           const games = await fetchTopGamesForGenre(genres[i].slug, 3);
           results[genres[i].slug] = games;
@@ -73,8 +79,8 @@ const DiscoverPage = () => {
       setLoadingThemes(true);
       const results = {};
       
-      // Fetch data for the first 5 themes (ones that will be initially visible)
-      for (let i = 0; i < 5; i++) {
+      // Fetch data for the first 4 themes (ones that will be initially visible)
+      for (let i = 0; i < 4; i++) {
         if (i < themes.length) {
           const games = await fetchTopGamesForTheme(themes[i].slug, 3);
           results[themes[i].slug] = games;
@@ -88,9 +94,36 @@ const DiscoverPage = () => {
     fetchInitialThemes();
   }, [fetchTopGamesForTheme]);
 
+  useEffect(() => {
+    const fetchHighlyRatedGamesData = async () => {
+      setLoadingHighlyRated(true);
+      await fetchGames("highlyRated");
+      setLoadingHighlyRated(false);
+    };
+    
+    fetchHighlyRatedGamesData();
+  }, [fetchGames]);
+
+  // Set a featured game when highly rated games are loaded
+  useEffect(() => {
+    if (highlyRatedGames && highlyRatedGames.length > 0 && !featuredGame) {
+      const gamesWithArtwork = highlyRatedGames.filter(
+        game => (game.artworks && game.artworks.length > 0) || 
+                (game.screenshots && game.screenshots.length > 0)
+      );
+      
+      // Use games with artwork if available, otherwise use all highly rated games
+      const gamePool = gamesWithArtwork.length > 0 ? gamesWithArtwork : highlyRatedGames;
+      
+      // Select a random game from the pool
+      const randomGame = gamePool[Math.floor(Math.random() * gamePool.length)];
+      setFeaturedGame(randomGame);
+    }
+  }, [highlyRatedGames, featuredGame]);
+
   const handleGenreSlideChange = async (currentSlide) => {
-    const startIdx = currentSlide * 5;
-    const endIdx = Math.min(startIdx + 5, genres.length);
+    const startIdx = currentSlide * 4;
+    const endIdx = Math.min(startIdx + 4, genres.length);
     
     for (let i = startIdx; i < endIdx; i++) {
       const genreSlug = genres[i].slug;
@@ -106,8 +139,8 @@ const DiscoverPage = () => {
   };
   
   const handleThemeSlideChange = async (currentSlide) => {
-    const startIdx = currentSlide * 5;
-    const endIdx = Math.min(startIdx + 5, themes.length);
+    const startIdx = currentSlide * 4;
+    const endIdx = Math.min(startIdx + 4, themes.length);
     
     for (let i = startIdx; i < endIdx; i++) {
       const themeSlug = themes[i].slug;
@@ -124,14 +157,23 @@ const DiscoverPage = () => {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      <CategoryHeader 
-        title="Discover Games"
-        description="Explore our vast collection of games across different categories and find your next favorite title."
+      {/* Hero Section Component */}
+      <HeroSection 
+        featuredGame={featuredGame} 
+        genres={genres}
       />
       
       {/* Main content */}
       <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4">
+          {/* Trending Games Carousel */}
+          <TrendingGames />
+        </div>
+          
+        {/* Game of the Year 2024 Feature */}
+        <GameOfTheYear />
+        
+        <div className="container mx-auto px-4">
           {/* Genre Carousel */}
           <GenreCarousel
             title="Popular Genres"
@@ -142,7 +184,12 @@ const DiscoverPage = () => {
             loading={loadingGenres}
             onSlideChange={handleGenreSlideChange}
           />
+        </div>
           
+        {/* Most Anticipated Game Feature */}
+        <MostAnticipatedGame />
+        
+        <div className="container mx-auto px-4">  
           {/* Theme Carousel */}
           <GenreCarousel
             title="Popular Themes"
@@ -153,6 +200,9 @@ const DiscoverPage = () => {
             loading={loadingThemes}
             onSlideChange={handleThemeSlideChange}
           />
+          
+          {/* Game Lists Section */}
+          <GameListSection />
         </div>
       </div>
     </div>
