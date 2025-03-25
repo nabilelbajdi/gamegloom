@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import API_URL from "../utils/apiConfig";
 
 // Create the context
 const AuthContext = createContext();
@@ -34,7 +35,7 @@ export function AuthProvider({ children }) {
 
     while (attempts < maxAttempts) {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/me", {
+        const res = await fetch(`${API_URL}/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -66,7 +67,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", token);
       
       // Then fetch complete user data
-      const res = await fetch("http://localhost:8000/api/v1/me", {
+      const res = await fetch(`${API_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

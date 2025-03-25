@@ -93,7 +93,7 @@ const HeroSection = ({
               <Link 
                 key={genre.slug} 
                 to={`/genre/${genre.slug}`}
-                className="px-4 py-1.5 rounded-lg bg-surface-dark/70 backdrop-blur-sm text-sm text-white hover:text-white hover:bg-surface-dark/80 hover:text-primary transition-all shadow-sm"
+                className="px-4 py-1.5 rounded-lg bg-surface-dark/70 backdrop-blur-sm text-sm text-white hover:text-white hover:bg-surface-dark/80 transition-all shadow-sm"
               >
                 {genre.title}
               </Link>

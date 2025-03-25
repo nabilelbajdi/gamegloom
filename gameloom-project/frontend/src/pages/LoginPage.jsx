@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLoadingBar } from "../App";
+import API_URL from "../utils/apiConfig";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const LoginPage = () => {
     loadingBar.start();
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
