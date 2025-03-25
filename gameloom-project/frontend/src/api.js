@@ -1,7 +1,7 @@
 // src/api.js
 import { normalizeGameData, normalizeGamesData } from './utils/gameUtils';
 
-const BASE_URL = "http://localhost:8000/api/v1"; 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"; 
 
 // Centralized Fetch Games
 async function fetchGames(endpoint) {
