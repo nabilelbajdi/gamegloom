@@ -48,6 +48,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://localhost:8000",
+    "https://gameloom-labb3.vercel.app"
 ]
 
 app.add_middleware(
