@@ -50,7 +50,8 @@ origins = [
     "http://localhost:8000",
     "https://gameloom-labb3.vercel.app",
     "https://gamegloom.com",
-    "https://www.gamegloom.com"
+    "https://www.gamegloom.com",
+    "https://api.gamegloom.com",
 ]
 
 app.add_middleware(
