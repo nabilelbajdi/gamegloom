@@ -10,7 +10,6 @@ import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor, Ta
 import { searchGames } from "../../api";
 
 const NAV_ITEMS = [
-  { name: "My Library", path: "/library" },
   { 
     name: "Discover", 
     path: "/discover",
