@@ -104,7 +104,7 @@ async def upload_avatar(
         )
     
     # Ensure avatars directory exists
-    avatars_dir = Path("/var/www/avatars")
+    avatars_dir = Path("frontend/public/images/avatars")
     os.makedirs(avatars_dir, exist_ok=True)
     
     # Generate unique filename
@@ -135,7 +135,7 @@ async def upload_avatar(
                     logger.error(f"Error removing old avatar: {str(e)}")
         
         # Update user's avatar URL in database
-        avatar_url = f"https://api.gamegloom.com/images/avatars/{unique_filename}"
+        avatar_url = f"/images/avatars/{unique_filename}"
         current_user.avatar = avatar_url
         db.commit()
         db.refresh(current_user)
