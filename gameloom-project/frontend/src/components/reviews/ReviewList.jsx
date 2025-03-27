@@ -25,12 +25,19 @@ const ReviewList = ({ gameId, releaseDate }) => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      await fetchGameReviews(gameId);
-      setInitialLoad(false);
+      try {
+        await fetchGameReviews(gameId);
+      } catch (err) {
+        if (user) {
+          console.error("Error fetching reviews:", err);
+        }
+      } finally {
+        setInitialLoad(false);
+      }
     };
     
     fetchReviews();
-  }, [gameId]);
+  }, [gameId, fetchGameReviews, user]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -125,7 +132,7 @@ const ReviewList = ({ gameId, releaseDate }) => {
       </div>
 
       {/* Error Message */}
-      {error && (
+      {error && user && (
         <div className="p-4 bg-red-500/10 text-red-500 rounded-lg">
           {error}
         </div>

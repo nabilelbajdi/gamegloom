@@ -189,14 +189,21 @@ export const getGameReviews = async (gameId) => {
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`, {
-    headers
-  });
-  
-  if (!response.ok) {
-    throw new Error("Failed to fetch reviews");
+  try {
+    const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`, {
+      headers
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to fetch reviews");
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return [];
   }
-  return await response.json();
 };
 
 export const getUserReviewForGame = async (gameId) => {

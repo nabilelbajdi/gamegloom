@@ -9,7 +9,7 @@ from ..models.review import Review, ReviewLike, ReviewComment
 from ..models.game import Game
 from ..models.user import User
 from ...db_setup import get_db
-from ..core.security import get_current_user
+from ..core.security import get_current_user, get_current_user_optional
 
 router = APIRouter(
     prefix="/reviews",
@@ -110,29 +110,41 @@ async def get_recent_reviews(
 @router.get("/game/{igdb_id}", response_model=List[schemas.Review])
 async def get_game_reviews(
     igdb_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """Get all reviews for a specific game."""
-    game = db.query(Game).filter(Game.igdb_id == igdb_id).first()
-    if not game:
+    try:
+        game = db.query(Game).filter(Game.igdb_id == igdb_id).first()
+        if not game:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game not found"
+            )
+        
+        reviews = db.query(Review).join(User).filter(Review.game_id == game.id).all()
+        
+        if current_user:
+            for review in reviews:
+                review.user_liked = db.query(ReviewLike).filter(
+                    and_(
+                        ReviewLike.user_id == current_user.id,
+                        ReviewLike.review_id == review.id
+                    )
+                ).first() is not None
+        else:
+            for review in reviews:
+                review.user_liked = False
+        
+        return reviews
+    except Exception as e:
+        print(f"Error in get_game_reviews: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Game not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while fetching reviews"
         )
-    
-    reviews = db.query(Review).join(User).filter(Review.game_id == game.id).all()
-    
-    if current_user:
-        for review in reviews:
-            review.user_liked = db.query(ReviewLike).filter(
-                and_(
-                    ReviewLike.user_id == current_user.id,
-                    ReviewLike.review_id == review.id
-                )
-            ).first() is not None
-    
-    return reviews
 
 @router.get("/{review_id}", response_model=schemas.Review)
 async def get_review(

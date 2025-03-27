@@ -1,7 +1,7 @@
 # core/auth.py
 from datetime import datetime, timedelta, UTC
 import secrets
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -10,8 +10,20 @@ from ..models.token import Token
 from ..models.user import User
 from ...db_setup import get_db
 
-# Security scheme for token
+# Custom bearer class that allows missing tokens
+class OptionalHTTPBearer(HTTPBearer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, auto_error=False, **kwargs)
+
+    async def __call__(self, request: Request):
+        if "Authorization" in request.headers:
+            return await super().__call__(request)
+        return None
+
+# Regular security for required auth
 security = HTTPBearer()
+# Optional security for endpoints that work with or without auth
+optional_security = OptionalHTTPBearer()
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -69,4 +81,16 @@ async def get_current_user(
             detail="Invalid or expired token"
         )
     
+    return user
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(optional_security),
+    db: Session = Depends(get_db)
+) -> User | None:
+    """Dependency to get current user from token, or None if no valid token."""
+    if credentials is None:
+        return None
+        
+    token = credentials.credentials
+    user = get_user_by_token(db, token)
     return user 
