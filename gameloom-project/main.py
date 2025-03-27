@@ -1,4 +1,5 @@
 # main.py
+# Testing GitHub Actions deployment workflow
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
