@@ -31,16 +31,14 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
         {/* Status Ribbon */}
-        {user && (
-          <div className={`absolute top-0 left-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
-            <GameCardStatus 
-              game={game}
-              onStatusChange={handleStatusChange}
-              showDropdown={showStatusDropdown}
-              size={smallStatus ? "small" : "default"}
-            />
-          </div>
-        )}
+        <div className={`absolute top-0 left-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+          <GameCardStatus 
+            game={game}
+            onStatusChange={handleStatusChange}
+            showDropdown={showStatusDropdown}
+            size={smallStatus ? "small" : "default"}
+          />
+        </div>
 
         {/* Game information overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">

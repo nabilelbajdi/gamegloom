@@ -1,9 +1,13 @@
 import React from "react";
 import { Plus, Check, Trash2, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import useUserGameStore from "../../store/useUserGameStore";
+import { useAuth } from "../../context/AuthContext";
 
 const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }) => {
   const { addGame, removeGame, getGameStatus, updateStatus, isGameLoading } = useUserGameStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const gameStatus = getGameStatus(game.id);
   const isLoading = isGameLoading(game.id);
 
@@ -55,6 +59,11 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
     if (e) {
       e.preventDefault(); 
       e.stopPropagation();
+    }
+
+    if (!user) {
+      navigate("/login");
+      return;
     }
 
     // Toggle dropdown if no status is provided
@@ -155,8 +164,8 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
         </div>
       </div>
       
-      {/* Status Dropdown */}
-      {showDropdown && !isLoading && (
+      {/* Status Dropdown - Only show if user is logged in */}
+      {showDropdown && !isLoading && user && (
         <div 
           className={`absolute ${dimensions.dropdownTop} left-0 z-20 ${size === "small" ? "w-28" : "w-32"} bg-surface-dark rounded-b-lg shadow-lg border border-gray-800/50 overflow-hidden`}
           onClick={(e) => e.stopPropagation()}

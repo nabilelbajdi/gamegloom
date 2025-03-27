@@ -33,16 +33,14 @@ const GameCardSimple = ({ game }) => {
         />
         
         {/* Status Ribbon */}
-        {user && (
-          <div className="absolute top-0 left-0 z-10 transition-opacity duration-300">
-            <GameCardStatus 
-              game={game} 
-              onStatusChange={handleStatusChange}
-              showDropdown={showStatusDropdown}
-              size="large"
-            />
-          </div>
-        )}
+        <div className="absolute top-0 left-0 z-10 transition-opacity duration-300">
+          <GameCardStatus 
+            game={game} 
+            onStatusChange={handleStatusChange}
+            showDropdown={showStatusDropdown}
+            size="large"
+          />
+        </div>
         
         {/* Hover overlay with "View Game" and game info */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

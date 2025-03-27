@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, Check, Plus, Tags, Play, Trophy } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 
 const GameListCard = ({ game, index }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { addGame, removeGame, getGameStatus, updateStatus } = useUserGameStore();
   const gameStatus = getGameStatus(game.id);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -16,7 +17,10 @@ const GameListCard = ({ game, index }) => {
       e.stopPropagation();
     }
 
-    if (!user) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     
     if (status === null) {
       setShowStatusDropdown(!showStatusDropdown);
@@ -136,74 +140,72 @@ const GameListCard = ({ game, index }) => {
         />
         
         {/* Status Ribbon */}
-        {user && (
-          <div className="absolute top-0 left-0 z-10">
-            <div 
-              className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
-              onClick={(e) => handleStatusClick(e)}
-              aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
-              role="button"
-              tabIndex="0"
+        <div className="absolute top-0 left-0 z-10">
+          <div 
+            className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
+            onClick={(e) => handleStatusClick(e)}
+            aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
+            role="button"
+            tabIndex="0"
+          >
+            <svg 
+              width="18px" 
+              height="27px" 
+              viewBox="0 0 30 46" 
+              xmlns="http://www.w3.org/2000/svg" 
+              role="presentation"
+              preserveAspectRatio="xMinYMin meet"
             >
-              <svg 
-                width="18px" 
-                height="27px" 
-                viewBox="0 0 30 46" 
-                xmlns="http://www.w3.org/2000/svg" 
-                role="presentation"
-                preserveAspectRatio="xMinYMin meet"
-              >
-                {/* Ribbon Background */}
-                <polygon 
-                  className={`${getRibbonColor()} transition-colors duration-300`} 
-                  points="30 0 0 0 0 44 15 37 30 44"
-                />
-                {/* Hover Effect*/}
-                <polygon 
-                  className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
-                  points="30 0 0 0 0 44 15 37 30 44"
-                />
-                {/* Shadow */}
-                <polygon 
-                  className="fill-black/40" 
-                  points="30 44 30 46 15 39 0 46 0 44 15 37"
-                />
-              </svg>
-              
-              {/* Icon */}
-              <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: "4px" }}>
-                {getRibbonIcon()}
+              {/* Ribbon Background */}
+              <polygon 
+                className={`${getRibbonColor()} transition-colors duration-300`} 
+                points="30 0 0 0 0 44 15 37 30 44"
+              />
+              {/* Hover Effect*/}
+              <polygon 
+                className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
+                points="30 0 0 0 0 44 15 37 30 44"
+              />
+              {/* Shadow */}
+              <polygon 
+                className="fill-black/40" 
+                points="30 44 30 46 15 39 0 46 0 44 15 37"
+              />
+            </svg>
+            
+            {/* Icon */}
+            <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: "4px" }}>
+              {getRibbonIcon()}
+            </div>
+          </div>
+          
+          {/* Status Icons Dropdown - Only show if user is logged in */}
+          {showStatusDropdown && user && (
+            <div 
+              className="absolute top-[26px] left-0 z-20 flex bg-surface-dark rounded shadow-md border border-gray-800/50 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Vertical stack of status icons */}
+              <div className="flex flex-col divide-y divide-gray-800/30">
+                {["want_to_play", "playing", "played"].map((status) => (
+                  <button
+                    key={status}
+                    onClick={(e) => handleStatusClick(e, status)}
+                    className={`
+                      p-1 flex items-center justify-center w-5 h-5
+                      ${gameStatus === status ? 'bg-gray-800/80' : 'hover:bg-gray-800/50'}
+                      ${getStatusColor(status)}
+                      transition-colors duration-200
+                    `}
+                    title={status.replace(/_/g, " ")}
+                  >
+                    {getStatusIcon(status)}
+                  </button>
+                ))}
               </div>
             </div>
-            
-            {/* Status Icons Dropdown */}
-            {showStatusDropdown && (
-              <div 
-                className="absolute top-[26px] left-0 z-20 flex bg-surface-dark rounded shadow-md border border-gray-800/50 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Vertical stack of status icons */}
-                <div className="flex flex-col divide-y divide-gray-800/30">
-                  {["want_to_play", "playing", "played"].map((status) => (
-                    <button
-                      key={status}
-                      onClick={(e) => handleStatusClick(e, status)}
-                      className={`
-                        p-1 flex items-center justify-center w-5 h-5
-                        ${gameStatus === status ? 'bg-gray-800/80' : 'hover:bg-gray-800/50'}
-                        ${getStatusColor(status)}
-                        transition-colors duration-200
-                      `}
-                      title={status.replace(/_/g, " ")}
-                    >
-                      {getStatusIcon(status)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
         
         {/* Hover overlay - matching GameCard.jsx */}
         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

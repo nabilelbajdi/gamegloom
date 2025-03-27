@@ -33,15 +33,13 @@ const GameCard = ({ game }) => {
         />
         
         {/* Status Ribbon */}
-        {user && (
-          <div className="absolute top-0 left-0 z-10">
-            <GameCardStatus 
-              game={game} 
-              onStatusChange={handleStatusChange}
-              showDropdown={showStatusDropdown} 
-            />
-          </div>
-        )}
+        <div className="absolute top-0 left-0 z-10">
+          <GameCardStatus 
+            game={game} 
+            onStatusChange={handleStatusChange}
+            showDropdown={showStatusDropdown} 
+          />
+        </div>
         
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
