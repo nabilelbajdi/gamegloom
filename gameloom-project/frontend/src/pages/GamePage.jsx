@@ -15,6 +15,11 @@ const GamePage = () => {
   const { gameDetails, fetchGameDetails } = useGameStore();
   const { fetchCollection, collection } = useUserGameStore();
   const isLoggedIn = localStorage.getItem("token") !== null;
+  
+  const isNumericId = !isNaN(gameId);
+  const game = isNumericId
+    ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
+    : Object.values(gameDetails).find(g => g.slug === gameId);
 
   useEffect(() => {
     // Always fetch game details
@@ -26,10 +31,34 @@ const GamePage = () => {
     }
   }, [fetchGameDetails, gameId, fetchCollection, isLoggedIn]);
 
-  const isNumericId = !isNaN(gameId);
-  const game = isNumericId
-    ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
-    : Object.values(gameDetails).find(g => g.slug === gameId);
+  // Save recently viewed game
+  useEffect(() => {
+    if (game) {
+      try {
+        const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewedGames') || '[]');
+        
+        // Prepare simplified game object with essential info
+        const gameToSave = {
+          id: game.id || game.igdb_id,
+          igdb_id: game.igdb_id,
+          slug: game.slug,
+          name: game.name,
+          coverImage: game.coverImage
+        };
+        
+        // Remove this game if it exists already (to move it to the front)
+        const filteredGames = recentlyViewed.filter(g => g.id !== gameToSave.id && g.igdb_id !== gameToSave.igdb_id);
+        
+        // Add current game to the beginning - store up to 15 games
+        const updatedGames = [gameToSave, ...filteredGames].slice(0, 15);
+        
+        // Save to localStorage
+        localStorage.setItem('recentlyViewedGames', JSON.stringify(updatedGames));
+      } catch (error) {
+        console.error('Error saving recently viewed game:', error);
+      }
+    }
+  }, [game]);
     
   if (!game) return <div className="flex-center h-screen">Loading...</div>;
 
@@ -38,16 +67,6 @@ const GamePage = () => {
     if (!url || !url.includes('/t_')) return url;
     return url.replace(/\/t_[^/]+\//, '/t_1080p/');
   };
-
-  // OPTION 1: Use the first screenshot available
-  // const backgroundImage = game.screenshots?.length > 0 
-  //   ? getHighResImage(game.screenshots[0])
-  //   : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg");
-
-  // OPTION 2: Use a random screenshot
-  // const backgroundImage = game.screenshots?.length > 0 
-  //   ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
-  //   : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg");
 
   // OPTION 3: Use the first artwork available
   const backgroundImage = game.artworks?.length > 0
@@ -77,11 +96,8 @@ const GamePage = () => {
         {/* Game Details Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} trailer={game.videos?.[0]} />
-          {/* <div className="container mx-auto my-6 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
-          {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <SimilarGames games={game.similarGames} />
-          {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <RelatedContent 
             dlcs={game.dlcs}
             expansions={game.expansions}
@@ -94,7 +110,6 @@ const GamePage = () => {
             packs={game.packs}
             editions={game.editions}
           />
-          {/* <div className="container mx-auto my-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div> */}
           <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />
         </div>
       </div>

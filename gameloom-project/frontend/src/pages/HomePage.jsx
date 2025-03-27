@@ -4,10 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import Hero from "../components/home/HeroSection";
 import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
-import JoinCommunity from "../components/home/JoinCommunity";
+import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGames";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import LatestGames from "../components/home/LatestGames";
-import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGames";
 
 const HomePage = () => {
   const { loading } = useAuth();
@@ -45,7 +44,6 @@ const HomePage = () => {
           <LatestGames />
         </div>
         <ReviewedGames />
-        <JoinCommunity />
       </div>
     </>
   );

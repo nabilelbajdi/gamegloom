@@ -6,7 +6,7 @@ import Icon from "../UI/Icon";
 import SearchResults from "../search/SearchResults";
 import debounce from "lodash/debounce";
 import useUserGameStore from "../../store/useUserGameStore";
-import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor, Tags } from "lucide-react";
+import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor, Tags, Library } from "lucide-react";
 import { searchGames } from "../../api";
 
 const NAV_ITEMS = [
@@ -31,7 +31,7 @@ const LoadingSkeleton = () => (
   <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
     <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
       <Link to="/" className="text-lg font-bold cursor-pointer px-2">
-        GameLoom
+        Game<span className="text-primary">Gloom</span>
       </Link>
 
       <div className="hidden md:flex pl-10 space-x-2">
@@ -260,7 +260,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
       <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
         <Link to="/" className="text-lg font-bold cursor-pointer px-2">
-          GameLoom
+          Game<span className="text-primary">Gloom</span>
         </Link>
 
         <div className="hidden md:flex pl-10 space-x-2">
@@ -427,8 +427,8 @@ export default function Navbar() {
             className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
           >
             <div className="flex items-center space-x-2">
-              <Icon name="bookmark-plus" className="icon pointer-events-none" />
-              <span>Collection</span>
+              <Library size={16} className="text-gray-300" />
+              <span>Library</span>
               {user && (collection.want_to_play.length + collection.playing.length + collection.played.length) > 0 && (
                 <span className="bg-primary text-dark rounded-full px-2">
                   {collection.want_to_play.length + collection.playing.length + collection.played.length}
@@ -456,7 +456,14 @@ export default function Navbar() {
                     className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
                     role="menuitem"
                   >
-                    Profile
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/library?tab=my_lists"
+                    className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
+                    role="menuitem"
+                  >
+                    My Lists
                   </Link>
                   <Link
                     to="/settings"
@@ -537,7 +544,10 @@ export default function Navbar() {
           {user ? (
             <>
               <Link to="/profile" className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
-                Profile
+                My Profile
+              </Link>
+              <Link to="/library?tab=my_lists" className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" onClick={() => setIsOpen(false)}>
+                My Lists
               </Link>
               <button onClick={handleLogout} className="nav-link text-xs text-left hover:bg-gray-800 rounded-md px-3 py-1.5">
                 Logout

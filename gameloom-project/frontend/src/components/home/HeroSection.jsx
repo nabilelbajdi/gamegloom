@@ -1,7 +1,7 @@
 // src/components/home/HeroSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
 import Button from "../UI/Button";
 import GameCardSimple from "../game/GameCardSimple";
@@ -14,7 +14,7 @@ import { motion } from "motion/react";
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { highlyRatedGames, trendingGames, anticipatedGames, fetchGames } = useGameStore();
+  const { highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, fetchGames } = useGameStore();
   const { user } = useAuth();
   const { fetchCollection } = useUserGameStore();
   const [featuredGames, setFeaturedGames] = useState([]);
@@ -24,7 +24,7 @@ const HeroSection = () => {
   const sliderRef = useRef(null);
 
   useEffect(() => {
-    // Fetch all types of games if not available
+    // Fetch appropriate games based on login status
     if (!highlyRatedGames || highlyRatedGames.length === 0) {
       fetchGames("highlyRated");
     }
@@ -34,48 +34,70 @@ const HeroSection = () => {
     if (!anticipatedGames || anticipatedGames.length === 0) {
       fetchGames("anticipated");
     }
-  }, [highlyRatedGames, trendingGames, anticipatedGames, fetchGames]);
+    
+    // Only fetch recommendations for logged-in users
+    if (user && (!recommendedGames || recommendedGames.length === 0)) {
+      fetchGames("recommendations");
+    }
+  }, [highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, fetchGames, user]);
 
   useEffect(() => {
-    if (featuredGames.length === 0 && 
-        highlyRatedGames?.length > 0 && 
-        trendingGames?.length > 0 && 
-        anticipatedGames?.length > 0) {
-      
-      // Get valid games from all lists
-      const validHighlyRated = highlyRatedGames
-        .slice(0, 20)
-        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-      
-      const validTrending = trendingGames
-        .slice(0, 20)
-        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-
-      const validAnticipated = anticipatedGames
-        .slice(0, 20)
-        .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-
-      // Combine all lists
-      const combinedGames = [...validHighlyRated, ...validTrending, ...validAnticipated];
-      
-      if (combinedGames.length > 0) {
-        const selectedGames = [];
-        const gamesCopy = [...combinedGames];
-        
-        const numGamesToSelect = Math.min(10, gamesCopy.length);
-        
-        for (let i = 0; i < numGamesToSelect; i++) {
-          const randomIndex = Math.floor(Math.random() * gamesCopy.length);
-          selectedGames.push(gamesCopy[randomIndex]);
-          gamesCopy.splice(randomIndex, 1);
+    // Different game selection logic based on login status
+    if (featuredGames.length === 0) {
+      if (user && recommendedGames?.length > 0) {
+        // For logged-in users with recommendations
+        const validRecommendedGames = recommendedGames
+          .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+          
+        if (validRecommendedGames.length > 0) {
+          const selectedGames = validRecommendedGames.slice(0, 10);
+          setFeaturedGames(selectedGames);
+          updateBackgroundImage(selectedGames[0]);
+          document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
+        } else {
+          selectRandomHighlyRatedGames();
         }
-        
-        setFeaturedGames(selectedGames);
-        updateBackgroundImage(selectedGames[0]);
-        document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
+      } else if (highlyRatedGames?.length > 0 && trendingGames?.length > 0 && anticipatedGames?.length > 0) {
+        // For non-logged-in users
+        selectRandomHighlyRatedGames();
       }
     }
-  }, [highlyRatedGames, trendingGames, anticipatedGames, featuredGames.length]);
+  }, [highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, featuredGames.length, user]);
+
+  const selectRandomHighlyRatedGames = () => {
+    // Get valid games from all lists
+    const validHighlyRated = highlyRatedGames
+      .slice(0, 20)
+      .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+    
+    const validTrending = trendingGames
+      .slice(0, 20)
+      .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+
+    const validAnticipated = anticipatedGames
+      .slice(0, 20)
+      .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
+
+    // Combine all lists
+    const combinedGames = [...validHighlyRated, ...validTrending, ...validAnticipated];
+    
+    if (combinedGames.length > 0) {
+      const selectedGames = [];
+      const gamesCopy = [...combinedGames];
+      
+      const numGamesToSelect = Math.min(10, gamesCopy.length);
+      
+      for (let i = 0; i < numGamesToSelect; i++) {
+        const randomIndex = Math.floor(Math.random() * gamesCopy.length);
+        selectedGames.push(gamesCopy[randomIndex]);
+        gamesCopy.splice(randomIndex, 1);
+      }
+      
+      setFeaturedGames(selectedGames);
+      updateBackgroundImage(selectedGames[0]);
+      document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -123,9 +145,16 @@ const HeroSection = () => {
   };
 
   const scrollToContent = () => {
-    const contentSection = document.querySelector(".bg-dark");
-    if (contentSection) {
-      contentSection.scrollIntoView({ behavior: "smooth" });
+    // Scroll to the "coming soon" section
+    const comingSoonSection = document.getElementById("coming-soon") || document.querySelector(".coming-soon");
+    if (comingSoonSection) {
+      comingSoonSection.scrollIntoView({ behavior: "smooth" });
+    } else {
+      // Fallback to scroll down a fixed amount if section doesn't exist
+      window.scrollTo({
+        top: window.innerHeight,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -143,7 +172,24 @@ const HeroSection = () => {
     pauseOnHover: false
   };
 
-  const features = [
+  // Different features based on login status
+  const features = user ? [
+    {
+      icon: <ListChecks className="w-4 h-4" />,
+      title: "Track Progress",
+      description: "Manage your gaming backlog"
+    },
+    {
+      icon: <Library className="w-4 h-4" />,
+      title: "Your Library",
+      description: "Build your gaming collection"
+    },
+    {
+      icon: <BookMarked className="w-4 h-4" />,
+      title: "Get Recommendations",
+      description: "Find your next favorite game"
+    }
+  ] : [
     {
       icon: <TrendingUp className="w-4 h-4" />,
       title: "Track Trending Games",
@@ -191,7 +237,7 @@ const HeroSection = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
             >
-              Your Gaming Journey <br />Starts Here
+              {user ? `Welcome Back, ${user.username}` : 'Your Gaming Journey\nStarts Here'}
             </motion.h1>
             
             <motion.p 
@@ -200,7 +246,7 @@ const HeroSection = () => {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.6 }}
             >
-              Track your games, share reviews, and connect with fellow gamers in one place
+              {user ? 'Check out these personalized recommendations based on your gaming taste' : 'Track your games, share reviews, and connect with fellow gamers in one place'}
             </motion.p>
             
             {/* CTA Buttons */}
@@ -210,27 +256,42 @@ const HeroSection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.9 }}
             >
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button 
-                  to="/signup"
-                  label="Join Now"
-                  variant="primary"
-                  icon={<UserPlus className="mr-1 h-4 w-4" />}
-                />
-              </motion.div>
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button 
-                  to="/about"
-                  label="Learn More"
-                  variant="secondary"
-                />
-              </motion.div>
+              {!user ? (
+                <>
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      to="/signup"
+                      label="Join Now"
+                      variant="primary"
+                      icon={<UserPlus className="mr-1 h-4 w-4" />}
+                    />
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button 
+                      to="/about"
+                      label="Learn More"
+                      variant="secondary"
+                    />
+                  </motion.div>
+                </>
+              ) : (
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button 
+                    to="/discover/recommendations"
+                    label="View All Recommendations"
+                    variant="primary"
+                  />
+                </motion.div>
+              )}
             </motion.div>
 
             {/* Feature Highlights */}
@@ -270,9 +331,14 @@ const HeroSection = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="w-full max-w-sm mx-auto px-4">
+            <div className="w-full max-w-sm mx-auto px-4 pt-8">
               {featuredGames.length > 0 ? (
                 <div className="relative">
+                  <div className="absolute -top-8 left-0 right-0 text-center">
+                    <h2 className="text-sm font-semibold text-primary">
+                      {user ? 'Recommended For You' : 'Featured Games'}
+                    </h2>
+                  </div>
                   <Slider ref={sliderRef} {...sliderSettings}>
                     {featuredGames.map((game) => (
                       <div key={game.id} className="px-2">
@@ -313,25 +379,14 @@ const HeroSection = () => {
                           currentGameIndex === index ? "bg-primary w-4" : "bg-white/50"
                         }`}
                         aria-label={`Go to slide ${index + 1}`}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
                       />
                     ))}
                   </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full h-1 bg-dark/50 mt-4 rounded-full overflow-hidden">
-                    <div 
-                      key={animationKey}
-                      className={`h-full bg-primary origin-left animate-progress ${
-                        sliderSettings.autoplay ? 'animate-progress-running' : 'animate-progress-paused'
-                      }`}
-                      style={{ animationDuration: 'var(--carousel-duration)' }}
-                    />
-                  </div>
                 </div>
               ) : (
-                <div className="w-full aspect-[3/4] bg-gray-800 rounded-lg animate-pulse"></div>
+                <div className="animate-pulse">
+                  <div className="w-full aspect-[3/4] bg-surface-dark rounded-lg"></div>
+                </div>
               )}
             </div>
           </motion.div>
@@ -340,26 +395,19 @@ const HeroSection = () => {
 
       {/* Scroll Indicator */}
       <motion.div 
-        className="absolute bottom-4 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center cursor-pointer"
+        onClick={scrollToContent}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ 
-          duration: 0.5, 
-          delay: 1.5,
-          y: { 
-            repeat: Infinity,
-            repeatType: "reverse",
-            duration: 0.8,
-            ease: "easeInOut" 
-          }
-        }}
+        transition={{ duration: 0.5, delay: 2 }}
+        whileHover={{ y: 5 }}
       >
-        <button
-          onClick={scrollToContent}
-          className="text-light hover:text-primary hover:bg-dark/50 rounded-full p-1.5 transition-colors cursor-pointer"
+        <motion.div 
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop" }}
         >
-          <ChevronDown className="h-6 w-6" />
-        </button>
+          <ChevronDown className="h-5 w-5 text-white/60" />
+        </motion.div>
       </motion.div>
     </section>
   );

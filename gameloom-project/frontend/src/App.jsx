@@ -1,5 +1,5 @@
 import React, { useRef, createContext, useContext } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import LoadingBar from "react-top-loading-bar";
 import { useRouteLoadingBar } from "./hooks/useRouteLoadingBar";
@@ -24,6 +24,7 @@ import LatestReleasesPage from "./pages/discover/LatestReleasesPage";
 import GenrePage from "./pages/discover/GenrePage";
 import ThemePage from "./pages/discover/ThemePage";
 import RecommendationsPage from "./pages/discover/RecommendationsPage";
+import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 
 const LoadingBarContext = createContext(null);
 
@@ -37,10 +38,15 @@ export const useLoadingBar = () => {
 
 function AppContent() {
   useRouteLoadingBar();
+  const location = useLocation();
+  
+  // Check if current path is login or signup
+  const isAuthPage = ['/login', '/signup'].includes(location.pathname);
   
   return (
     <>
-      <Navbar />
+      <ScrollToTopOnMount />
+      {!isAuthPage && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/library" element={<MyLibraryPage />} />
@@ -62,7 +68,7 @@ function AppContent() {
         <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      <Footer />
+      {!isAuthPage && <Footer />}
     </>
   );
 }
