@@ -1,0 +1,53 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'main.py'
+      - 'requirements.txt'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      
+    - name: Deploy to EC2
+      run: |
+        ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          # Navigate to your project directory
+          cd /home/ubuntu/fastapi-app/gameloom-labb3/gameloom-project
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Activate virtual environment
+          source venv/bin/activate
+          
+          # Install dependencies
+          pip install -r requirements.txt
+          
+          # Run migrations if needed
+          cd backend
+          alembic upgrade head
+          cd ..
+          
+          # Restart application using Supervisor
+          sudo supervisorctl restart fastapi
+          
+          # Check status
+          sudo supervisorctl status fastapi
+        EOF
