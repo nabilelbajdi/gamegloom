@@ -5,7 +5,7 @@ const LibraryHeader = () => {
     <div className="relative overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img 
-          src="/images/emerald.jpg" 
+          src="/images/collage.jpg" 
           alt="Library Background" 
           className="w-full h-full object-cover" 
         />
