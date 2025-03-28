@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLoadingBar } from "../../App";
 import Icon from "../UI/Icon";
@@ -23,8 +23,8 @@ const NAV_ITEMS = [
       { name: "Recommendations", path: "/discover/recommendations" },
     ]
   },
-  { name: "Community", path: "/community" },
-  { name: "Articles", path: "/articles" }
+  { name: "For you", path: "/discover/recommendations" },
+  { name: "Coming Soon", path: "/discover/anticipated" }
 ];
 
 const LoadingSkeleton = () => (
@@ -34,7 +34,7 @@ const LoadingSkeleton = () => (
         Game<span className="text-primary">Gloom</span>
       </Link>
 
-      <div className="hidden md:flex pl-10 space-x-2">
+      <div className="hidden md:flex pl-4 space-x-2">
         {NAV_ITEMS.map((_, index) => (
           <div key={index} className="nav-link text-xs">
             <div className="h-4 w-16 bg-gray-700 animate-pulse rounded"></div>
@@ -42,7 +42,7 @@ const LoadingSkeleton = () => (
         ))}
       </div>
 
-      <form className="flex items-center flex-grow max-w-md px-2">
+      <form className="flex items-center flex-grow max-w-xl px-2">
         <div className="relative flex items-center w-full bg-white rounded overflow-hidden">
           <div className="w-16 h-8 bg-gray-300 animate-pulse"></div>
           <div className="flex-1 h-8 bg-gray-300 animate-pulse"></div>
@@ -74,6 +74,7 @@ export default function Navbar() {
   const categoryButtonRef = useRef(null);
   const categoryDropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
@@ -254,16 +255,23 @@ export default function Navbar() {
     loadingBar.complete();
   };
 
+  const handleLogoClick = (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   if (loading) return <LoadingSkeleton />;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
       <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
-        <Link to="/" className="text-lg font-bold cursor-pointer px-2">
+        <Link to="/" className="text-lg font-bold cursor-pointer px-2" onClick={handleLogoClick}>
           Game<span className="text-primary">Gloom</span>
         </Link>
 
-        <div className="hidden md:flex pl-10 space-x-2">
+        <div className="hidden md:flex pl-4 space-x-2">
           {NAV_ITEMS.map((item, index) => (
             item.dropdown ? (
               <div key={index} className="relative group">
@@ -301,7 +309,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        <form onSubmit={handleSearchSubmit} className="flex items-center flex-grow max-w-md px-2">
+        <form onSubmit={handleSearchSubmit} className="flex items-center flex-grow max-w-xl px-2">
           <div className="relative w-full" ref={searchContainerRef}>
             <div className="flex items-center w-full bg-white rounded-md overflow-hidden shadow-sm">
               {/* Category selector button */}

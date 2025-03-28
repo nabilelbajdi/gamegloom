@@ -1,7 +1,7 @@
 // src/components/home/HeroSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks } from "lucide-react";
+import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks, Search } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
 import Button from "../UI/Button";
 import GameCardSimple from "../game/GameCardSimple";
@@ -10,7 +10,19 @@ import useUserGameStore from "../../store/useUserGameStore";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+
+// CSS for Quote Animation
+const quoteAnimationStyle = {
+  "@keyframes fadeIn": {
+    "0%": { opacity: 0, transform: "translateY(10px)" },
+    "100%": { opacity: 1, transform: "translateY(0)" }
+  },
+  "@keyframes fadeOut": {
+    "0%": { opacity: 1, transform: "translateY(0)" },
+    "100%": { opacity: 0, transform: "translateY(-10px)" }
+  }
+};
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -21,7 +33,35 @@ const HeroSection = () => {
   const [currentGameIndex, setCurrentGameIndex] = useState(0);
   const [backgroundImage, setBackgroundImage] = useState("");
   const [animationKey, setAnimationKey] = useState(0);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const sliderRef = useRef(null);
+
+  // Famous game quotes
+  const gameQuotes = [
+    { quote: "War. War never changes.", source: "Fallout" },
+    { quote: "It's dangerous to go alone! Take this.", source: "The Legend of Zelda" },
+    { quote: "The cake is a lie.", source: "Portal" },
+    { quote: "Nothing is true, everything is permitted.", source: "Assassin's Creed" },
+    { quote: "A man chooses, a slave obeys.", source: "BioShock" },
+    { quote: "Stay awhile and listen.", source: "Diablo" },
+    { quote: "Wake up, Mr. Freeman. Wake up and smell the ashes.", source: "Half-Life 2" },
+    { quote: "Would you kindly?", source: "BioShock" },
+    { quote: "You have died of dysentery.", source: "The Oregon Trail" },
+    { quote: "Do a barrel roll!", source: "Star Fox 64" },
+    { quote: "I used to be an adventurer like you. Then I took an arrow in the knee.", source: "The Elder Scrolls V: Skyrim" },
+    { quote: "It's super effective!", source: "Pokémon" }
+  ];
+
+  // Cycle through quotes
+  useEffect(() => {
+    if (user) {
+      const quoteInterval = setInterval(() => {
+        setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % gameQuotes.length);
+      }, 6000);
+      
+      return () => clearInterval(quoteInterval);
+    }
+  }, [user, gameQuotes.length]);
 
   useEffect(() => {
     // Fetch appropriate games based on login status
@@ -240,14 +280,38 @@ const HeroSection = () => {
               {user ? `Welcome Back, ${user.username}` : 'Your Gaming Journey\nStarts Here'}
             </motion.h1>
             
-            <motion.p 
-              className="text-base text-light/80 max-w-lg mt-1 leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.6 }}
-            >
-              {user ? 'Check out these personalized recommendations based on your gaming taste' : 'Track your games, share reviews, and connect with fellow gamers in one place'}
-            </motion.p>
+            {user ? (
+              <div className="h-36 relative overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentQuoteIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-l-4 border-primary pl-4 py-2">
+                      <p className="text-xl md:text-2xl text-light/95 font-semibold italic leading-tight">
+                        "{gameQuotes[currentQuoteIndex].quote}"
+                      </p>
+                      <p className="text-sm text-primary mt-2 font-medium">
+                        — {gameQuotes[currentQuoteIndex].source}
+                      </p>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            ) : (
+              <motion.p 
+                className="text-base text-light/80 max-w-lg mt-1 leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, delay: 0.6 }}
+              >
+                Track your games, share reviews, and connect with fellow gamers in one place
+              </motion.p>
+            )}
             
             {/* CTA Buttons */}
             <motion.div 
@@ -281,16 +345,33 @@ const HeroSection = () => {
                   </motion.div>
                 </>
               ) : (
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button 
-                    to="/discover/recommendations"
-                    label="View All Recommendations"
-                    variant="primary"
-                  />
-                </motion.div>
+                <>
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto"
+                  >
+                    <Button 
+                      to="/discover"
+                      label="Find Your Next Adventure"
+                      variant="primary"
+                      icon={<Search className="mr-1 h-4 w-4" />}
+                      className="w-full"
+                    />
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full sm:w-auto"
+                  >
+                    <Button 
+                      to="/discover/recommendations"
+                      label="Your Recommendations"
+                      variant="secondary"
+                      className="w-full"
+                    />
+                  </motion.div>
+                </>
               )}
             </motion.div>
 
@@ -381,6 +462,17 @@ const HeroSection = () => {
                         aria-label={`Go to slide ${index + 1}`}
                       />
                     ))}
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full h-1 bg-dark/50 mt-4 rounded-full overflow-hidden">
+                    <div 
+                      key={animationKey}
+                      className={`h-full bg-primary origin-left animate-progress ${
+                        sliderSettings.autoplay ? 'animate-progress-running' : 'animate-progress-paused'
+                      }`}
+                      style={{ animationDuration: 'var(--carousel-duration)' }}
+                    />
                   </div>
                 </div>
               ) : (

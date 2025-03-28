@@ -123,7 +123,7 @@ const GameCarousel = memo(({
   return (
     <section className={title === "Trending Now" ? "mt-4" : "mt-10"}>
       {/* Section Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-2">
         <SectionHeader 
           title={title}
           viewAllLink={viewAllLink}

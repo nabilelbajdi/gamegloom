@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLoadingBar } from "../App";
@@ -14,9 +14,25 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   const loadingBar = useLoadingBar();
+
+  // Load saved username and password if they exist
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    const wasRemembered = localStorage.getItem('rememberMe') === 'true';
+    
+    if (savedUsername && savedPassword && wasRemembered) {
+      setFormData({
+        username: savedUsername,
+        password: savedPassword
+      });
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,6 +40,10 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleRememberMeChange = (e) => {
+    setRememberMe(e.target.checked);
   };
 
   const handleSubmit = async (e) => {
@@ -43,6 +63,17 @@ const LoginPage = () => {
 
       if (!response.ok) {
         throw new Error("Invalid username or password");
+      }
+
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem('rememberedUsername', formData.username);
+        localStorage.setItem('rememberedPassword', formData.password);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberedPassword');
+        localStorage.removeItem('rememberMe');
       }
 
       const data = await response.json();
@@ -96,18 +127,6 @@ const LoginPage = () => {
 
       {/* Center Content */}
       <div className="w-full flex flex-col items-center justify-center z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-center mb-4 max-w-md px-4"
-        >
-          <h2 className="text-3xl font-bold text-white">Welcome to GameGloom</h2>
-          <p className="text-lg mt-2 text-gray-300">
-            Track games, share reviews, and join our community
-          </p>
-        </motion.div>
-
         <motion.div
           className="w-full max-w-sm px-4"
           initial={{ opacity: 0, y: 20 }}
@@ -187,6 +206,8 @@ const LoginPage = () => {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={handleRememberMeChange}
                     className="h-4 w-4 rounded bg-gray-800 border-gray-700 text-primary focus:ring-primary/50"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-xs text-gray-300">
