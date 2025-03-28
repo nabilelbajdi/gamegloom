@@ -51,7 +51,7 @@ const SearchPage = () => {
 
   // Search categories
   const SEARCH_CATEGORIES = [
-    { id: "all", label: "All Categories", icon: Search },
+    { id: "all", label: "All", icon: Search },
     { id: "games", label: "Titles", icon: Gamepad2 },
     { id: "developers", label: "Developers", icon: Users },
     { id: "platforms", label: "Platforms", icon: Monitor },
@@ -411,7 +411,7 @@ const SearchPage = () => {
       case "developers": return "Developers";
       case "platforms": return "Platforms";
       case "keywords": return "Keywords";
-      default: return "All Categories";
+      default: return "All";
     }
   };
 
@@ -499,31 +499,10 @@ const SearchPage = () => {
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                   {/* New Search Form */}
                   <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto order-2 sm:order-1">
-                    <div className="relative w-full sm:w-auto">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Search size={16} className="text-primary" />
-                      </div>
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={handleSearchInput}
-                        placeholder={(() => {
-                          switch(category) {
-                            case "games": return "Search titles...";
-                            case "developers": return "Search developers...";
-                            case "platforms": return "Search platforms...";
-                            case "keywords": return "Search keywords...";
-                            default: return "Search games, developers, keywords...";
-                          }
-                        })()}
-                        className="w-full sm:w-56 bg-surface-dark text-sm text-white rounded-md pl-10 pr-4 py-2.5 focus:outline-none border-none shadow-sm"
-                        aria-label="Enter a new search term"
-                      />
-                    </div>
                     <div className="relative" ref={categoryButtonRef}>
                       <button 
                         type="button" 
-                        className="bg-surface-dark text-xs font-semibold text-gray-400 rounded-md px-3 py-2.5 focus:outline-none border-none shadow-sm cursor-pointer hover:text-white transition-colors flex items-center"
+                        className="bg-zinc-800 text-xs font-semibold text-gray-400 rounded-md px-3 py-2.5 focus:outline-none border-none shadow-sm cursor-pointer hover:text-white transition-colors flex items-center"
                         onClick={toggleCategoryDropdown}
                         aria-haspopup="true"
                         aria-expanded={categoryDropdownOpen}
@@ -564,9 +543,22 @@ const SearchPage = () => {
                         </div>
                       )}
                     </div>
+                    <div className="relative w-full sm:w-auto">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <Search size={16} className="text-primary" />
+                      </div>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearchInput}
+                        placeholder="New search..."
+                        className="w-full sm:w-56 bg-zinc-800 text-sm text-white rounded-md pl-10 pr-4 py-2.5 focus:outline-none border-none shadow-sm h-[38px]"
+                        aria-label="Enter a new search term"
+                      />
+                    </div>
                     <button
                       type="submit"
-                      className="bg-surface-dark text-primary hover:bg-black/10 text-sm font-semibold rounded-md px-4 py-2.5 transition-colors shadow-sm cursor-pointer"
+                      className="bg-zinc-800 text-primary hover:bg-black/10 text-sm font-semibold rounded-md px-4 py-2.5 transition-colors shadow-sm cursor-pointer h-[38px]"
                     >
                       Search
                     </button>

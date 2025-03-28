@@ -273,9 +273,30 @@ const GameCategoryPage = ({
         <div className="container mx-auto px-4 -mt-8">
           {/* Two-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Column - Games */}
+            {/* Left Column - Filter Panel */}
+            <div className="w-full lg:w-64 xl:w-72 hidden lg:block">
+              <FilterPanel
+                allGenres={allGenres}
+                allThemes={allThemes}
+                allPlatforms={allPlatforms}
+                allGameModes={allGameModes}
+                allPlayerPerspectives={allPlayerPerspectives}
+                allContentTypes={allContentTypes}
+                activeGenres={genreFilters}
+                activeThemes={themeFilters}
+                activePlatforms={platformFilters}
+                activeGameModes={gameModeFilters}
+                activePlayerPerspectives={perspectiveFilters}
+                activeContentTypes={contentTypeFilters}
+                minRating={minRatingFilter}
+                titleFilter={searchQuery}
+                onFilterChange={handleFilterChange}
+                onTitleFilterChange={(value) => setSearchQuery(value)}
+              />
+            </div>
+            
+            {/* Right Column - Games */}
             <div className="flex-1">
-              {/* Card Container */}
               <div className="bg-surface-dark/90 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800/30 overflow-hidden">
                 <div className="p-4 border-b border-gray-800/30">
                   {/* Controls Section */}
@@ -358,28 +379,6 @@ const GameCategoryPage = ({
                   )}
                 </div>
               </div>
-            </div>
-            
-            {/* Right Column - Filter Panel */}
-            <div className="w-full lg:w-64 xl:w-72 hidden lg:block">
-              <FilterPanel
-                allGenres={allGenres}
-                allThemes={allThemes}
-                allPlatforms={allPlatforms}
-                allGameModes={allGameModes}
-                allPlayerPerspectives={allPlayerPerspectives}
-                allContentTypes={allContentTypes}
-                activeGenres={genreFilters}
-                activeThemes={themeFilters}
-                activePlatforms={platformFilters}
-                activeGameModes={gameModeFilters}
-                activePlayerPerspectives={perspectiveFilters}
-                activeContentTypes={contentTypeFilters}
-                minRating={minRatingFilter}
-                titleFilter={searchQuery}
-                onFilterChange={handleFilterChange}
-                onTitleFilterChange={(value) => setSearchQuery(value)}
-              />
             </div>
           </div>
         </div>

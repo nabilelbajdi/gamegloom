@@ -239,7 +239,7 @@ const FilterPanel = ({
               value={titleFilter}
               onChange={(e) => onTitleFilterChange(e.target.value)}
               placeholder="Filter by title..."
-              className="w-full bg-surface-dark text-sm text-white rounded-md pl-8 pr-8 py-2 focus:outline-none border-none shadow-sm"
+              className="w-full bg-zinc-800 text-sm text-white rounded-md pl-8 pr-8 py-2 focus:outline-none border-none shadow-sm"
             />
             {titleFilter && (
               <button
@@ -269,7 +269,7 @@ const FilterPanel = ({
           
           {ratingExpanded && (
             <div className="px-4 pb-4">
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   type="range"
                   min="0"
@@ -277,12 +277,15 @@ const FilterPanel = ({
                   step="0.5"
                   value={rating}
                   onChange={handleRatingChange}
-                  className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary"
+                  style={{
+                    background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${(rating/5)*100}%, rgb(71 85 105) ${(rating/5)*100}%, rgb(71 85 105) 100%)`
+                  }}
                 />
                 
                 <div className="flex justify-between mt-2 items-center">
                   <span className="text-xs text-gray-400">0</span>
-                  <div className="rounded-md bg-surface-dark py-1.5 px-3 shadow-sm border-none">
+                  <div className="rounded-md bg-zinc-800 py-1.5 px-3 shadow-sm border-none">
                     <div className="flex items-center gap-1.5">
                       <Star className={`w-3.5 h-3.5 ${rating > 0 ? "text-primary" : "text-gray-500"}`} fill={rating > 0 ? "currentColor" : "none"} />
                       <span className={`text-xs font-semibold ${rating > 0 ? "text-white" : "text-gray-500"}`}>

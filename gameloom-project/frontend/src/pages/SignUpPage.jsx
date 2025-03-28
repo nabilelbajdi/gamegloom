@@ -91,18 +91,6 @@ const SignUpPage = () => {
       {/* Center Content */}
       <div className="w-full flex flex-col items-center justify-center z-10">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-center mb-3 max-w-md px-4"
-        >
-          <h2 className="text-2xl font-bold text-white">Welcome to GameGloom</h2>
-          <p className="text-base mt-1 text-gray-300">
-            Track games, share reviews, and join our community
-          </p>
-        </motion.div>
-
-        <motion.div
           className="w-full max-w-sm px-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
