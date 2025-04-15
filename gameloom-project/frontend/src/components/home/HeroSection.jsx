@@ -1,7 +1,7 @@
 // src/components/home/HeroSection.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks, Search } from "lucide-react";
+import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks, Search, X } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
 import Button from "../UI/Button";
 import GameCardSimple from "../game/GameCardSimple";
@@ -34,7 +34,20 @@ const HeroSection = () => {
   const [backgroundImage, setBackgroundImage] = useState("");
   const [animationKey, setAnimationKey] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [showDevBanner, setShowDevBanner] = useState(false);
   const sliderRef = useRef(null);
+
+  // Check localStorage for banner preference when component mounts
+  useEffect(() => {
+    const bannerDismissed = sessionStorage.getItem('devBannerDismissed');
+    setShowDevBanner(bannerDismissed !== 'true');
+  }, []);
+
+  // Handle banner dismissal
+  const handleDismissBanner = () => {
+    setShowDevBanner(false);
+    sessionStorage.setItem('devBannerDismissed', 'true');
+  };
 
   // Famous game quotes
   const gameQuotes = [
@@ -249,6 +262,24 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen w-full flex items-center overflow-hidden">
+      {/* Development Notice Banner */}
+      {showDevBanner && (
+        <div className="absolute top-14 left-0 right-0 z-40 bg-primary/90 backdrop-blur-sm py-1.5 px-3 text-center shadow-md">
+          <div className="container mx-auto flex items-center justify-center">
+            <p className="text-sm font-medium text-dark">
+              GameGloom is currently under development. Some features may be limited or unavailable.
+            </p>
+            <button 
+              onClick={handleDismissBanner}
+              className="ml-3 p-1 text-dark hover:text-black transition-colors cursor-pointer"
+              aria-label="Dismiss notice"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Background Image */}
       <div className="absolute inset-0">
         {backgroundImage ? (
