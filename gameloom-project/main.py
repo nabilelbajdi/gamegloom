@@ -39,8 +39,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="GameLoom API",
-    description="API for GameLoom - Your Gaming Discovery Platform",
+    title="GameGloom API",
+    description="API for GameGloom - Your Gaming Discovery Platform",
     version="1.0.0",
     lifespan=lifespan
 )

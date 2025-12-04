@@ -5,7 +5,7 @@ const Logo = ({ className = "h-14 w-auto" }) => {
     <Link to="/" className={`logo flex items-center ${className}`}>
       <img
         src="/images/logo.svg"
-        alt="GameLoom Logo"
+        alt="GameGloom Logo"
         className="w-auto h-full object-contain"
       />
     </Link>
