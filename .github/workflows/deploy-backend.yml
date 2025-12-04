@@ -4,9 +4,9 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'gameloom-project/backend/**'
-      - 'gameloom-project/main.py'
-      - 'gameloom-project/requirements.txt'
+      - 'src/backend/**'
+      - 'src/main.py'
+      - 'src/requirements.txt'
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
@@ -30,7 +30,7 @@ jobs:
       run: |
         ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           # Navigate to your project directory
-          cd /home/ubuntu/fastapi-app/gameloom-labb3/gameloom-project
+          cd /home/ubuntu/fastapi-app/gameloom-labb3/src
           
           # Pull latest changes
           git pull origin main

@@ -75,7 +75,7 @@ A modern game tracking and discovery platform. Track your gaming backlog, discov
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/gamegloom.git
-cd gamegloom/gameloom-project
+cd gamegloom/src
 ```
 
 2. Create a `.env` file in the project root:
@@ -126,7 +126,7 @@ The app will be available at `http://localhost:5173`
 ## Project Structure
 
 ```
-gameloom-project/
+src/
 ├── backend/
 │   ├── alembic/          # Database migrations
 │   └── app/
