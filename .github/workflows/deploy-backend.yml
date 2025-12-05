@@ -19,42 +19,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Set up SSH
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-      
     - name: Deploy to EC2
-      env:
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-        EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
-      run: |
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'EOF'
-          # Navigate to your project directory
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
           cd /home/ubuntu/fastapi-app/gameloom-labb3/src
-          
-          # Pull latest changes
           git pull origin main
-          
-          # Activate virtual environment
           source venv/bin/activate
-          
-          # Install dependencies
           pip install -r requirements.txt
-          
-          # Run migrations if needed
           cd backend
           alembic upgrade head
           cd ..
-          
-          # Restart application using Supervisor
           sudo supervisorctl restart fastapi
-          
-          # Check status
           sudo supervisorctl status fastapi
-        EOF
