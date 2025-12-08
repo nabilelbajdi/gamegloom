@@ -4,7 +4,7 @@ import secrets
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import bcrypt
 
 from ..models.token import Token
 from ..models.user import User
@@ -25,20 +25,22 @@ security = HTTPBearer()
 # Optional security for endpoints that work with or without auth
 optional_security = OptionalHTTPBearer()
 
-# Password hashing - bcrypt auto-truncates passwords > 72 bytes
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    # Truncate to 72 bytes for bcrypt compatibility
-    plain_password = plain_password[:72]
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate to 72 bytes for bcrypt compatibility and encode
+    password_bytes = plain_password[:72].encode('utf-8')
+    try:
+        hash_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hash_bytes)
+    except Exception:
+        return False
 
 def get_password_hash(password: str) -> str:
     """Generate password hash."""
-    # Truncate to 72 bytes for bcrypt compatibility
-    password = password[:72]
-    return pwd_context.hash(password)
+    # Truncate to 72 bytes for bcrypt compatibility and encode
+    password_bytes = password[:72].encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
 def generate_token() -> str:
     """Generate a secure random token."""
@@ -97,4 +99,4 @@ async def get_current_user_optional(
         
     token = credentials.credentials
     user = get_user_by_token(db, token)
-    return user 
+    return user
