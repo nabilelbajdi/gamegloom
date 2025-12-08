@@ -9,9 +9,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from httpx import AsyncClient, ASGITransport
+from fastapi import FastAPI
 
 from backend.app.api.db_setup import Base, get_db
-from main import app
+from backend.app.api.v1.routers.games import router as games_router
+from backend.app.api.v1.routers.auth import router as auth_router
+from backend.app.api.v1.routers.user_games import router as user_games_router
+
+# Create a minimal test app (avoids importing scheduler from main.py)
+test_app = FastAPI()
+test_app.include_router(auth_router, prefix="/api/v1")
+test_app.include_router(games_router, prefix="/api/v1")
+test_app.include_router(user_games_router, prefix="/api/v1")
 
 # Create test database engine (SQLite in-memory)
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -49,13 +58,13 @@ def override_get_db(db_session):
 @pytest_asyncio.fixture
 async def client(override_get_db):
     """Create async test client with database override."""
-    app.dependency_overrides[get_db] = override_get_db
+    test_app.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(
-        transport=ASGITransport(app=app),
+        transport=ASGITransport(app=test_app),
         base_url="http://test"
     ) as ac:
         yield ac
-    app.dependency_overrides.clear()
+    test_app.dependency_overrides.clear()
 
 
 @pytest.fixture

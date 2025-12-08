@@ -803,8 +803,8 @@ def search_games_in_db(db: Session, query: str, limit: int = 6, category: str = 
     # Return combined results
     return exact_matches + additional_matches
 
-def get_games_by_genre(db: Session, genre_slug: str, limit: int = None):
-    """Get games that match a specific genre slug"""
+def get_games_by_genre(db: Session, genre_slug: str, limit: int = 50, offset: int = 0):
+    """Get games that match a specific genre slug with pagination"""
     from ..models.game import Game
     
     search_pattern = f"%{genre_slug}%"
@@ -815,10 +815,24 @@ def get_games_by_genre(db: Session, genre_slug: str, limit: int = None):
         (Game.genres.ilike(search_pattern) | Game.genres.ilike(name_pattern))
     ).order_by(Game.total_rating.desc().nulls_last())
     
+    if offset:
+        query = query.offset(offset)
     if limit:
         query = query.limit(limit)
         
     return query.all()
+
+def count_games_by_genre(db: Session, genre_slug: str) -> int:
+    """Count total games matching a genre slug"""
+    from ..models.game import Game
+    
+    search_pattern = f"%{genre_slug}%"
+    genre_name = " ".join(word.capitalize() for word in genre_slug.replace("-", " ").split())
+    name_pattern = f"%{genre_name}%"
+    
+    return db.query(Game).filter(
+        (Game.genres.ilike(search_pattern) | Game.genres.ilike(name_pattern))
+    ).count()
 
 def get_genre_id_by_slug(genre_slug: str):
     """Map genre slug to IGDB genre ID"""
@@ -883,8 +897,8 @@ def get_games_by_ids(db: Session, game_ids: list):
     
     return db.query(Game).filter(Game.id.in_(game_ids)).all()
 
-def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
-    """Get games that match a specific theme slug"""
+def get_games_by_theme(db: Session, theme_slug: str, limit: int = 50, offset: int = 0):
+    """Get games that match a specific theme slug with pagination"""
     from ..models.game import Game
     
     search_pattern = f"%{theme_slug}%"
@@ -895,10 +909,24 @@ def get_games_by_theme(db: Session, theme_slug: str, limit: int = None):
         (Game.themes.ilike(search_pattern) | Game.themes.ilike(name_pattern))
     ).order_by(Game.total_rating.desc().nulls_last())
     
+    if offset:
+        query = query.offset(offset)
     if limit:
         query = query.limit(limit)
         
     return query.all()
+
+def count_games_by_theme(db: Session, theme_slug: str) -> int:
+    """Count total games matching a theme slug"""
+    from ..models.game import Game
+    
+    search_pattern = f"%{theme_slug}%"
+    theme_name = " ".join(word.capitalize() for word in theme_slug.replace("-", " ").split())
+    name_pattern = f"%{theme_name}%"
+    
+    return db.query(Game).filter(
+        (Game.themes.ilike(search_pattern) | Game.themes.ilike(name_pattern))
+    ).count()
 
 def fetch_time_to_beat(game_id: int) -> dict | None:
     """Fetch time to beat data from IGDB for a specific game ID."""

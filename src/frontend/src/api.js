@@ -1,7 +1,7 @@
 // src/api.js
 import { normalizeGameData, normalizeGamesData } from './utils/gameUtils';
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"; 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 // Centralized Fetch Games
 async function fetchGames(endpoint) {
@@ -25,9 +25,25 @@ export const fetchHighlyRatedGames = () => fetchGames("highly-rated-games");
 export const fetchLatestGames = () => fetchGames("latest-games");
 export const fetchTrendingGames = () => fetchGames("trending-games");
 
-// Fetch Games by Genre or Theme
-export const fetchGamesByGenre = (genreSlug) => fetchGames(`games?genre=${genreSlug}`);
-export const fetchGamesByTheme = (themeSlug) => fetchGames(`games?theme=${themeSlug}`);
+// Fetch Games by Genre or Theme (with pagination)
+export const fetchGamesByGenre = (genreSlug, limit = 50, offset = 0) =>
+  fetchGames(`games?genre=${genreSlug}&limit=${limit}&offset=${offset}`);
+export const fetchGamesByTheme = (themeSlug, limit = 50, offset = 0) =>
+  fetchGames(`games?theme=${themeSlug}&limit=${limit}&offset=${offset}`);
+
+// Fetch total game count for genre/theme
+export const fetchGameCount = async (categoryType, filter) => {
+  try {
+    const param = categoryType === "genre" ? "genre" : "theme";
+    const response = await fetch(`${BASE_URL}/games/count?${param}=${filter}`);
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.total || 0;
+  } catch (error) {
+    console.error("Error fetching game count:", error);
+    return 0;
+  }
+};
 
 // Fetch Multiple Game Details
 export const fetchMultipleGameDetails = async (gameIds) => {
@@ -138,7 +154,7 @@ export const createReview = async (gameId, rating, content) => {
   });
 
   const data = await response.json();
-  
+
   if (!response.ok) {
     throw new Error(data.detail || "Failed to create review");
   }
@@ -160,7 +176,7 @@ export const updateReview = async (reviewId, rating, content) => {
   });
 
   const data = await response.json();
-  
+
   if (!response.ok) {
     throw new Error(data.detail || "Failed to update review");
   }
@@ -193,12 +209,12 @@ export const getGameReviews = async (gameId) => {
     const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`, {
       headers
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || "Failed to fetch reviews");
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error("Error fetching reviews:", error);
@@ -216,15 +232,15 @@ export const getUserReviewForGame = async (gameId) => {
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     if (response.status === 404) {
       return null;
     }
-    
+
     if (!response.ok) {
       throw new Error("Failed to fetch user review");
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error("Error fetching user review:", error);
@@ -583,7 +599,7 @@ export const searchGames = async (query, category = "all", limit = 6) => {
   try {
     // Handle common platform abbreviations when searching in the platforms category
     let searchQuery = query;
-    
+
     if (category === "platforms") {
       // Map of common abbreviations to full platform names
       const platformAbbreviations = {
@@ -601,22 +617,22 @@ export const searchGames = async (query, category = "all", limit = 6) => {
         "3ds": "Nintendo 3DS",
         "pc": "PC (Microsoft Windows)"
       };
-      
+
       // Convert query to lowercase for case-insensitive matching
       const queryLower = query.toLowerCase();
-      
+
       // Replace abbreviation with full name if it exists in mapping
       if (platformAbbreviations[queryLower]) {
         searchQuery = platformAbbreviations[queryLower];
       }
     }
-    
+
     const response = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return normalizeGamesData(data);
   } catch (error) {

@@ -112,7 +112,7 @@ def populate_released_games(limit: int = 10000) -> dict:
             # Simple query - let meets_quality_requirements() filter out mods/packs
             query = f"""
                 {services.IGDB_GAME_FIELDS}
-                where total_rating_count >= 10 
+                where total_rating_count >= 1 
                     & cover != null 
                     & version_parent = null;
                 sort total_rating_count desc;

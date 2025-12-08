@@ -14,6 +14,20 @@ router = APIRouter(tags=["games"])
 
 logger = logging.getLogger(__name__)
 
+@router.get("/games/count")
+async def get_games_count(
+    db: Session = Depends(get_db),
+    genre: str = None,
+    theme: str = None
+):
+    """Get total count of games for a genre or theme."""
+    if genre:
+        return {"total": services.count_games_by_genre(db, genre)}
+    if theme:
+        return {"total": services.count_games_by_theme(db, theme)}
+    return {"total": 0}
+
+
 @router.get("/games/{identifier}", response_model=schemas.Game)
 async def get_game(identifier: str, db: Session = Depends(get_db)):
     """Get game details by IGDB ID or slug.
@@ -379,19 +393,20 @@ async def get_games(
     genre: str = None, 
     theme: str = None, 
     ids: str = None,
-    limit: int = None
+    limit: int = 50,
+    offset: int = 0
 ):
-    """Get games with optional filtering by genre, theme, or IDs"""
+    """Get games with optional filtering by genre, theme, or IDs. Supports pagination."""
     if ids:
         game_ids = [int(id) for id in ids.split(",")]
         return services.get_games_by_ids(db, game_ids)
     
     if genre:
-        db_games = services.get_games_by_genre(db, genre, limit)
+        db_games = services.get_games_by_genre(db, genre, limit, offset)
         return db_games
     
     if theme:
-        db_games = services.get_games_by_theme(db, theme, limit)
+        db_games = services.get_games_by_theme(db, theme, limit, offset)
         return db_games
     
-    return services.get_recent_games(db, limit=limit or 100)
+    return services.get_recent_games(db, limit=limit)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGameStore from "../../store/useGameStore";
 import { useAuth } from "../../context/AuthContext";
+import { fetchGameCount } from "../../api";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
 import GamesList from "../../components/common/GamesList";
@@ -13,8 +14,8 @@ import ActiveFilters from "../../components/common/ActiveFilters";
 import ScrollToTop from "../../components/common/ScrollToTop";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
 
-const GameCategoryPage = ({ 
-  title, 
+const GameCategoryPage = ({
+  title,
   categoryType,
   description = "",
   genreFilter = null,
@@ -22,8 +23,9 @@ const GameCategoryPage = ({
 }) => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { 
+  const {
     fetchGames,
+    loadMoreGames,
     trendingGames,
     anticipatedGames,
     highlyRatedGames,
@@ -32,8 +34,11 @@ const GameCategoryPage = ({
     themeGames,
     recommendedGames
   } = useGameStore();
-  
+
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid");
   const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating_high" : "added_new");
@@ -67,6 +72,15 @@ const GameCategoryPage = ({
 
     const loadGames = async () => {
       setLoading(true);
+      setHasMore(true);
+
+      // Fetch total count for genre/theme pages
+      if ((categoryType === "genre" || categoryType === "theme") && (genreFilter || themeFilter)) {
+        const filter = genreFilter || themeFilter;
+        const count = await fetchGameCount(categoryType, filter);
+        setTotalCount(count);
+      }
+
       if (categoryType === "genre" && genreFilter) {
         await fetchGames(categoryType, genreFilter);
       } else if (categoryType === "theme" && themeFilter) {
@@ -81,42 +95,42 @@ const GameCategoryPage = ({
   }, [categoryType, fetchGames, genreFilter, themeFilter, user, navigate, authLoading]);
 
   const games = getGamesForCategory();
-  
+
   // Preserve default ordering
   const gamesWithIndex = games.map((game, index) => ({
     ...game,
     originalIndex: categoryType !== "recommendations" ? index : null
   }));
-  
+
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
   const extractFilterOptions = () => {
     const allGenres = [...new Set(gamesWithIndex
       .filter(game => game.genres)
       .flatMap(game => {
-        let genres = typeof game.genres === 'string' 
+        let genres = typeof game.genres === 'string'
           ? game.genres.split(',').map(g => g.trim())
           : game.genres;
         return genres;
       })
     )].sort();
-    
+
     const allThemes = [...new Set(gamesWithIndex
       .filter(game => game.themes)
-      .flatMap(game => typeof game.themes === 'string' 
+      .flatMap(game => typeof game.themes === 'string'
         ? game.themes.split(',').map(t => t.trim())
         : game.themes)
     )].sort();
 
     const allPlatforms = [...new Set(gamesWithIndex
       .filter(game => game.platforms)
-      .flatMap(game => typeof game.platforms === 'string' 
+      .flatMap(game => typeof game.platforms === 'string'
         ? game.platforms.split(',').map(p => p.trim())
           .map(p => p.replace("PC (Microsoft Windows)", "PC")
-                    .replace("PlayStation 5", "PS5")
-                    .replace("PlayStation 4", "PS4")
-                    .replace("Nintendo Switch", "Switch")
-                    .replace("PlayStation 3", "PS3")
-                    .replace("PlayStation 2", "PS2"))
+            .replace("PlayStation 5", "PS5")
+            .replace("PlayStation 4", "PS4")
+            .replace("Nintendo Switch", "Switch")
+            .replace("PlayStation 3", "PS3")
+            .replace("PlayStation 2", "PS2"))
         : game.platforms)
     )].sort();
 
@@ -124,7 +138,7 @@ const GameCategoryPage = ({
       .filter(game => game.gameModes || game.game_modes)
       .flatMap(game => {
         const modes = game.gameModes || game.game_modes;
-        return typeof modes === 'string' 
+        return typeof modes === 'string'
           ? modes.split(',').map(m => m.trim())
           : modes;
       })
@@ -134,7 +148,7 @@ const GameCategoryPage = ({
       .filter(game => game.playerPerspectives || game.player_perspectives)
       .flatMap(game => {
         const perspectives = game.playerPerspectives || game.player_perspectives;
-        return typeof perspectives === 'string' 
+        return typeof perspectives === 'string'
           ? perspectives.split(',').map(p => p.trim())
           : perspectives;
       })
@@ -159,17 +173,17 @@ const GameCategoryPage = ({
   const filterGames = () => {
     return gamesWithIndex.filter(game => {
       // Search filter
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (game.description && game.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       // Content type filter
-      const matchesContentType = contentTypeFilters.length === 0 || 
+      const matchesContentType = contentTypeFilters.length === 0 ||
         (game.game_type_name && (
           contentTypeFilters.includes(game.game_type_name) ||
           (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
         ));
-        
+
       // Apply all other filters
       const passesOtherFilters = gamePassesAllFilters(game, {
         genres: genreFilters,
@@ -179,7 +193,7 @@ const GameCategoryPage = ({
         playerPerspectives: perspectiveFilters,
         minRating: minRatingFilter
       });
-      
+
       return matchesSearch && matchesContentType && passesOtherFilters;
     });
   };
@@ -210,7 +224,7 @@ const GameCategoryPage = ({
 
   const filteredGames = filterGames();
   const sortedGames = sortGames(filteredGames);
-  
+
   // Filter handlers
   const handleFilterChange = (filters) => {
     setGenreFilters(filters.genres || []);
@@ -260,14 +274,24 @@ const GameCategoryPage = ({
     setContentTypeFilters([]);
   };
 
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const filter = genreFilter || themeFilter;
+    const currentCount = games.length;
+    const loadedCount = await loadMoreGames(categoryType, filter, currentCount);
+    if (loadedCount < 50) setHasMore(false);
+    setLoadingMore(false);
+  };
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Header Section */}
-      <CategoryHeader 
-        title={title} 
+      <CategoryHeader
+        title={title}
         description={description}
       />
-      
+
       {/* Main Content Area */}
       <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
         <div className="container mx-auto px-4 -mt-8">
@@ -294,7 +318,7 @@ const GameCategoryPage = ({
                 onTitleFilterChange={(value) => setSearchQuery(value)}
               />
             </div>
-            
+
             {/* Right Column - Games */}
             <div className="flex-1">
               <div className="bg-surface-dark/90 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800/30 overflow-hidden">
@@ -304,7 +328,11 @@ const GameCategoryPage = ({
                     {/* Games Count */}
                     <div className="flex items-center gap-3 order-1 sm:order-none">
                       <div className="text-light/70 text-sm">
-                        <span className="font-semibold text-light">{sortedGames.length}</span> Games
+                        {(categoryType === "genre" || categoryType === "theme") && totalCount > 0 ? (
+                          <><span className="font-semibold text-light">{sortedGames.length}</span> of {totalCount.toLocaleString()} games</>
+                        ) : (
+                          <><span className="font-semibold text-light">{sortedGames.length}</span> Games</>
+                        )}
                       </div>
                     </div>
 
@@ -343,7 +371,7 @@ const GameCategoryPage = ({
                       />
                     </div>
                   </div>
-                  
+
                   {/* Active Filters Display */}
                   <ActiveFilters
                     genreFilters={genreFilters}
@@ -363,7 +391,7 @@ const GameCategoryPage = ({
                     onClearAll={handleClearAllFilters}
                   />
                 </div>
-                
+
                 {/* Games Display */}
                 <div className="p-5">
                   {viewMode === "grid" ? (
@@ -377,13 +405,33 @@ const GameCategoryPage = ({
                       loading={loading}
                     />
                   )}
+
+                  {/* Load More - subtle text link */}
+                  {(categoryType === "genre" || categoryType === "theme") && hasMore && !loading && sortedGames.length > 0 && (
+                    <div className="text-center mt-6">
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                        className="text-primary/70 hover:text-primary text-sm transition-colors hover:underline disabled:opacity-50"
+                      >
+                        {loadingMore ? "Loading..." : "Load more games"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* All loaded message */}
+                  {(categoryType === "genre" || categoryType === "theme") && !hasMore && sortedGames.length > 0 && (
+                    <div className="text-center text-light/40 mt-6 text-xs">
+                      Showing all {sortedGames.length} games
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Scroll to Top Button */}
       <ScrollToTop />
     </div>
