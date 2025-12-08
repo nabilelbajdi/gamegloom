@@ -1,5 +1,5 @@
 # services.py
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from sqlalchemy import select, or_, case, String
 from sqlalchemy.orm import Session
 
@@ -536,7 +536,7 @@ def is_stale(db_game: game.Game, max_age_hours: int = 24) -> bool:
     if not db_game or not db_game.updated_at:
         return True
     
-    age = datetime.utcnow() - db_game.updated_at
+    age = datetime.now(UTC) - db_game.updated_at.replace(tzinfo=UTC)
     return age.total_seconds() > (max_age_hours * 3600)
 
 async def refresh_game_async(igdb_id: int) -> bool:
@@ -581,7 +581,7 @@ async def refresh_game_async(igdb_id: int) -> bool:
             # Update existing games (they were already accepted)
             update_game(db, existing_game.id, processed_data)
             # Explicitly update the timestamp since onupdate only fires if row changes
-            existing_game.updated_at = datetime.utcnow()
+            existing_game.updated_at = datetime.now(UTC)
             db.commit()  # Explicit commit to ensure changes are saved
             logger.info(f"[SWR] Successfully refreshed: {processed_data.name} (IGDB: {igdb_id})")
         else:
@@ -608,7 +608,7 @@ async def refresh_game_async(igdb_id: int) -> bool:
 
 def get_trending_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get trending games from the database"""
-    current_time = datetime.utcnow()
+    current_time = datetime.now(UTC)
     six_months_ago = current_time - timedelta(days=180)
     
     return list(db.scalars(
@@ -628,7 +628,7 @@ def get_trending_games(db: Session, limit: int = 100) -> list[game.Game]:
 
 def get_anticipated_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get anticipated games from the database"""
-    current_time = datetime.utcnow()
+    current_time = datetime.now(UTC)
     one_year_future = current_time + timedelta(days=365)
     
     return list(db.scalars(
@@ -657,7 +657,7 @@ def get_highly_rated_games(db: Session, limit: int = 100) -> list[game.Game]:
 
 def get_latest_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get latest released games from the database"""
-    current_time = datetime.utcnow()
+    current_time = datetime.now(UTC)
     one_month_ago = current_time - timedelta(days=30)
     
     return list(db.scalars(

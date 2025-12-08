@@ -1,5 +1,5 @@
 # models/game.py
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy import Integer, String, Float, JSON, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from ...db_setup import Base
@@ -120,8 +120,8 @@ class Game(Base):
     
     raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Store full IGDB response
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     is_deleted: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False, server_default=sa.text('false'))
 
     def __repr__(self):

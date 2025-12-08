@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_
 from typing import List, Dict, Tuple
 from collections import Counter
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from ..core import schemas
 from ..models.user import User
@@ -84,7 +84,7 @@ def calculate_release_date_score(release_date: datetime | None) -> float:
     if not release_date:
         return 0.5
     
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     years_old = (now - release_date).days / 365.25
     
     if years_old <= 2:
@@ -222,7 +222,7 @@ async def get_recommended_games(
                 and_(
                     ~Game.id.in_(user_game_ids),
                     Game.game_type_id == 0,
-                    Game.first_release_date <= datetime.utcnow(),
+                    Game.first_release_date <= datetime.now(UTC),
                     Game.total_rating >= min_rating,
                     Game.total_rating_count >= 50
                 )
