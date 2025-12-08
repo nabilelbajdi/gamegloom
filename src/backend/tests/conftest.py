@@ -3,6 +3,17 @@
 Test configuration and fixtures for FastAPI backend tests.
 Uses SQLite in-memory database for test isolation.
 """
+import sys
+from pathlib import Path
+
+# Add parent directories to path for imports to work from any location
+backend_dir = Path(__file__).parent.parent
+src_dir = backend_dir.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 import pytest
 import pytest_asyncio
 from sqlalchemy import create_engine
@@ -11,10 +22,10 @@ from sqlalchemy.pool import StaticPool
 from httpx import AsyncClient, ASGITransport
 from fastapi import FastAPI
 
-from backend.app.api.db_setup import Base, get_db
-from backend.app.api.v1.routers.games import router as games_router
-from backend.app.api.v1.routers.auth import router as auth_router
-from backend.app.api.v1.routers.user_games import router as user_games_router
+from app.api.db_setup import Base, get_db
+from app.api.v1.routers.games import router as games_router
+from app.api.v1.routers.auth import router as auth_router
+from app.api.v1.routers.user_games import router as user_games_router
 
 # Create a minimal test app (avoids importing scheduler from main.py)
 test_app = FastAPI()
