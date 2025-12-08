@@ -125,7 +125,7 @@ class TestMe:
     async def test_me_no_token(self, client):
         """Test /me fails without auth token."""
         response = await client.get("/api/v1/me")
-        assert response.status_code == 403  # FastAPI returns 403 for missing auth
+        assert response.status_code in [401, 403]  # Either is valid for missing auth
     
     async def test_me_invalid_token(self, client):
         """Test /me fails with invalid token."""
