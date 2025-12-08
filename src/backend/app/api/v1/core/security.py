@@ -25,8 +25,8 @@ security = HTTPBearer()
 # Optional security for endpoints that work with or without auth
 optional_security = OptionalHTTPBearer()
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - bcrypt auto-truncates passwords > 72 bytes
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
