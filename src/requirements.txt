@@ -50,7 +50,7 @@ pycparser==2.22
 pydantic==2.12.5
 pydantic-extra-types==2.10.2
 pydantic-settings==2.1.0
-pydantic_core==2.27.2
+pydantic_core==2.41.5
 Pygments==2.19.1
 python-dotenv==1.0.1
 python-jose==3.3.0
