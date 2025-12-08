@@ -6,13 +6,18 @@ from ..models.game import Game
 
 class SemanticAnalyzer:
     def __init__(self):
-        self.vectorizer = TfidfVectorizer(
-            stop_words='english',
-            max_features=10000,
-            ngram_range=(1, 2)
-        )
+        self.vectorizer = None
         self.game_vectors = None
         self.game_ids = None
+
+    def get_vectorizer(self):
+        if self.vectorizer is None:
+            self.vectorizer = TfidfVectorizer(
+                stop_words='english',
+                max_features=10000,
+                ngram_range=(1, 2)
+            )
+        return self.vectorizer
 
     def _prepare_text(self, game: Game) -> str:
         """Combine and clean game text data for analysis."""
@@ -38,7 +43,7 @@ class SemanticAnalyzer:
         
         # Create TF-IDF vectors
         try:
-            vectors = self.vectorizer.fit_transform(game_texts)
+            vectors = self.get_vectorizer().fit_transform(game_texts)
         except ValueError:
             # Handle empty text case
             return {game.id: 0.0 for game in candidate_games}

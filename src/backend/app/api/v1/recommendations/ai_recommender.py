@@ -10,12 +10,19 @@ logger = logging.getLogger(__name__)
 class AIRecommender:
     def __init__(self):
         """Initialize the AI recommender with a pre-trained model"""
-        try:
-            self.model = SentenceTransformer('all-MiniLM-L6-v2')
-            self.cache = {}
-        except Exception as e:
-            logger.error(f"Error initializing AI recommender: {str(e)}")
-            raise
+        self.model = None
+        self.cache = {}
+
+    def get_model(self):
+        """Lazy load the model only when needed"""
+        if self.model is None:
+            try:
+                # Load on CPU to save memory on small instances
+                self.model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+            except Exception as e:
+                logger.error(f"Error loading AI model: {str(e)}")
+                raise
+        return self.model
 
     def create_game_embedding(self, game: Game) -> torch.Tensor:
         """
@@ -39,7 +46,7 @@ class AIRecommender:
             Perspectives: {game.player_perspectives or ''}
             """
             
-            embedding = torch.tensor(self.model.encode(game_text))
+            embedding = torch.tensor(self.get_model().encode(game_text))
             # Normalize the embedding
             normalized_embedding = F.normalize(embedding, p=2, dim=0)
             self.cache[game.id] = normalized_embedding
