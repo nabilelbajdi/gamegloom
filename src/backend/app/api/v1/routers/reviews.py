@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+import sqlalchemy as sa
 from typing import List
 from datetime import datetime, UTC
 
@@ -99,6 +100,10 @@ async def get_recent_reviews(
     """Get the most recent reviews with their associated game and user data."""
     reviews = (
         db.query(Review)
+        .options(
+            sa.orm.joinedload(Review.user),
+            sa.orm.joinedload(Review.game)
+        )
         .join(User)
         .join(Game)
         .order_by(Review.created_at.desc())
@@ -207,7 +212,7 @@ async def update_review(
     return review
 
 @router.delete("/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_review(
+def delete_review(
     review_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -309,7 +314,7 @@ async def add_comment(
     return comment
 
 @router.get("/{review_id}/comments", response_model=List[schemas.ReviewComment])
-async def get_review_comments(
+def get_review_comments(
     review_id: int,
     db: Session = Depends(get_db)
 ):
@@ -325,7 +330,7 @@ async def get_review_comments(
     return comments
 
 @router.get("/user/game/{igdb_id}", response_model=schemas.Review)
-async def get_user_review_for_game(
+def get_user_review_for_game(
     igdb_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -354,7 +359,7 @@ async def get_user_review_for_game(
     return review
 
 @router.delete("/{review_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_comment(
+def delete_comment(
     review_id: int,
     comment_id: int,
     current_user: User = Depends(get_current_user),
@@ -383,7 +388,7 @@ async def delete_comment(
     return None
 
 @router.put("/{review_id}/comments/{comment_id}", response_model=schemas.ReviewComment)
-async def update_comment(
+def update_comment(
     review_id: int,
     comment_id: int,
     comment_data: schemas.ReviewCommentCreate,

@@ -57,12 +57,15 @@ async def add_game_to_collection(
     return db_user_game
 
 @router.get("/collection", response_model=schemas.UserGameResponse)
-async def get_user_collection(
+def get_user_collection(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get user's game collection."""
-    user_games = db.query(UserGame, Game).join(
+    import sqlalchemy as sa
+    user_games = db.query(UserGame, Game).options(
+        sa.orm.joinedload(UserGame.game)
+    ).join(
         Game, UserGame.game_id == Game.id
     ).filter(
         UserGame.user_id == current_user.id
@@ -100,7 +103,7 @@ async def get_user_collection(
     return collection
 
 @router.patch("/{igdb_id}", response_model=schemas.UserGame)
-async def update_game_status(
+def update_game_status(
     igdb_id: int,
     game_data: schemas.UserGameUpdate,
     current_user: User = Depends(get_current_user),
@@ -133,7 +136,7 @@ async def update_game_status(
     return user_game
 
 @router.delete("/{igdb_id}", status_code=status.HTTP_200_OK)
-async def remove_game_from_collection(
+def remove_game_from_collection(
     igdb_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

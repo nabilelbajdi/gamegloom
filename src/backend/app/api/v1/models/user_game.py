@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 from sqlalchemy import Integer, ForeignKey, DateTime, Enum as SQLAlchemyEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ...db_setup import Base
 
 class GameStatus(str, Enum):
@@ -19,6 +19,9 @@ class UserGame(Base):
     status: Mapped[GameStatus] = mapped_column(SQLAlchemyEnum(GameStatus), nullable=False)
     added_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    game = relationship("Game")
 
     def __repr__(self):
         return f"<UserGame(user_id={self.user_id}, game_id={self.game_id}, status={self.status})>" 
