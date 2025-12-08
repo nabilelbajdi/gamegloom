@@ -1,7 +1,7 @@
 """add user model
 
 Revision ID: 7829dcd5d20a
-Revises: 30792afd1955
+Revises: ffbdcf4a7fd9
 Create Date: 2025-02-18 18:24:18.667409
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '7829dcd5d20a'
-down_revision: Union[str, None] = '30792afd1955'
+down_revision: Union[str, None] = 'ffbdcf4a7fd9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

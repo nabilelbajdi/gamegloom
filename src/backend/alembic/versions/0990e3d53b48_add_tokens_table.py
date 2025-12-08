@@ -1,7 +1,7 @@
 """add tokens table
 
 Revision ID: 0990e3d53b48
-Revises: 37b6922f1ed4
+Revises: 7829dcd5d20a
 Create Date: 2025-02-19 15:06:23.175135
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '0990e3d53b48'
-down_revision: Union[str, None] = '37b6922f1ed4'
+down_revision: Union[str, None] = '7829dcd5d20a'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
