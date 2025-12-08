@@ -10,7 +10,7 @@ import useUserGameStore from "../../store/useUserGameStore";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // CSS for Quote Animation
 const quoteAnimationStyle = {
@@ -71,7 +71,7 @@ const HeroSection = () => {
       const quoteInterval = setInterval(() => {
         setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % gameQuotes.length);
       }, 6000);
-      
+
       return () => clearInterval(quoteInterval);
     }
   }, [user, gameQuotes.length]);
@@ -87,7 +87,7 @@ const HeroSection = () => {
     if (!anticipatedGames || anticipatedGames.length === 0) {
       fetchGames("anticipated");
     }
-    
+
     // Only fetch recommendations for logged-in users
     if (user && (!recommendedGames || recommendedGames.length === 0)) {
       fetchGames("recommendations");
@@ -101,7 +101,7 @@ const HeroSection = () => {
         // For logged-in users with recommendations
         const validRecommendedGames = recommendedGames
           .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-          
+
         if (validRecommendedGames.length > 0) {
           const selectedGames = validRecommendedGames.slice(0, 10);
           setFeaturedGames(selectedGames);
@@ -122,7 +122,7 @@ const HeroSection = () => {
     const validHighlyRated = highlyRatedGames
       .slice(0, 20)
       .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-    
+
     const validTrending = trendingGames
       .slice(0, 20)
       .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
@@ -133,19 +133,19 @@ const HeroSection = () => {
 
     // Combine all lists
     const combinedGames = [...validHighlyRated, ...validTrending, ...validAnticipated];
-    
+
     if (combinedGames.length > 0) {
       const selectedGames = [];
       const gamesCopy = [...combinedGames];
-      
+
       const numGamesToSelect = Math.min(10, gamesCopy.length);
-      
+
       for (let i = 0; i < numGamesToSelect; i++) {
         const randomIndex = Math.floor(Math.random() * gamesCopy.length);
         selectedGames.push(gamesCopy[randomIndex]);
         gamesCopy.splice(randomIndex, 1);
       }
-      
+
       setFeaturedGames(selectedGames);
       updateBackgroundImage(selectedGames[0]);
       document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
@@ -160,7 +160,7 @@ const HeroSection = () => {
 
   const updateBackgroundImage = (game) => {
     if (!game) return;
-    
+
     if (game.artworks && game.artworks.length > 0) {
       setBackgroundImage(game.artworks[0]);
     } else if (game.screenshots && game.screenshots.length > 0) {
@@ -269,7 +269,7 @@ const HeroSection = () => {
             <p className="text-sm font-medium text-dark">
               GameGloom is currently under development. Some features may be limited or unavailable.
             </p>
-            <button 
+            <button
               onClick={handleDismissBanner}
               className="ml-3 p-1 text-dark hover:text-black transition-colors cursor-pointer"
               aria-label="Dismiss notice"
@@ -302,7 +302,7 @@ const HeroSection = () => {
         <div className="grid md:grid-cols-2 gap-6 items-center">
           {/* Left Side Content */}
           <div className="space-y-6 py-4">
-            <motion.h1 
+            <motion.h1
               className="text-3xl md:text-5xl font-bold text-light leading-tight mt-2"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -310,7 +310,7 @@ const HeroSection = () => {
             >
               {user ? `Welcome Back, ${user.username}` : 'Your Gaming Journey\nStarts Here'}
             </motion.h1>
-            
+
             {user ? (
               <div className="h-36 relative overflow-hidden">
                 <AnimatePresence mode="wait">
@@ -334,7 +334,7 @@ const HeroSection = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <motion.p 
+              <motion.p
                 className="text-base text-light/80 max-w-lg mt-1 leading-relaxed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -343,9 +343,9 @@ const HeroSection = () => {
                 Track your games, share reviews, and connect with fellow gamers in one place
               </motion.p>
             )}
-            
+
             {/* CTA Buttons */}
-            <motion.div 
+            <motion.div
               className="flex gap-5 pt-2 mt-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -353,22 +353,22 @@ const HeroSection = () => {
             >
               {!user ? (
                 <>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Button 
+                    <Button
                       to="/signup"
                       label="Join Now"
                       variant="primary"
                       icon={<UserPlus className="mr-1 h-4 w-4" />}
                     />
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Button 
+                    <Button
                       to="/about"
                       label="Learn More"
                       variant="secondary"
@@ -377,12 +377,12 @@ const HeroSection = () => {
                 </>
               ) : (
                 <>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full sm:w-auto"
                   >
-                    <Button 
+                    <Button
                       to="/discover"
                       label="Find Your Next Adventure"
                       variant="primary"
@@ -390,12 +390,12 @@ const HeroSection = () => {
                       className="w-full"
                     />
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full sm:w-auto"
                   >
-                    <Button 
+                    <Button
                       to="/discover/recommendations"
                       label="Your Recommendations"
                       variant="secondary"
@@ -407,14 +407,14 @@ const HeroSection = () => {
             </motion.div>
 
             {/* Feature Highlights */}
-            <motion.div 
+            <motion.div
               className="grid grid-cols-3 gap-4 pt-4 mt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 1.2 }}
             >
               {features.map((feature, index) => (
-                <motion.div 
+                <motion.div
                   key={feature.title}
                   className="p-3 rounded-lg bg-surface-dark backdrop-blur-sm hover:bg-surface-dark/60 transition-all duration-300 cursor-pointer border border-dark/60"
                   initial={{ opacity: 0, y: 20 }}
@@ -437,7 +437,7 @@ const HeroSection = () => {
           </div>
 
           {/* Right Side - Featured Games Carousel */}
-          <motion.div 
+          <motion.div
             className="relative hidden md:block"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -458,10 +458,10 @@ const HeroSection = () => {
                       </div>
                     ))}
                   </Slider>
-                  
+
                   {/* Navigation Arrows */}
                   <div className="flex justify-between absolute top-1/2 -left-8 -right-8 -translate-y-1/2 pointer-events-none">
-                    <motion.button 
+                    <motion.button
                       onClick={handlePrevClick}
                       className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white pointer-events-auto cursor-pointer"
                       aria-label="Previous game"
@@ -470,7 +470,7 @@ const HeroSection = () => {
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </motion.button>
-                    <motion.button 
+                    <motion.button
                       onClick={handleNextClick}
                       className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white pointer-events-auto cursor-pointer"
                       aria-label="Next game"
@@ -480,28 +480,26 @@ const HeroSection = () => {
                       <ChevronRight className="h-5 w-5" />
                     </motion.button>
                   </div>
-                  
+
                   {/* Carousel Indicators */}
                   <div className="flex justify-center mt-4 gap-2">
                     {featuredGames.map((_, index) => (
                       <motion.button
                         key={index}
                         onClick={() => handleGoToSlide(index)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          currentGameIndex === index ? "bg-primary w-4" : "bg-white/50"
-                        }`}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${currentGameIndex === index ? "bg-primary w-4" : "bg-white/50"
+                          }`}
                         aria-label={`Go to slide ${index + 1}`}
                       />
                     ))}
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="w-full h-1 bg-dark/50 mt-4 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       key={animationKey}
-                      className={`h-full bg-primary origin-left animate-progress ${
-                        sliderSettings.autoplay ? 'animate-progress-running' : 'animate-progress-paused'
-                      }`}
+                      className={`h-full bg-primary origin-left animate-progress ${sliderSettings.autoplay ? 'animate-progress-running' : 'animate-progress-paused'
+                        }`}
                       style={{ animationDuration: 'var(--carousel-duration)' }}
                     />
                   </div>
@@ -517,7 +515,7 @@ const HeroSection = () => {
       </div>
 
       {/* Scroll Indicator */}
-      <motion.div 
+      <motion.div
         className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center cursor-pointer"
         onClick={scrollToContent}
         initial={{ opacity: 0, y: -10 }}
@@ -525,7 +523,7 @@ const HeroSection = () => {
         transition={{ duration: 0.5, delay: 2 }}
         whileHover={{ y: 5 }}
       >
-        <motion.div 
+        <motion.div
           animate={{ y: [0, 5, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop" }}
         >
