@@ -62,7 +62,8 @@ jobs:
           cd /home/ubuntu/fastapi-app/gamegloom/src
           git pull origin main
           source venv/bin/activate
-          pip install -r requirements.txt
+          # Force CPU-only installation for PyTorch to save space
+          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
           cd backend
           alembic upgrade head
           cd ..
