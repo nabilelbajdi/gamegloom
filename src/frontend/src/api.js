@@ -595,7 +595,7 @@ export const removeGameFromList = async (listId, gameId) => {
 };
 
 // Search API
-export const searchGames = async (query, category = "all", limit = 6) => {
+export const searchGames = async (query, category = "all", limit = 50, offset = 0) => {
   try {
     // Handle common platform abbreviations when searching in the platforms category
     let searchQuery = query;
@@ -627,7 +627,7 @@ export const searchGames = async (query, category = "all", limit = 6) => {
       }
     }
 
-    const response = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}`);
+    const response = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}&offset=${offset}`);
 
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
@@ -638,5 +638,18 @@ export const searchGames = async (query, category = "all", limit = 6) => {
   } catch (error) {
     console.error("Error searching games:", error);
     return [];
+  }
+};
+
+// Search count API
+export const searchCount = async (query, category = "all") => {
+  try {
+    const response = await fetch(`${BASE_URL}/search/count?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`);
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.total || 0;
+  } catch (error) {
+    console.error("Error fetching search count:", error);
+    return 0;
   }
 };

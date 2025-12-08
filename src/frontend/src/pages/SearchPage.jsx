@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { searchGames } from "../api";
+import { searchGames, searchCount } from "../api";
 import GamesGrid from "../components/discover/GamesGrid";
 import GamesList from "../components/common/GamesList";
 import FilterDropdown from "../components/common/FilterDropdown";
@@ -19,11 +19,11 @@ const GAMES_PER_PAGE = 48;
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   // Get search query and category from URL
   const query = searchParams.get("query") || "";
   const category = searchParams.get("category") || "all";
-  
+
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
@@ -35,19 +35,21 @@ const SearchPage = () => {
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
   const [contentTypeFilters, setContentTypeFilters] = useState([]);
-  
+
   // For new search
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // For filtering existing results
   const [titleFilterQuery, setTitleFilterQuery] = useState("");
   const [showFilterPanel, setShowFilterPanel] = useState(window.innerWidth >= 1024);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryButtonRef = useRef(null);
   const categoryDropdownRef = useRef(null);
-  
+
   // For pagination
-  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Search categories
   const SEARCH_CATEGORIES = [
@@ -62,30 +64,25 @@ const SearchPage = () => {
     const handleResize = () => {
       setShowFilterPanel(window.innerWidth >= 1024);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [genreFilters, themeFilters, platformFilters, gameModeFilters, perspectiveFilters, contentTypeFilters, minRatingFilter, titleFilterQuery]);
 
   // Handle click outside for category dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        categoryDropdownOpen && 
-        categoryButtonRef.current && 
-        categoryDropdownRef.current && 
-        !categoryButtonRef.current.contains(event.target) && 
+        categoryDropdownOpen &&
+        categoryButtonRef.current &&
+        categoryDropdownRef.current &&
+        !categoryButtonRef.current.contains(event.target) &&
         !categoryDropdownRef.current.contains(event.target)
       ) {
         setCategoryDropdownOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -111,43 +108,68 @@ const SearchPage = () => {
       if (!query) {
         setSearchResults([]);
         setLoading(false);
+        setTotalCount(0);
         return;
       }
 
       setLoading(true);
+      setHasMore(true);
       try {
-        // Request all results for the search page without limiting
+        // Fetch first batch and total count in parallel
         const startTime = Date.now();
-        const results = await searchGames(query, category, 9999);
-        
+        const [results, count] = await Promise.all([
+          searchGames(query, category, 50, 0),
+          searchCount(query, category)
+        ]);
+
         // Add a slight delay for the skeleton loader to show if the response is too fast
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime < 300) {
           await new Promise(resolve => setTimeout(resolve, 300 - elapsedTime));
         }
-        
-        // Use the utility function to normalize game data
-        const normalizedResults = normalizeGamesData(results);
-        
+
         // Add index property to preserve original order for relevance sorting
-        const resultsWithIndex = normalizedResults.map((game, index) => ({
+        const resultsWithIndex = results.map((game, index) => ({
           ...game,
           originalIndex: index
         }));
-        
+
         setSearchResults(resultsWithIndex || []);
+        setTotalCount(count);
+        setHasMore(results.length >= 50 && results.length < count);
       } catch (error) {
         console.error("Error searching games:", error);
         setSearchResults([]);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSearchResults();
-    // Reset to first page when query changes
-    setCurrentPage(0);
   }, [query, category]);
+
+  // Load more results
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const newResults = await searchGames(query, category, 50, searchResults.length);
+
+      const newResultsWithIndex = newResults.map((game, index) => ({
+        ...game,
+        originalIndex: searchResults.length + index
+      }));
+
+      setSearchResults(prev => [...prev, ...newResultsWithIndex]);
+      setHasMore(newResults.length >= 50 && searchResults.length + newResults.length < totalCount);
+    } catch (error) {
+      console.error("Error loading more games:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Handle search input changes
   const handleSearchInput = (e) => {
@@ -167,9 +189,9 @@ const SearchPage = () => {
       setPerspectiveFilters([]);
       setContentTypeFilters([]);
       setMinRatingFilter(0);
-      
+
       setSearchParams({ query: searchQuery, category });
-      
+
       // Clear the search input after submitting
       setSearchQuery("");
     }
@@ -184,36 +206,36 @@ const SearchPage = () => {
   const clearTitleFilter = () => {
     setTitleFilterQuery("");
   };
-  
+
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
   const extractFilterOptions = () => {
     const allGenres = [...new Set(searchResults
       .filter(game => game.genres)
       .flatMap(game => {
-        let genres = typeof game.genres === 'string' 
+        let genres = typeof game.genres === 'string'
           ? game.genres.split(',').map(g => g.trim())
           : game.genres;
         return genres;
       })
     )].sort();
-    
+
     const allThemes = [...new Set(searchResults
       .filter(game => game.themes)
-      .flatMap(game => typeof game.themes === 'string' 
+      .flatMap(game => typeof game.themes === 'string'
         ? game.themes.split(',').map(t => t.trim())
         : game.themes)
     )].sort();
 
     const allPlatforms = [...new Set(searchResults
       .filter(game => game.platforms)
-      .flatMap(game => typeof game.platforms === 'string' 
+      .flatMap(game => typeof game.platforms === 'string'
         ? game.platforms.split(',').map(p => p.trim())
           .map(p => p.replace("PC (Microsoft Windows)", "PC")
-                    .replace("PlayStation 5", "PS5")
-                    .replace("PlayStation 4", "PS4")
-                    .replace("Nintendo Switch", "Switch")
-                    .replace("PlayStation 3", "PS3")
-                    .replace("PlayStation 2", "PS2"))
+            .replace("PlayStation 5", "PS5")
+            .replace("PlayStation 4", "PS4")
+            .replace("Nintendo Switch", "Switch")
+            .replace("PlayStation 3", "PS3")
+            .replace("PlayStation 2", "PS2"))
         : game.platforms)
     )].sort();
 
@@ -221,7 +243,7 @@ const SearchPage = () => {
       .filter(game => game.gameModes || game.game_modes)
       .flatMap(game => {
         const modes = game.gameModes || game.game_modes;
-        return typeof modes === 'string' 
+        return typeof modes === 'string'
           ? modes.split(',').map(m => m.trim())
           : modes;
       })
@@ -231,7 +253,7 @@ const SearchPage = () => {
       .filter(game => game.playerPerspectives || game.player_perspectives)
       .flatMap(game => {
         const perspectives = game.playerPerspectives || game.player_perspectives;
-        return typeof perspectives === 'string' 
+        return typeof perspectives === 'string'
           ? perspectives.split(',').map(p => p.trim())
           : perspectives;
       })
@@ -256,16 +278,16 @@ const SearchPage = () => {
   const filteredGames = useMemo(() => {
     return searchResults.filter(game => {
       // Title filter
-      const matchesTitle = !titleFilterQuery || 
+      const matchesTitle = !titleFilterQuery ||
         game.name.toLowerCase().includes(titleFilterQuery.toLowerCase());
-      
+
       // Content type filter
-      const matchesContentType = contentTypeFilters.length === 0 || 
+      const matchesContentType = contentTypeFilters.length === 0 ||
         (game.game_type_name && (
           contentTypeFilters.includes(game.game_type_name) ||
           (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
         ));
-      
+
       // Apply all other filters
       const passesOtherFilters = gamePassesAllFilters(game, {
         genres: genreFilters,
@@ -275,7 +297,7 @@ const SearchPage = () => {
         playerPerspectives: perspectiveFilters,
         minRating: minRatingFilter
       });
-      
+
       return matchesTitle && matchesContentType && passesOtherFilters;
     });
   }, [searchResults, titleFilterQuery, contentTypeFilters, genreFilters, themeFilters, platformFilters, gameModeFilters, perspectiveFilters, minRatingFilter]);
@@ -284,27 +306,27 @@ const SearchPage = () => {
   const sortedGames = useMemo(() => {
     // Get the query for exact matching
     const searchQuery = query.toLowerCase().trim();
-    
+
     return [...filteredGames].sort((a, b) => {
       switch (sortOption) {
         case "exact_match":
           // First check for exact title matches
           const aExactMatch = a.name.toLowerCase() === searchQuery;
           const bExactMatch = b.name.toLowerCase() === searchQuery;
-          
+
           if (aExactMatch && !bExactMatch) return -1;
           if (!aExactMatch && bExactMatch) return 1;
-          
+
           // Then check for titles starting with the search query
           const aStartsWithMatch = a.name.toLowerCase().startsWith(searchQuery);
           const bStartsWithMatch = b.name.toLowerCase().startsWith(searchQuery);
-          
+
           if (aStartsWithMatch && !bStartsWithMatch) return -1;
           if (!aStartsWithMatch && bStartsWithMatch) return 1;
-          
+
           // Fall back to relevance order
           return a.originalIndex - b.originalIndex;
-        
+
         case "relevance":
           return a.originalIndex - b.originalIndex;
         case "name_asc":
@@ -329,31 +351,7 @@ const SearchPage = () => {
       }
     });
   }, [filteredGames, sortOption, query]);
-  
-  // Get paginated games
-  const paginatedGames = useMemo(() => {
-    const startIndex = currentPage * GAMES_PER_PAGE;
-    return sortedGames.slice(startIndex, startIndex + GAMES_PER_PAGE);
-  }, [sortedGames, currentPage]);
-  
-  // Calculate total pages
-  const totalPages = Math.ceil(sortedGames.length / GAMES_PER_PAGE);
-  
-  // Page navigation handlers
-  const goToNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-  
-  const goToPrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-  
+
   // Filter handlers
   const handleFilterChange = (filters) => {
     setGenreFilters(filters.genres || []);
@@ -406,7 +404,7 @@ const SearchPage = () => {
 
   // Build the category name based on the search parameters
   const getCategoryName = () => {
-    switch(category) {
+    switch (category) {
       case "games": return "Game Titles";
       case "developers": return "Developers";
       case "platforms": return "Platforms";
@@ -415,14 +413,14 @@ const SearchPage = () => {
     }
   };
 
-  const hasActiveFilters = titleFilterQuery || 
-                         genreFilters.length > 0 || 
-                         themeFilters.length > 0 || 
-                         platformFilters.length > 0 || 
-                         gameModeFilters.length > 0 || 
-                         perspectiveFilters.length > 0 || 
-                         contentTypeFilters.length > 0 ||
-                         minRatingFilter > 0;
+  const hasActiveFilters = titleFilterQuery ||
+    genreFilters.length > 0 ||
+    themeFilters.length > 0 ||
+    platformFilters.length > 0 ||
+    gameModeFilters.length > 0 ||
+    perspectiveFilters.length > 0 ||
+    contentTypeFilters.length > 0 ||
+    minRatingFilter > 0;
 
   return (
     <div className="min-h-screen bg-black pb-12">
@@ -436,29 +434,22 @@ const SearchPage = () => {
                 Search Results for "<span className="text-primary">{query}</span>"
               </h1>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-400 text-sm mt-1">
               <div className="flex items-center bg-surface/30 px-3 py-1 rounded-full">
                 <span className="font-semibold text-primary mr-1">Category:</span>
                 <span>{getCategoryName()}</span>
               </div>
-              
+
               <div className="flex items-center bg-surface/30 px-3 py-1 rounded-full">
-                <span className="font-semibold text-primary mr-1">Found:</span>
-                <span>{searchResults.length} games</span>
+                <span className="font-semibold text-primary mr-1">Showing:</span>
+                <span>{searchResults.length} of {totalCount.toLocaleString()} games</span>
               </div>
-              
+
               {filteredGames.length !== searchResults.length && (
                 <div className="flex items-center bg-surface/30 px-3 py-1 rounded-full">
-                  <span className="font-semibold text-primary mr-1">Showing:</span>
-                  <span>{filteredGames.length} after filtering</span>
-                </div>
-              )}
-              
-              {totalPages > 1 && (
-                <div className="flex items-center bg-surface/30 px-3 py-1 rounded-full">
-                  <span className="font-semibold text-primary mr-1">Page:</span>
-                  <span>{currentPage + 1} of {totalPages}</span>
+                  <span className="font-semibold text-primary mr-1">Filtered:</span>
+                  <span>{filteredGames.length} games</span>
                 </div>
               )}
             </div>
@@ -490,7 +481,7 @@ const SearchPage = () => {
               />
             </div>
           )}
-          
+
           {/* Right Column - Filters and Games */}
           <div className="flex-1 order-1 lg:order-2">
             {/* Filter Controls and Games Card */}
@@ -500,23 +491,23 @@ const SearchPage = () => {
                   {/* New Search Form */}
                   <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto order-2 sm:order-1">
                     <div className="relative" ref={categoryButtonRef}>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="bg-zinc-800 text-xs font-semibold text-gray-400 rounded-md px-3 py-2.5 focus:outline-none border-none shadow-sm cursor-pointer hover:text-white transition-colors flex items-center"
                         onClick={toggleCategoryDropdown}
                         aria-haspopup="true"
                         aria-expanded={categoryDropdownOpen}
                       >
                         {SEARCH_CATEGORIES.find(c => c.id === category)?.label}
-                        <ChevronDown 
-                          size={14} 
-                          className={`ml-1.5 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`} 
+                        <ChevronDown
+                          size={14}
+                          className={`ml-1.5 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
-                      
+
                       {/* Category Dropdown */}
                       {categoryDropdownOpen && (
-                        <div 
+                        <div
                           ref={categoryDropdownRef}
                           className="absolute top-full left-0 mt-1 w-36 z-[60] rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden"
                           role="menu"
@@ -563,7 +554,7 @@ const SearchPage = () => {
                       Search
                     </button>
                   </form>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end order-1 sm:order-2">
                     <div className="flex items-center gap-2">
@@ -591,7 +582,7 @@ const SearchPage = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Active Filters Display */}
                 <ActiveFilters
                   genreFilters={genreFilters}
@@ -611,7 +602,7 @@ const SearchPage = () => {
                   onClearAll={handleClearAllFilters}
                 />
               </div>
-              
+
               {/* Games Display */}
               <div className="p-5">
                 {loading ? (
@@ -620,135 +611,43 @@ const SearchPage = () => {
                   ) : (
                     <GamesList games={[]} loading={true} />
                   )
-                ) : paginatedGames.length > 0 ? (
+                ) : sortedGames.length > 0 ? (
                   <>
                     {viewMode === "grid" ? (
-                      <GamesGrid games={paginatedGames} loading={false} />
+                      <GamesGrid games={sortedGames} loading={false} />
                     ) : (
-                      <GamesList games={paginatedGames} loading={false} />
+                      <GamesList games={sortedGames} loading={false} />
                     )}
-                    
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                      <div className="mt-8 flex items-center justify-center">
-                        <div className="bg-surface-dark/60 backdrop-blur-sm border border-gray-800/30 rounded-lg p-1.5 flex items-center gap-1.5">
+
+                    {/* Load More / All Loaded */}
+                    <div className="mt-8 flex flex-col items-center justify-center gap-2">
+                      {hasMore ? (
+                        <>
                           <button
-                            onClick={goToPrevPage}
-                            disabled={currentPage === 0}
-                            className={`rounded-md px-2.5 py-1.5 flex items-center justify-center transition-colors ${
-                              currentPage === 0
-                                ? 'text-gray-600 cursor-not-allowed'
-                                : 'text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer'
-                            }`}
-                            aria-label="Previous page"
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className="text-primary/70 hover:text-primary text-sm transition-colors hover:underline cursor-pointer disabled:opacity-50"
                           >
-                            <ChevronLeft size={18} />
+                            {loadingMore ? "Loading..." : "Load more games"}
                           </button>
-                          
-                          <div className="flex gap-1">
-                            {Array.from({ length: Math.min(totalPages, 7) }).map((_, index) => {
-                              // For pagination with many pages, add ellipsis
-                              let pageToShow = index;
-                              
-                              if (totalPages > 7) {
-                                // Complex pagination logic for many pages
-                                if (currentPage < 4) {
-                                  // Near start: show first 5 pages, ellipsis, last page
-                                  if (index < 5) {
-                                    pageToShow = index;
-                                  } else if (index === 5) {
-                                    return (
-                                      <span key="ellipsis-end" className="flex items-center justify-center w-8 text-gray-500">
-                                        …
-                                      </span>
-                                    );
-                                  } else {
-                                    pageToShow = totalPages - 1;
-                                  }
-                                } else if (currentPage > totalPages - 5) {
-                                  // Near end: show first page, ellipsis, last 5 pages
-                                  if (index === 0) {
-                                    pageToShow = 0;
-                                  } else if (index === 1) {
-                                    return (
-                                      <span key="ellipsis-start" className="flex items-center justify-center w-8 text-gray-500">
-                                        …
-                                      </span>
-                                    );
-                                  } else {
-                                    pageToShow = totalPages - (7 - index);
-                                  }
-                                } else {
-                                  // Middle: show first page, ellipsis, current page and neighbors, ellipsis, last page
-                                  if (index === 0) {
-                                    pageToShow = 0;
-                                  } else if (index === 1) {
-                                    return (
-                                      <span key="ellipsis-start" className="flex items-center justify-center w-8 text-gray-500">
-                                        …
-                                      </span>
-                                    );
-                                  } else if (index === 6) {
-                                    pageToShow = totalPages - 1;
-                                  } else if (index === 5) {
-                                    return (
-                                      <span key="ellipsis-end" className="flex items-center justify-center w-8 text-gray-500">
-                                        …
-                                      </span>
-                                    );
-                                  } else {
-                                    pageToShow = currentPage + (index - 3);
-                                  }
-                                }
-                              }
-                                
-                              return (
-                                <button
-                                  key={pageToShow}
-                                  onClick={() => {
-                                    setCurrentPage(pageToShow);
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                  }}
-                                  className={`h-8 w-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                                    currentPage === pageToShow
-                                      ? 'bg-primary text-dark'
-                                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                  }`}
-                                  aria-label={`Page ${pageToShow + 1}`}
-                                  aria-current={currentPage === pageToShow ? 'page' : undefined}
-                                >
-                                  {pageToShow + 1}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          
-                          <button
-                            onClick={goToNextPage}
-                            disabled={currentPage >= totalPages - 1}
-                            className={`rounded-md px-2.5 py-1.5 flex items-center justify-center transition-colors ${
-                              currentPage >= totalPages - 1
-                                ? 'text-gray-600 cursor-not-allowed'
-                                : 'text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer'
-                            }`}
-                            aria-label="Next page"
-                          >
-                            <ChevronRight size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                        </>
+                      ) : (
+                        <span className="text-light/50 text-sm">
+                          Showing all {searchResults.length.toLocaleString()} games
+                        </span>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <div className="text-center py-12">
                     <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                      {searchResults.length > 0 
-                        ? "No results match your filters" 
+                      {searchResults.length > 0
+                        ? "No results match your filters"
                         : "No search results found"}
                     </h3>
                     <p className="text-gray-500 text-sm">
-                      {searchResults.length > 0 
-                        ? "Try adjusting or clearing your filters" 
+                      {searchResults.length > 0
+                        ? "Try adjusting or clearing your filters"
                         : "Try different search terms"}
                     </p>
                     {hasActiveFilters && searchResults.length > 0 && (
@@ -766,7 +665,7 @@ const SearchPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Scroll to Top Button */}
       <ScrollToTop />
     </div>

@@ -85,6 +85,9 @@ def calculate_release_date_score(release_date: datetime | None) -> float:
         return 0.5
     
     now = datetime.now(UTC)
+    # Ensure release_date is timezone-aware for comparison
+    if release_date.tzinfo is None:
+        release_date = release_date.replace(tzinfo=UTC)
     years_old = (now - release_date).days / 365.25
     
     if years_old <= 2:
