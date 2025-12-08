@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict
 from enum import Enum
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from ..models.user_game import GameStatus
 
 class UserBase(BaseModel):
@@ -27,16 +27,14 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TokenResponse(BaseModel):
     """Schema for token response to client."""
     token: str
     expires_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TokenCreate(BaseModel):
     """Schema for creating a new token."""
@@ -137,8 +135,7 @@ class Game(GameBase):
     updated_at: datetime
     is_deleted: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserGameBase(BaseModel):
     """Base schema for user-game relationships."""
@@ -157,8 +154,7 @@ class UserGame(UserGameBase):
     updated_at: datetime
     game: Optional[Game] = None  # For when we want to include game details
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserGameUpdate(BaseModel):
     """Schema for updating a user-game relationship."""
@@ -183,9 +179,7 @@ class GameBasicInfo(BaseModel):
     status: GameStatus
     game_type_name: str | None = None
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class UserGameResponse(BaseModel):
     """Schema for user game collection response."""
@@ -193,8 +187,7 @@ class UserGameResponse(BaseModel):
     playing: List[GameBasicInfo] = []
     played: List[GameBasicInfo] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Review Schemas
 class ReviewBase(BaseModel):
@@ -223,8 +216,7 @@ class Review(ReviewBase):
     user: Optional[UserResponse] = None
     game: Optional[Game] = None  # Add game relationship
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Review Comment Schemas
 class ReviewCommentBase(BaseModel):
@@ -244,8 +236,7 @@ class ReviewComment(ReviewCommentBase):
     updated_at: datetime
     user: Optional[UserResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Review Like Schema
 class ReviewLike(BaseModel):
@@ -255,16 +246,14 @@ class ReviewLike(BaseModel):
     review_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserProfileUpdate(BaseModel):
     """Schema for updating user profile information."""
     avatar: Optional[str] = None
     bio: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserStats(BaseModel):
     """Schema for user statistics."""
@@ -276,8 +265,7 @@ class UserStats(BaseModel):
     average_rating: Optional[float] = None
     lists_count: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ActivityGameInfo(BaseModel):
     """Basic game info for activity items."""
@@ -287,8 +275,7 @@ class ActivityGameInfo(BaseModel):
     slug: Optional[str] = None
     cover_image: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ActivityReviewInfo(BaseModel):
     """Basic review info for activity items."""
@@ -297,8 +284,7 @@ class ActivityReviewInfo(BaseModel):
     content: Optional[str] = None
     game: Optional[ActivityGameInfo] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ActivityType(str, Enum):
     """Types of user activities."""
@@ -318,15 +304,13 @@ class UserActivity(BaseModel):
     comment_content: Optional[str] = None
     target_username: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserActivityResponse(BaseModel):
     """Schema for user activity response."""
     activities: List[UserActivity]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # User List schemas
 class UserListBase(BaseModel):
@@ -351,15 +335,13 @@ class UserList(UserListBase):
     updated_at: datetime
     games: List[GameBasicInfo] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserListsResponse(BaseModel):
     """Schema for returning all user lists."""
     lists: List[UserList] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AddGameToListRequest(BaseModel):
     """Schema for adding a game to a user list."""

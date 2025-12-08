@@ -1,11 +1,17 @@
 # settings.py
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow"
+    )
+    
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     
@@ -14,11 +20,6 @@ class Settings(BaseSettings):
     IGDB_ACCESS_TOKEN: str = os.getenv("IGDB_ACCESS_TOKEN", "")
     IGDB_WEBHOOK_SECRET: str = os.getenv("IGDB_WEBHOOK_SECRET", "")
     IGDB_URL: str = "https://api.igdb.com/v4/games"
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"  # Allow extra fields
 
     def validate(self):
         if not self.DATABASE_URL:
