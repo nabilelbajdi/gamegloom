@@ -66,6 +66,49 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
 
     return data[0] if game_id else data
 
+# Game types to exclude (these aren't full games)
+EXCLUDED_GAME_TYPES = {
+    5: "Mod",
+    13: "Pack", 
+    14: "Update"
+}
+
+def meets_quality_requirements(game_data: schemas.GameCreate, log_warnings: bool = True) -> bool:
+    """Check if a game meets minimum quality requirements for storage.
+    
+    Requirements:
+    1. Must have a cover image
+    2. Must have a summary or storyline
+    3. Must not be a Mod, Pack, or Update
+    
+    Args:
+        game_data: The processed game data to check
+        log_warnings: If True, log warnings for rejected games
+        
+    Returns:
+        True if game meets requirements, False otherwise
+    """
+    # Check for excluded game types
+    if game_data.game_type_id in EXCLUDED_GAME_TYPES:
+        if log_warnings:
+            logger.info(f"[Quality] Skipping '{game_data.name}': is a {EXCLUDED_GAME_TYPES[game_data.game_type_id]}")
+        return False
+    
+    # Check for cover image
+    if not game_data.cover_image:
+        if log_warnings:
+            logger.info(f"[Quality] Skipping '{game_data.name}': no cover image")
+        return False
+    
+    # Check for summary or storyline
+    has_description = bool(game_data.summary) or bool(game_data.storyline)
+    if not has_description:
+        if log_warnings:
+            logger.info(f"[Quality] Skipping '{game_data.name}': no summary or storyline")
+        return False
+    
+    return True
+
 def process_similar_games(similar_games_data: list) -> list:
     """Process similar games data into our format"""
     similar_games = []
@@ -377,6 +420,7 @@ async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
         igdb_data = fetch_from_igdb(query=query)
         new_count = 0
         update_count = 0
+        skipped_count = 0
         
         for game_data in igdb_data:
             try:
@@ -389,17 +433,27 @@ async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
                 existing_game = get_game_by_igdb_id(db, game_data['id'])
                 
                 if existing_game:
+                    # Update existing games even if they don't meet quality requirements
+                    # (they were already accepted before)
                     update_game(db, existing_game.id, processed_data)
                     update_count += 1
                 else:
-                    create_game(db, processed_data)
-                    new_count += 1
+                    # Only create new games that meet quality requirements
+                    if meets_quality_requirements(processed_data):
+                        create_game(db, processed_data)
+                        new_count += 1
+                    else:
+                        skipped_count += 1
                     
             except Exception as e:
                 logger.error(f"Error processing game {game_data.get('name', 'Unknown')}: {str(e)}")
                 continue
+        
+        if skipped_count > 0:
+            logger.info(f"[Quality] Skipped {skipped_count} games that didn't meet quality requirements")
                 
         return new_count, update_count
+
         
     except Exception as e:
         logger.error(f"Error syncing games from IGDB: {str(e)}")
@@ -467,6 +521,90 @@ def update_game(db: Session, game_id: int, game: schemas.GameUpdate) -> game.Gam
     db.commit()
     db.refresh(db_game)
     return db_game
+
+# Stale-While-Revalidate (SWR) Functions
+def is_stale(db_game: game.Game, max_age_hours: int = 24) -> bool:
+    """Check if a game's data is stale and needs refreshing.
+    
+    Args:
+        db_game: The game object to check
+        max_age_hours: Maximum age in hours before data is considered stale (default: 24)
+    
+    Returns:
+        True if the game data is stale and should be refreshed
+    """
+    if not db_game or not db_game.updated_at:
+        return True
+    
+    age = datetime.utcnow() - db_game.updated_at
+    return age.total_seconds() > (max_age_hours * 3600)
+
+async def refresh_game_async(igdb_id: int) -> bool:
+    """Refresh a game's data from IGDB in the background.
+    
+    This is designed to be called as a background task via asyncio.create_task().
+    It creates its own database session to avoid issues with the request session
+    being closed before the task completes.
+    
+    Args:
+        igdb_id: The IGDB ID of the game to refresh
+        
+    Returns:
+        True if refresh was successful, False otherwise
+    """
+    # Import here to avoid circular imports
+    from ...db_setup import SessionLocal
+    
+    db = SessionLocal()
+    try:
+        logger.info(f"[SWR] Background refresh starting for IGDB ID: {igdb_id}")
+        
+        # Fetch fresh data from IGDB
+        igdb_data = fetch_from_igdb(game_id=igdb_id)
+        if not igdb_data:
+            logger.warning(f"[SWR] No data returned from IGDB for game {igdb_id}")
+            return False
+        
+        # Handle list response (fetch_from_igdb returns dict for single game, but be safe)
+        if isinstance(igdb_data, list):
+            igdb_data = igdb_data[0] if igdb_data else None
+        
+        if not igdb_data:
+            return False
+        
+        # Process the data
+        processed_data = process_igdb_data(igdb_data)
+        
+        # Find and update the existing game
+        existing_game = get_game_by_igdb_id(db, igdb_id)
+        if existing_game:
+            # Update existing games (they were already accepted)
+            update_game(db, existing_game.id, processed_data)
+            # Explicitly update the timestamp since onupdate only fires if row changes
+            existing_game.updated_at = datetime.utcnow()
+            db.commit()  # Explicit commit to ensure changes are saved
+            logger.info(f"[SWR] Successfully refreshed: {processed_data.name} (IGDB: {igdb_id})")
+        else:
+            # Only create new games that meet quality requirements
+            if meets_quality_requirements(processed_data):
+                create_game(db, processed_data)
+                db.commit()  # Explicit commit to ensure changes are saved
+                logger.info(f"[SWR] Created new game: {processed_data.name} (IGDB: {igdb_id})")
+            else:
+                logger.info(f"[SWR] Skipped creating '{processed_data.name}': doesn't meet quality requirements")
+                return False
+        
+        return True
+        
+    except Exception as e:
+        db.rollback()  # Explicit rollback on error
+        logger.error(f"[SWR] Error refreshing game {igdb_id}: {str(e)}")
+        return False
+    finally:
+        db.close()
+
+
+
 
 def get_trending_games(db: Session, limit: int = 100) -> list[game.Game]:
     """Get trending games from the database"""

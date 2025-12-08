@@ -1,4 +1,6 @@
 # scheduler.py
+# Focused scheduler that only updates featured/homepage games
+# Individual game pages use SWR pattern for on-demand refresh
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
@@ -6,71 +8,103 @@ from backend.app.api.db_setup import SessionLocal
 from backend.app.api.v1.core import services
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
 
-async def update_all_games():
-    """Update all stored games in the database periodically."""
+async def update_featured_games():
+    """Update only featured/homepage games.
+    
+    This is a focused update that keeps homepage content fresh:
+    - Trending games (recent releases with high hype)
+    - Anticipated games (upcoming releases)
+    - Highly rated games (top rated of all time)
+    - Latest releases (past 30 days)
+    
+    Individual game pages use SWR pattern for on-demand refresh.
+    """
     try:
-        logger.info("Starting full game database update task")
+        logger.info("[Scheduler] Starting featured games update")
         
         db = SessionLocal()
         try:
-            # Import the Game model from the models directory
-            from backend.app.api.v1.models.game import Game
+            current_time = int(datetime.now().timestamp())
+            six_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
+            one_year_future = current_time + (365 * 24 * 60 * 60)
+            three_months_ago = int((datetime.now() - timedelta(days=90)).timestamp())
             
-            # Define how old a game can be before needing an update
-            update_threshold = datetime.now() - timedelta(days=7)
-
-            # Get all games that haven't been updated in 7+ days
-            outdated_games = db.query(Game).filter(
-                Game.updated_at < update_threshold
-            ).limit(200).all()
-
-            if not outdated_games:
-                logger.info("No outdated games found for update.")
-                return
-
-            # Fetch IGDB updates for these games
-            game_ids = [str(game.igdb_id) for game in outdated_games]
-
-            query = f"""
-                fields name, summary, storyline, first_release_date, 
-                       genres.name, platforms.name, cover.image_id, 
-                       screenshots.image_id, videos.video_id, rating, 
-                       aggregated_rating, total_rating, total_rating_count, hypes,
-                       similar_games.name, similar_games.cover.image_id, similar_games.rating,
-                       similar_games.total_rating, similar_games.genres.name,
-                       involved_companies.company.name, involved_companies.developer, game_modes.name, 
-                       player_perspectives.name, themes.name;
-                where id = ({",".join(game_ids)}) & cover != null;
+            # Update trending games
+            trending_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                where first_release_date >= {six_months_ago} 
+                    & first_release_date <= {current_time} 
+                    & hypes > 0 & cover != null;
+                sort hypes desc;
+                limit 50;
             """
-
-            new_count, update_count = await services.sync_games_from_igdb(db, query)
-            logger.info(f"Game database update completed: {new_count} new games, {update_count} updated games")
+            trending_new, trending_updated = await services.sync_games_from_igdb(db, trending_query)
+            logger.info(f"[Scheduler] Trending: {trending_new} new, {trending_updated} updated")
+            
+            # Update anticipated games
+            anticipated_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                where first_release_date > {current_time} 
+                    & first_release_date < {one_year_future} 
+                    & hypes > 0 & cover != null;
+                sort hypes desc;
+                limit 50;
+            """
+            anticipated_new, anticipated_updated = await services.sync_games_from_igdb(db, anticipated_query)
+            logger.info(f"[Scheduler] Anticipated: {anticipated_new} new, {anticipated_updated} updated")
+            
+            # Update highly rated games
+            rated_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                where total_rating_count > 100 & total_rating > 85 & cover != null;
+                sort total_rating desc;
+                limit 50;
+            """
+            rated_new, rated_updated = await services.sync_games_from_igdb(db, rated_query)
+            logger.info(f"[Scheduler] Highly rated: {rated_new} new, {rated_updated} updated")
+            
+            # Update latest releases
+            latest_query = f"""
+                {services.IGDB_GAME_FIELDS}
+                where first_release_date >= {three_months_ago} 
+                    & first_release_date <= {current_time} 
+                    & cover != null;
+                sort first_release_date desc;
+                limit 50;
+            """
+            latest_new, latest_updated = await services.sync_games_from_igdb(db, latest_query)
+            logger.info(f"[Scheduler] Latest: {latest_new} new, {latest_updated} updated")
+            
+            total_new = trending_new + anticipated_new + rated_new + latest_new
+            total_updated = trending_updated + anticipated_updated + rated_updated + latest_updated
+            logger.info(f"[Scheduler] Complete: {total_new} new, {total_updated} updated")
+            
         finally:
             db.close()
 
     except Exception as e:
-        logger.error(f"Error in update_all_games task: {str(e)}")
+        logger.error(f"[Scheduler] Error: {str(e)}")
 
 def init_scheduler():
-    """Initialize the scheduler with all tasks."""
+    """Initialize the scheduler with featured games update task."""
     try:
-        # Update all stored games every 12 hours
+        # Update featured games every 6 hours
         scheduler.add_job(
-            update_all_games,
-            CronTrigger(hour="*/12"),
-            id="update_all_games",
+            update_featured_games,
+            CronTrigger(hour="*/6"),
+            id="update_featured_games",
             replace_existing=True
         )
         
         scheduler.start()
-        logger.info("Scheduler initialized successfully")
+        logger.info("[Scheduler] Initialized - updating featured games every 6 hours")
 
     except Exception as e:
-        logger.error(f"Error initializing scheduler: {str(e)}")
+        logger.error(f"[Scheduler] Init error: {str(e)}")
         raise
+

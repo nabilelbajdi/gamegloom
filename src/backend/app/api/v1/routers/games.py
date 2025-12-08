@@ -16,7 +16,13 @@ logger = logging.getLogger(__name__)
 
 @router.get("/games/{identifier}", response_model=schemas.Game)
 async def get_game(identifier: str, db: Session = Depends(get_db)):
-    """Get game details by IGDB ID or slug, first checking database then IGDB"""
+    """Get game details by IGDB ID or slug.
+    
+    Uses Stale-While-Revalidate (SWR) pattern:
+    - Returns cached data immediately
+    - If data is stale (>24h old), triggers background refresh
+    - If game not in DB, fetches from IGDB and stores
+    """
     db_game = None
     
     if identifier.isdigit():
@@ -27,7 +33,17 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
             try:
                 igdb_data = services.fetch_from_igdb(game_id=igdb_id)
                 game_data = services.process_igdb_data(igdb_data)
-                db_game = services.create_game(db, game_data)
+                
+                # Only store games that meet quality requirements
+                if services.meets_quality_requirements(game_data):
+                    db_game = services.create_game(db, game_data)
+                else:
+                    raise HTTPException(
+                        status_code=404, 
+                        detail=f"Game doesn't meet quality requirements (missing cover or description)"
+                    )
+            except HTTPException:
+                raise
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
     else:
@@ -41,41 +57,59 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
                 
                 if search_results and len(search_results) > 0:
                     game_data = services.process_igdb_data(search_results[0])
-                    db_game = services.create_game(db, game_data)
+                    
+                    # Only store games that meet quality requirements
+                    if services.meets_quality_requirements(game_data):
+                        db_game = services.create_game(db, game_data)
+                    else:
+                        raise HTTPException(
+                            status_code=404, 
+                            detail=f"Game doesn't meet quality requirements (missing cover or description)"
+                        )
                 else:
                     raise HTTPException(status_code=404, detail=f"Game with slug '{slug}' not found")
+            except HTTPException:
+                raise
             except Exception as e:
                 if "not found" in str(e).lower():
                     raise HTTPException(status_code=404, detail=f"Game with slug '{slug}' not found")
                 raise HTTPException(status_code=500, detail=str(e))
     
-    needs_update = True
-    if db_game and db_game.updated_at:
-        last_update = db_game.updated_at
-        current_time = datetime.utcnow()
-        time_difference = current_time - last_update
-        # Skip background updates if updated in the last 24 hours
-        if time_difference.total_seconds() < 86400:
-            needs_update = False
+    # SWR Pattern: Check if game data is stale and needs background refresh
+    if db_game and services.is_stale(db_game, max_age_hours=24):
+        logger.info(f"[SWR] Game {db_game.name} is stale, triggering background refresh")
+        try:
+            # Trigger background refresh - doesn't block the response
+            # Note: refresh_game_async creates its own DB session
+            asyncio.create_task(services.refresh_game_async(db_game.igdb_id))
+        except Exception as e:
+            logger.error(f"[SWR] Error starting background refresh: {str(e)}")
+
+
+
     
-    # Only run background update tasks if needed
-    if needs_update:
-        if db_game and db_game.similar_games:
+    # Also refresh related data if stale
+    if db_game and services.is_stale(db_game, max_age_hours=24):
+        # Sync similar games in background
+        if db_game.similar_games:
             try:
                 asyncio.create_task(services.sync_similar_games(db, db_game.id))
             except Exception as e:
                 logger.error(f"Error starting similar games sync: {str(e)}")
         
+        # Fetch related game types in background
         try:
             asyncio.create_task(services.fetch_related_game_types(db, db_game.id))
         except Exception as e:
             logger.error(f"Error starting related game types fetch: {str(e)}")
         
+        # Fetch editions and bundles in background
         try:
             asyncio.create_task(services.fetch_game_editions_and_bundles(db, db_game.id))
         except Exception as e:
             logger.error(f"Error starting editions and bundles fetch: {str(e)}")
         
+        # Fetch time to beat (this one is quick, do it synchronously)
         try:
             time_to_beat = services.fetch_time_to_beat(db_game.igdb_id)
             if time_to_beat:
@@ -86,6 +120,7 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
             logger.error(f"Error fetching time to beat data: {str(e)}")
     
     return db_game
+
 
 @router.get("/trending-games", response_model=List[schemas.Game])
 async def get_trending_games(db: Session = Depends(get_db)):
