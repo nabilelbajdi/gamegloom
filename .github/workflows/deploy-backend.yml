@@ -39,8 +39,9 @@ jobs:
       env:
         DATABASE_URL: "sqlite:///:memory:"
         SECRET_KEY: "test-secret-key-for-ci"
-        TWITCH_CLIENT_ID: "test"
-        TWITCH_CLIENT_SECRET: "test"
+        IGDB_CLIENT_ID: "test-client-id"
+        IGDB_ACCESS_TOKEN: "test-access-token"
+        IGDB_WEBHOOK_SECRET: "test-webhook-secret"
 
   deploy:
     name: Deploy to EC2
