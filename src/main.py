@@ -1,5 +1,4 @@
 # main.py
-# Testing GitHub Actions deployment workflow
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -49,11 +48,12 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://localhost:8000",
-    "https://gameloom-labb3.vercel.app",
+    "https://gamegloom.vercel.app",  # Update this after renaming Vercel project
     "https://gamegloom.com",
     "https://www.gamegloom.com",
     "https://api.gamegloom.com",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,
