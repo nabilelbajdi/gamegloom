@@ -79,7 +79,7 @@ torch==2.6.0
 tqdm==4.67.1
 transformers==4.49.0
 typer==0.15.1
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 tzlocal==5.3
 ujson==5.10.0
 urllib3==2.3.0
