@@ -11,7 +11,9 @@ psycopg[binary]>=3.0
 
 # Authentication
 bcrypt>=4.2.0
-python-jose>=3.3.0
+
+# Rate Limiting
+slowapi>=0.1.9
 
 # Validation & Serialization
 pydantic>=2.12.0

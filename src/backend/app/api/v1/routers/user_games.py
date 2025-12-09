@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.post("", response_model=schemas.UserGame)
-async def add_game_to_collection(
+def add_game_to_collection(
     game_data: schemas.UserGameCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

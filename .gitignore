@@ -1,11 +1,14 @@
 # Node.js dependencies
 node_modules/
 dist/
+dist-ssr/
 .vite/
 .vscode/
 .DS_Store
+*.local
 
 # Logs
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -14,6 +17,8 @@ pnpm-debug.log*
 
 # Environment variables
 .env
+.env.local
+.env.*.backup
 
 # Virtual environment
 venv/
@@ -25,3 +30,13 @@ __pycache__/
 
 # Database files
 *.db
+
+# Alembic
+alembic/versions/*.pyc
+
+# Script data files
+scripts/data_management/fetch_progress.json
+scripts/**/*.log
+
+# User uploaded content
+src/backend/static/avatars/
