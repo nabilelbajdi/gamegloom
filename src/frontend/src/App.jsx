@@ -8,11 +8,8 @@ import Footer from "./components/layout/Footer";
 import HomePage from "./pages/HomePage";
 import MyLibraryPage from "./pages/MyLibraryPage";
 import DiscoverPage from "./pages/DiscoverPage";
-import CommunityPage from "./pages/CommunityPage";
-import StatsPage from "./pages/StatsPage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import ArticlesPage from "./pages/ArticlesPage";
 import SignUpPage from "./pages/SignUpPage";
 import GamePage from "./pages/GamePage";
 import ProfilePage from "./pages/ProfilePage";
@@ -39,10 +36,10 @@ export const useLoadingBar = () => {
 function AppContent() {
   useRouteLoadingBar();
   const location = useLocation();
-  
+
   // Check if current path is login or signup
   const isAuthPage = ['/login', '/signup'].includes(location.pathname);
-  
+
   return (
     <>
       <ScrollToTopOnMount />
@@ -59,10 +56,7 @@ function AppContent() {
         <Route path="/genre/:genreSlug" element={<GenrePage />} />
         <Route path="/theme/:themeSlug" element={<ThemePage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/community" element={<CommunityPage />} />
-        <Route path="/stats" element={<StatsPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/articles" element={<ArticlesPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/game/:gameId" element={<GamePage />} />
@@ -84,7 +78,7 @@ const App = () => {
     <LoadingBarContext.Provider value={loadingBar}>
       <AuthProvider>
         <Router>
-          <LoadingBar 
+          <LoadingBar
             color="var(--color-primary)"
             ref={loadingRef}
             shadow={true}
