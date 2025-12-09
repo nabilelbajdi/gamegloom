@@ -10,8 +10,8 @@ import { LogOut, ChevronDown, Search as SearchIcon, Gamepad2, Users, Monitor, Ta
 import { searchGames } from "../../api";
 
 const NAV_ITEMS = [
-  { 
-    name: "Discover", 
+  {
+    name: "Discover",
     path: "/discover",
     dropdown: [
       { name: "Trending Now", path: "/discover/trending" },
@@ -78,7 +78,7 @@ export default function Navbar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, logout } = useAuth();
   const loadingBar = useLoadingBar();
-  const { collection, fetchCollection } = useUserGameStore();
+  const { collection, fetchCollection, clearCollection } = useUserGameStore();
 
   // Search categories
   const SEARCH_CATEGORIES = [
@@ -101,27 +101,27 @@ export default function Navbar() {
     const handleClickOutside = (event) => {
       // Handle category dropdown click outside
       if (
-        categoryDropdownOpen && 
-        categoryButtonRef.current && 
-        categoryDropdownRef.current && 
-        !categoryButtonRef.current.contains(event.target) && 
+        categoryDropdownOpen &&
+        categoryButtonRef.current &&
+        categoryDropdownRef.current &&
+        !categoryButtonRef.current.contains(event.target) &&
         !categoryDropdownRef.current.contains(event.target)
       ) {
         setCategoryDropdownOpen(false);
       }
-      
+
       if (searchResults.length > 0 || searchQuery) {
         const clickedOutsideSearchArea = (
-          searchContainerRef.current && 
-          !searchContainerRef.current.contains(event.target) && 
-          searchDropdownRef.current && 
+          searchContainerRef.current &&
+          !searchContainerRef.current.contains(event.target) &&
+          searchDropdownRef.current &&
           !searchDropdownRef.current.contains(event.target)
         );
-        
+
         if (clickedOutsideSearchArea) {
           const isSearchInput = event.target.closest('input[type="text"]');
           const isSearchForm = event.target.closest('form');
-          
+
           if (!isSearchInput && (!isSearchForm || !isSearchForm.contains(searchContainerRef.current))) {
             setSearchQuery("");
             setSearchResults([]);
@@ -129,7 +129,7 @@ export default function Navbar() {
         }
       }
     };
-    
+
     // Handle escape key
     const handleEscKey = (event) => {
       if (event.key === 'Escape') {
@@ -142,10 +142,10 @@ export default function Navbar() {
         }
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscKey);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscKey);
@@ -195,13 +195,13 @@ export default function Navbar() {
   const handleSearchInput = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
+
     if (!query.trim()) {
       setIsSearching(false);
       setSearchResults([]);
       return;
     }
-    
+
     setIsSearching(true);
     debouncedSearch(query, searchCategory);
   };
@@ -209,15 +209,15 @@ export default function Navbar() {
   // Handle search form submit (on Enter key)
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    
+
     if (searchQuery.trim()) {
       // Cancel any pending searches by clearing the debounce
       debouncedSearch.cancel();
       setIsSearching(false);
-      
+
       // Navigate to search page (or update search params if already there)
       const searchPath = `/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(searchCategory)}`;
-      
+
       if (window.location.pathname === '/search') {
         const newParams = new URLSearchParams();
         newParams.set('query', searchQuery);
@@ -226,7 +226,7 @@ export default function Navbar() {
       } else {
         navigate(searchPath);
       }
-      
+
       setSearchQuery("");
       setSearchResults([]);
     }
@@ -236,7 +236,7 @@ export default function Navbar() {
   const handleCategorySelect = (category) => {
     setSearchCategory(category);
     setCategoryDropdownOpen(false);
-    
+
     if (searchQuery.trim()) {
       debouncedSearch(searchQuery, category);
     }
@@ -250,6 +250,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     loadingBar.start();
+    clearCollection(); // Clear user-specific data from store
     logout();
     navigate("/");
     loadingBar.complete();
@@ -275,8 +276,8 @@ export default function Navbar() {
           {NAV_ITEMS.map((item, index) => (
             item.dropdown ? (
               <div key={index} className="relative group">
-                <Link 
-                  to={item.path} 
+                <Link
+                  to={item.path}
                   className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200 flex items-center"
                 >
                   {item.name}
@@ -298,9 +299,9 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link 
-                key={index} 
-                to={item.path} 
+              <Link
+                key={index}
+                to={item.path}
                 className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
               >
                 {item.name}
@@ -314,8 +315,8 @@ export default function Navbar() {
             <div className="flex items-center w-full bg-white rounded-md overflow-hidden shadow-sm">
               {/* Category selector button */}
               <div className="relative" ref={categoryButtonRef}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="flex items-center h-8 px-3 hover:bg-gray-100 border-r border-gray-300 cursor-pointer"
                   onClick={toggleCategoryDropdown}
                   aria-haspopup="true"
@@ -325,15 +326,15 @@ export default function Navbar() {
                   <span className="text-xs text-gray-700">
                     {SEARCH_CATEGORIES.find(c => c.id === searchCategory)?.label}
                   </span>
-                  <ChevronDown 
-                    size={14} 
-                    className={`ml-1 text-gray-600 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`} 
+                  <ChevronDown
+                    size={14}
+                    className={`ml-1 text-gray-600 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                
+
                 {/* Category Dropdown */}
                 {categoryDropdownOpen && (
-                  <div 
+                  <div
                     ref={categoryDropdownRef}
                     className="fixed w-36 z-[60] rounded-md shadow-lg bg-surface-dark border border-gray-800/50 overflow-hidden"
                     role="menu"
@@ -360,7 +361,7 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-              
+
               <div className="relative flex-grow flex items-center">
                 <div className="absolute left-3 flex items-center justify-center h-full">
                   {isSearching ? (
@@ -379,7 +380,7 @@ export default function Navbar() {
                 <input
                   type="text"
                   placeholder={(() => {
-                    switch(searchCategory) {
+                    switch (searchCategory) {
                       case "games": return "Search titles...";
                       case "developers": return "Search developers...";
                       case "platforms": return "Search platforms...";
@@ -393,8 +394,8 @@ export default function Navbar() {
                 />
               </div>
               {searchQuery && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="px-3 h-8 hover:bg-gray-100 flex items-center cursor-pointer"
                   onClick={() => {
                     setSearchQuery("");
@@ -430,8 +431,8 @@ export default function Navbar() {
         </form>
 
         <div className="hidden md:flex items-center space-x-2">
-          <Link 
-            to="/library" 
+          <Link
+            to="/library"
             className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
           >
             <div className="flex items-center space-x-2">
@@ -494,8 +495,8 @@ export default function Navbar() {
               </div>
             </div>
           ) : (
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="nav-link px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-all duration-200"
             >
               Sign In
@@ -503,7 +504,7 @@ export default function Navbar() {
           )}
         </div>
 
-        <button 
+        <button
           className="md:hidden p-2"
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
@@ -518,8 +519,8 @@ export default function Navbar() {
           {NAV_ITEMS.map((item, index) => (
             item.dropdown ? (
               <div key={index} className="space-y-1">
-                <Link 
-                  to={item.path} 
+                <Link
+                  to={item.path}
                   className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5 flex items-center justify-between"
                   onClick={() => setIsOpen(false)}
                 >
@@ -539,10 +540,10 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <Link 
-                key={index} 
-                to={item.path} 
-                className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5" 
+              <Link
+                key={index}
+                to={item.path}
+                className="nav-link text-xs text-gray-300 hover:bg-gray-800 rounded-md px-3 py-1.5"
                 onClick={() => setIsOpen(false)}
               >
                 {item.name}
