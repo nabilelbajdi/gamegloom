@@ -10,6 +10,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
 # Environment variables
 .env
@@ -19,3 +20,8 @@ venv/
 
 # Python
 __pycache__/
+*.pyc
+*.pyo
+
+# Database files
+*.db
