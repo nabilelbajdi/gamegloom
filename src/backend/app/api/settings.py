@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     IGDB_ACCESS_TOKEN: str = os.getenv("IGDB_ACCESS_TOKEN", "")
     IGDB_WEBHOOK_SECRET: str = os.getenv("IGDB_WEBHOOK_SECRET", "")
     IGDB_URL: str = "https://api.igdb.com/v4/games"
+    
+    # Steam Integration settings (optional - leave empty to disable)
+    STEAM_API_KEY: str = os.getenv("STEAM_API_KEY", "")
+    STEAM_OPENID_REALM: str = os.getenv("STEAM_OPENID_REALM", "http://localhost:5173")
+    STEAM_OPENID_RETURN_TO: str = os.getenv("STEAM_OPENID_RETURN_TO", "http://localhost:8000/api/v1/integrations/steam/callback")
 
     def validate(self):
         if not self.DATABASE_URL:
