@@ -53,14 +53,23 @@
     opacity: 0.8;
 }
 
-/* Cover - fixed sizing */
+/* Cover - base styles */
 .sync-card-cover {
     position: relative;
     width: 100%;
-    padding-bottom: 100%;
     border-radius: 8px;
     overflow: hidden;
     background: var(--color-gray-900);
+}
+
+/* IGDB covers are portrait (3:4 ratio) */
+.sync-card-cover.igdb-cover {
+    padding-bottom: 133.33%;
+}
+
+/* PSN covers are square (1:1 ratio) */
+.sync-card-cover.psn-cover {
+    padding-bottom: 100%;
 }
 
 .sync-card-cover img {

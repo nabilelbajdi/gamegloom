@@ -28,6 +28,7 @@ const SyncGameCard = ({
 
     // Matched: show IGDB data (what user will see in library)
     // Unmatched: show PSN data (what we got from PlayStation)
+    const useIgdbCover = isMatched && game.igdb_cover_url;
     const coverUrl = isMatched
         ? (game.igdb_cover_url || game.image_url)
         : game.image_url;
@@ -82,8 +83,8 @@ const SyncGameCard = ({
             role="button"
             aria-pressed={selected}
         >
-            {/* Cover */}
-            <div className="sync-card-cover">
+            {/* Cover - different aspect ratio for IGDB (portrait) vs PSN (square) */}
+            <div className={`sync-card-cover ${useIgdbCover ? 'igdb-cover' : 'psn-cover'}`}>
                 {coverUrl ? (
                     <img src={coverUrl} alt={game.platform_name} loading="lazy" />
                 ) : (
