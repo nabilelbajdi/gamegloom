@@ -21,7 +21,10 @@ import LatestReleasesPage from "./pages/discover/LatestReleasesPage";
 import GenrePage from "./pages/discover/GenrePage";
 import ThemePage from "./pages/discover/ThemePage";
 import RecommendationsPage from "./pages/discover/RecommendationsPage";
+import SettingsPage from "./pages/SettingsPage";
+import SyncReviewPage from "./pages/SyncReviewPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
+import ToastContainer from "./components/common/Toast/ToastContainer";
 
 const LoadingBarContext = createContext(null);
 
@@ -59,6 +62,8 @@ function AppContent() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/sync/:platform" element={<SyncReviewPage />} />
         <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
@@ -87,6 +92,7 @@ const App = () => {
             waitingTime={400}
           />
           <AppContent />
+          <ToastContainer />
         </Router>
       </AuthProvider>
     </LoadingBarContext.Provider>

@@ -641,7 +641,6 @@ export const searchGames = async (query, category = "all", limit = 50, offset = 
   }
 };
 
-// Search count API
 export const searchCount = async (query, category = "all") => {
   try {
     const response = await fetch(`${BASE_URL}/search/count?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`);
@@ -652,4 +651,268 @@ export const searchCount = async (query, category = "all") => {
     console.error("Error fetching search count:", error);
     return 0;
   }
+};
+
+// ============================================
+// Integration API Functions
+// ============================================
+
+/**
+ * Fetch integration status for all platforms
+ * GET /integrations/status
+ */
+export const fetchIntegrationStatus = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/status`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch integration status");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Unlink a platform (Steam/PSN)
+ * DELETE /integrations/{platform}/unlink
+ */
+export const unlinkPlatform = async (platform) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/${platform}/unlink`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to unlink ${platform}`);
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get Steam auth URL for OAuth flow
+ * GET /integrations/steam/auth-url
+ */
+export const getSteamAuthUrl = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const returnUrl = `${window.location.origin}/settings?tab=integrations&steam_callback=true`;
+  const response = await fetch(`${BASE_URL}/integrations/steam/auth-url?return_url=${encodeURIComponent(returnUrl)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to get Steam auth URL");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Link Steam account with OpenID params
+ * POST /integrations/steam/link
+ */
+export const linkSteamAccount = async (openidParams) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/link`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(openidParams)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to link Steam account");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Link PSN account with username
+ * POST /integrations/psn/link
+ */
+export const linkPSNAccount = async (username) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/psn/link`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ username })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to link PSN account");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Clear all games from user's library
+ * DELETE /user-games/all
+ */
+export const clearAllGames = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/user-games/all`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to clear library");
+  }
+
+  return await response.json();
+};
+
+// ============================================
+// Sync API Functions
+// ============================================
+
+/**
+ * Sync games from a platform (PSN/Steam)
+ * POST /sync/{platform}
+ */
+export const syncPlatform = async (platform) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/sync/${platform}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `Failed to sync ${platform}`);
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get synced games for a platform
+ * GET /sync/{platform}/games
+ */
+export const getSyncedGames = async (platform, status = null) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const url = status
+    ? `${BASE_URL}/sync/${platform}/games?status=${status}`
+    : `${BASE_URL}/sync/${platform}/games`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch synced games");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update a synced game (status, target list, or fix match)
+ * PATCH /sync/games/{id}
+ */
+export const updateSyncedGame = async (gameId, updates) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/sync/games/${gameId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(updates)
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update game");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Import confirmed synced games to library
+ * POST /sync/import
+ */
+export const importSyncedGames = async (gameIds) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/sync/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ game_ids: gameIds })
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to import games");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Delete a synced game (permanently remove from sync list)
+ * DELETE /sync/games/{id}
+ */
+export const deleteSyncedGame = async (gameId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/sync/games/${gameId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete game");
+  }
+
+  return await response.json();
 };
