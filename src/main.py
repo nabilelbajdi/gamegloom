@@ -17,6 +17,7 @@ from backend.app.api.v1.routers.recommendations import router as recommendations
 from backend.app.api.v1.routers.webhooks import router as webhooks_router
 from backend.app.api.v1.routers.user_lists import router as user_lists_router
 from backend.app.api.v1.routers.integrations import router as integrations_router
+from backend.app.api.v1.routers.sync import router as sync_router
 # Import models to ensure SQLAlchemy can resolve relationships
 from backend.app.api.v1.models.user_platform_link import UserPlatformLink
 from scripts.scheduler.scheduler import init_scheduler
@@ -87,6 +88,7 @@ app.include_router(recommendations_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(user_lists_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
+app.include_router(sync_router, prefix="/api/v1")
 
 # Mount static files
 app.mount("/images", StaticFiles(directory="frontend/public/images"), name="images")

@@ -135,6 +135,20 @@ def update_game_status(
     db.refresh(user_game)
     return user_game
 
+@router.delete("/all", status_code=status.HTTP_200_OK)
+def clear_all_games(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Remove all games from user's collection."""
+    deleted_count = db.query(UserGame).filter(
+        UserGame.user_id == current_user.id
+    ).delete()
+    
+    db.commit()
+    return {"message": f"Cleared {deleted_count} games from your library", "count": deleted_count}
+
+
 @router.delete("/{igdb_id}", status_code=status.HTTP_200_OK)
 def remove_game_from_collection(
     igdb_id: int,

@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     STEAM_API_KEY: str = os.getenv("STEAM_API_KEY", "")
     STEAM_OPENID_REALM: str = os.getenv("STEAM_OPENID_REALM", "http://localhost:5173")
     STEAM_OPENID_RETURN_TO: str = os.getenv("STEAM_OPENID_RETURN_TO", "http://localhost:8000/api/v1/integrations/steam/callback")
+    
+    # PSN Integration settings (required for PSN features)
+    PSN_NPSSO: str = os.getenv("PSN_NPSSO", "")
 
     def validate(self):
         if not self.DATABASE_URL:
