@@ -1,13 +1,15 @@
 # services/sync_service.py
 """
-Sync Service - handles syncing games from PSN/Steam.
+Sync Service - syncs games from PSN/Steam and matches them to IGDB.
 
-Simplified matching:
-1. Exact name match (from Sony 65k database)
-2. Slug match (fallback)
-3. Mark as unmatched (user can fix)
+Matching strategy:
+1. Exact name match (via Sony 65k title database)
+2. Slug match with fallbacks (suffixes, Roman numerals)
+3. Release date disambiguation for games with similar names
+4. Mark as unmatched if no confident match found
 """
 import re
+import unicodedata
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -157,10 +159,12 @@ class SyncService:
             else:
                 # Match to IGDB
                 platform_name_raw = game.get("name", "")
+                first_played = game.get("first_played")
                 igdb_id, igdb_name, igdb_cover, confidence, method = self._match_game(
                     platform_id=platform_id,
                     platform_name=platform_name_raw,
-                    platform="psn"
+                    platform="psn",
+                    first_played=first_played
                 )
                 
                 # Create new synced game
@@ -187,9 +191,16 @@ class SyncService:
         self.db.commit()
         return stats
     
-    def _match_game(self, platform_id: str, platform_name: str, platform: str) -> tuple:
+    def _match_game(self, platform_id: str, platform_name: str, platform: str, 
+                    first_played: datetime = None) -> tuple:
         """
-        Match a platform game to IGDB. Simplified logic.
+        Match a platform game to IGDB with multiple fallback strategies.
+        
+        Args:
+            platform_id: Platform-specific game ID
+            platform_name: Game name from platform
+            platform: 'psn' or 'steam'
+            first_played: When user first played (for release date disambiguation)
         
         Returns:
             (igdb_id, igdb_name, igdb_cover, confidence, method) - any can be None
@@ -216,17 +227,119 @@ class SyncService:
                 # Use Sony name for slug matching
                 platform_name = clean_name
         
-        # Step 2: Slug matching
+        # Step 2: Slug matching with fallbacks
         slug = self._generate_slug(platform_name)
-        game = self.db.query(Game).filter(Game.slug == slug).first()
-        if game:
-            return (game.igdb_id, game.name, game.cover_image, 0.85, "slug")
         
-        # Step 3: No match found
+        # Check base slug and IGDB disambiguation suffixes (--1, --2, etc.)
+        candidates = self.db.query(Game).filter(
+            (Game.slug == slug) | 
+            (Game.slug.like(f"{slug}--_"))  # Match --1, --2, etc.
+        ).all()
+        
+        if candidates:
+            game = self._pick_best_match(candidates, first_played)
+            if game:
+                confidence = 0.85 if game.slug == slug else 0.80
+                return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
+        
+        # 2b. Try with Roman numeral conversion (3→iii, 2→ii)
+        roman_slug = self._slug_with_roman_numerals(slug)
+        if roman_slug != slug:
+            candidates = self.db.query(Game).filter(
+                (Game.slug == roman_slug) | 
+                (Game.slug.like(f"{roman_slug}--_"))
+            ).all()
+            
+            if candidates:
+                game = self._pick_best_match(candidates, first_played)
+                if game:
+                    return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
+        
+        # Step 3: Partial name search (last resort - be careful with short names)
+        clean_name = self._clean_name(platform_name)
+        if len(clean_name) >= 5:  # Only for names 5+ chars to avoid false positives
+            # Use word boundary matching - name should be at start or have clear boundaries
+            game = self.db.query(Game).filter(
+                Game.name.ilike(f"{clean_name}%")  # Starts with
+            ).first()
+            if game:
+                return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
+        
+        # Step 4: No match found
         return (None, None, None, None, None)
     
+    def _pick_best_match(self, candidates: list, first_played: datetime = None) -> Game:
+        """
+        Pick the best match from multiple candidate games.
+        Uses release date to disambiguate (e.g., 2015 Star Wars Battlefront vs 2004).
+        
+        Logic: Prefer the game with the most recent release date that is
+        still BEFORE or within a few months AFTER when the user first played.
+        """
+        if len(candidates) == 1:
+            return candidates[0]
+        
+        if not first_played:
+            # No first_played info - prefer newer game (higher IGDB ID = newer entry)
+            return max(candidates, key=lambda g: g.igdb_id or 0)
+        
+        from datetime import timedelta
+        
+        # Make first_played timezone-naive for comparison with IGDB dates
+        if hasattr(first_played, 'tzinfo') and first_played.tzinfo is not None:
+            first_played = first_played.replace(tzinfo=None)
+        
+        # Allow games released up to ~2 months after first_played (pre-release access, etc.)
+        cutoff = first_played + timedelta(days=60)
+        
+        # Filter to games released before or shortly after first_played
+        valid = [g for g in candidates 
+                 if g.first_release_date and g.first_release_date <= cutoff]
+        
+        if valid:
+            # Pick the most recently released valid game
+            return max(valid, key=lambda g: g.first_release_date)
+        
+        # No valid matches by date - fall back to newest by IGDB ID
+        return max(candidates, key=lambda g: g.igdb_id or 0)
+    
+    # Slug numeral conversion (IGDB often uses Roman numerals)
+    _ARABIC_TO_ROMAN = {
+        '10': 'x', '9': 'ix', '8': 'viii', '7': 'vii', '6': 'vi',
+        '5': 'v', '4': 'iv', '3': 'iii', '2': 'ii', '1': 'i',
+    }
+    
+    def _slug_with_roman_numerals(self, slug: str) -> str:
+        """Convert trailing Arabic numeral in slug to Roman numeral."""
+        for arabic, roman in self._ARABIC_TO_ROMAN.items():
+            # Match number at end of slug (e.g., "-3" → "-iii")
+            if slug.endswith(f'-{arabic}'):
+                return slug[:-len(arabic)-1] + f'-{roman}'
+        return slug
+    
+    def _normalize_unicode(self, text: str) -> str:
+        """Normalize Unicode chars (ö→o, é→e) using NFD decomposition."""
+        normalized = unicodedata.normalize('NFD', text)
+        return ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
+    
     def _clean_name(self, name: str) -> str:
-        """Remove trademark symbols, normalize spacing."""
+        """Remove trademark symbols, normalize Unicode, and spacing."""
+        # Unicode Roman numerals → ASCII equivalents
+        roman_map = {
+            'Ⅰ': 'I', 'Ⅱ': 'II', 'Ⅲ': 'III', 'Ⅳ': 'IV', 'Ⅴ': 'V',
+            'Ⅵ': 'VI', 'Ⅶ': 'VII', 'Ⅷ': 'VIII', 'Ⅸ': 'IX', 'Ⅹ': 'X',
+            'Ⅺ': 'XI', 'Ⅻ': 'XII',
+            # Lowercase variants
+            'ⅰ': 'I', 'ⅱ': 'II', 'ⅲ': 'III', 'ⅳ': 'IV', 'ⅴ': 'V',
+            'ⅵ': 'VI', 'ⅶ': 'VII', 'ⅷ': 'VIII', 'ⅸ': 'IX', 'ⅹ': 'X',
+            'ⅺ': 'XI', 'ⅻ': 'XII',
+        }
+        for unicode_char, ascii_equiv in roman_map.items():
+            if unicode_char in name:
+                # Insert space before numeral if preceded by a letter (SOULCALIBURⅥ → SOULCALIBUR VI)
+                name = re.sub(rf'([a-zA-Z])({re.escape(unicode_char)})', rf'\1 {ascii_equiv}', name)
+                name = name.replace(unicode_char, ascii_equiv)
+        
         return (name
             .replace("™", "")
             .replace("®", "")
@@ -235,10 +348,13 @@ class SyncService:
     
     def _generate_slug(self, name: str) -> str:
         """Generate IGDB-compatible slug from game name."""
+        name = self._clean_name(name)
+        name = self._normalize_unicode(name)
+        
         slug = name.lower()
-        slug = slug.replace("™", "").replace("®", "").replace("©", "")
+        slug = slug.replace('_', ' ')
         slug = re.sub(r"[^a-z0-9\s-]", "", slug)
-        slug = re.sub(r"[\s_]+", "-", slug)
+        slug = re.sub(r"\s+", "-", slug)
         slug = re.sub(r"-+", "-", slug)
         return slug.strip("-")
     
