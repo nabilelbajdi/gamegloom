@@ -1,0 +1,59 @@
+/* components/sync/SyncHeader.css */
+
+.sync-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.sync-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Import All button */
+.sync-import-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: black;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.sync-import-all:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.sync-import-all:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.sync-import-all:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 600px) {
+    .sync-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sync-import-all {
+        align-self: flex-start;
+    }
+}

@@ -1,0 +1,302 @@
+/* components/sync/SyncGameCard.css */
+
+/* Card wrapper - flex column for consistent alignment */
+.sync-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease,
+        box-shadow 0.25s ease;
+}
+
+.sync-card:hover,
+.sync-card:focus-visible {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.sync-card.selected {
+    transform: translateY(-4px) scale(1.02);
+}
+
+.sync-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Fading state for transitions */
+.sync-card.fading {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+    pointer-events: none;
+}
+
+.sync-card.imported {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.sync-card.imported:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.sync-card.skipped {
+    opacity: 0.5;
+}
+
+.sync-card.skipped:hover {
+    opacity: 0.8;
+}
+
+/* Cover - fixed sizing */
+.sync-card-cover {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--color-gray-900);
+}
+
+.sync-card-cover img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter 0.25s ease, transform 0.25s ease;
+}
+
+/* Hover blur effect */
+.sync-card:hover .sync-card-cover img,
+.sync-card:focus-visible .sync-card-cover img {
+    filter: blur(2px) brightness(0.7);
+    transform: scale(1.05);
+}
+
+.sync-card.imported:hover .sync-card-cover img {
+    filter: none;
+    transform: none;
+}
+
+.sync-card-no-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-gray-800), var(--color-gray-900));
+}
+
+.sync-card-no-cover span {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-gray-600);
+    text-transform: uppercase;
+}
+
+/* Platform badge */
+.sync-card-badge {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--color-gray-300);
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 3px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+}
+
+/* Selected checkmark */
+.sync-card-check {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: black;
+    border-radius: 50%;
+    z-index: 10;
+    animation: checkPop 0.15s ease;
+}
+
+@keyframes checkPop {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Hover overlay */
+.sync-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 8;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+}
+
+.sync-card:hover .sync-card-overlay,
+.sync-card:focus-visible .sync-card-overlay {
+    opacity: 1;
+}
+
+/* Action buttons with text */
+.sync-card-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    opacity: 0.9;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    font-size: 10px;
+}
+
+.sync-card-action:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.sync-card-action.confirm {
+    color: #10b981;
+}
+
+.sync-card-action.skip {
+    color: var(--color-gray-400);
+}
+
+.sync-card-action.skip:hover {
+    color: var(--color-gray-200);
+}
+
+.sync-card-action.fix {
+    color: #f59e0b;
+}
+
+.sync-card-action.fix:hover {
+    color: #fbbf24;
+}
+
+.sync-card-action.restore {
+    color: var(--color-gray-300);
+}
+
+.sync-card-action.restore:hover {
+    color: white;
+}
+
+.sync-card-action.delete {
+    color: var(--color-gray-500);
+}
+
+.sync-card-action.delete:hover {
+    color: #ef4444;
+}
+
+/* Card info - title + subtitle */
+.sync-card-info {
+    text-align: center;
+    margin-top: 6px;
+}
+
+.sync-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-gray-300);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.sync-card-subtitle {
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--color-gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+.sync-card:hover .sync-card-title,
+.sync-card:focus-visible .sync-card-title {
+    color: var(--color-gray-200);
+}
+
+/* Unmatched indicator */
+.sync-card.unmatched .sync-card-cover {
+    box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.4);
+}
+
+/* Confidence badge */
+.sync-card-confidence {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sync-card:hover .sync-card-confidence {
+    opacity: 1;
+}
+
+.sync-card-confidence.high {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.sync-card-confidence.medium {
+    background: rgba(245, 158, 11, 0.9);
+    color: white;
+}
+
+.sync-card-confidence.low {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}

@@ -1,0 +1,179 @@
+// components/sync/SyncGameCard.jsx
+import React from 'react';
+import { Check, X, RotateCcw, Wrench } from 'lucide-react';
+import './SyncGameCard.css';
+
+/**
+ * Premium grid card for synced games.
+ * Default: cover + platform badge only
+ * Hover: blur + centered action icons
+ * Skipped: show restore action on hover
+ * Unmatched: show Fix action to manually search
+ */
+const SyncGameCard = ({
+    game,
+    selected = false,
+    fading = false,
+    onSelect,
+    onConfirm,
+    onSkip,
+    onUnskip,
+    onDelete,
+    onFix,
+    showActions = true,
+}) => {
+    const isMatched = !!game.igdb_id;
+    const isImported = game.status === 'imported';
+    const isSkipped = game.status === 'skipped';
+
+    // Matched: show IGDB data (what user will see in library)
+    // Unmatched: show PSN data (what we got from PlayStation)
+    const coverUrl = isMatched
+        ? (game.igdb_cover_url || game.image_url)
+        : game.image_url;
+    const displayName = isMatched ? game.igdb_name : game.platform_name;
+
+    const handleCardClick = (e) => {
+        if (isImported || isSkipped) return;
+        if (e.target.closest('.sync-card-action')) return;
+        onSelect?.(game.id);
+    };
+
+    const handleConfirm = (e) => {
+        e.stopPropagation();
+        onConfirm?.(game.id);
+    };
+
+    const handleSkip = (e) => {
+        e.stopPropagation();
+        onSkip?.(game.id);
+    };
+
+    const handleUnskip = (e) => {
+        e.stopPropagation();
+        onUnskip?.(game.id);
+    };
+
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        onDelete?.(game.id);
+    };
+
+    const handleFix = (e) => {
+        e.stopPropagation();
+        onFix?.(game);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!isImported && !isSkipped) {
+                onSelect?.(game.id);
+            }
+        }
+    };
+
+    return (
+        <div
+            className={`sync-card ${selected ? 'selected' : ''} ${isImported ? 'imported' : ''} ${isSkipped ? 'skipped' : ''} ${!isMatched ? 'unmatched' : ''} ${fading ? 'fading' : ''}`}
+            onClick={handleCardClick}
+            onKeyDown={handleKeyDown}
+            tabIndex={isImported ? -1 : 0}
+            role="button"
+            aria-pressed={selected}
+        >
+            {/* Cover */}
+            <div className="sync-card-cover">
+                {coverUrl ? (
+                    <img src={coverUrl} alt={game.platform_name} loading="lazy" />
+                ) : (
+                    <div className="sync-card-no-cover">
+                        <span>{game.platform_name?.charAt(0)}</span>
+                    </div>
+                )}
+
+                {/* Platform badge */}
+                <div className="sync-card-badge">
+                    {game.platform === 'psn' ? 'PSN' : 'Steam'}
+                </div>
+
+                {/* Selected check */}
+                {selected && (
+                    <div className="sync-card-check">
+                        <Check size={12} />
+                    </div>
+                )}
+
+                {/* Hover overlay - actions for active games */}
+                {showActions && !isImported && !isSkipped && (
+                    <div className="sync-card-overlay">
+                        {/* Import button - only for matched games */}
+                        {isMatched && (
+                            <button
+                                className="sync-card-action confirm"
+                                onClick={handleConfirm}
+                                title="Import"
+                            >
+                                <Check size={16} />
+                                <span>Import</span>
+                            </button>
+                        )}
+                        {/* Fix button - for all games (find/correct match) */}
+                        <button
+                            className="sync-card-action fix"
+                            onClick={handleFix}
+                            title="Search for match"
+                        >
+                            <Wrench size={16} />
+                            <span>Fix</span>
+                        </button>
+                        <button
+                            className="sync-card-action skip"
+                            onClick={handleSkip}
+                            title="Skip"
+                        >
+                            <X size={16} />
+                            <span>Skip</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Hover overlay - unskip/remove for skipped games */}
+                {isSkipped && (
+                    <div className="sync-card-overlay skipped-overlay">
+                        <button
+                            className="sync-card-action restore"
+                            onClick={handleUnskip}
+                            title="Restore to Needs Review"
+                        >
+                            <RotateCcw size={16} />
+                            <span>Restore</span>
+                        </button>
+                        <button
+                            className="sync-card-action delete"
+                            onClick={handleDelete}
+                            title="Remove permanently"
+                        >
+                            <X size={16} />
+                            <span>Remove</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Title below card - IGDB name with PSN subtitle */}
+            <div className="sync-card-info">
+                <div className="sync-card-title" title={displayName}>
+                    {displayName}
+                </div>
+                {isMatched && game.igdb_name !== game.platform_name && (
+                    <div className="sync-card-subtitle" title={game.platform_name}>
+                        PSN: {game.platform_name}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default SyncGameCard;

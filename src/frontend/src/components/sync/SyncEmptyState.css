@@ -1,0 +1,47 @@
+/* components/sync/SyncEmptyState.css */
+
+.sync-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.sync-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    border-radius: 50%;
+    background: var(--color-gray-800);
+    color: var(--color-gray-500);
+}
+
+.sync-empty-primary .sync-empty-icon {
+    background: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+}
+
+.sync-empty-success .sync-empty-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.sync-empty-title {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+}
+
+.sync-empty-description {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-gray-500);
+    max-width: 280px;
+}
