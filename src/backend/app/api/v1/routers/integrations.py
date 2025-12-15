@@ -1,27 +1,38 @@
 # routers/integrations.py
 """
 Platform integrations router for Steam and PSN.
+
+Endpoints:
+- Steam: OAuth linking, game fetching
+- PSN: Username linking, library sync, import
+
+The PSN flow is ephemeral - games are matched on-the-fly, not stored in a 
+sync table. Users review matches and import directly to their library.
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 from ..core import security
 from ..models.user import User
 from ..models.user_platform_link import UserPlatformLink, PlatformType
+from ..models.user_game import UserGame
+from ..models.game import Game as GameModel
 from ...db_setup import get_db
 from ...settings import settings
-
-# Import services - using relative imports
 from ..services import steam_service, psn_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
 
-# ============ SCHEMAS ============
+# ═══════════════════════════════════════════════════════════════════
+# Schemas
+# ═══════════════════════════════════════════════════════════════════
 
 class PlatformLinkResponse(BaseModel):
     """Response schema for a linked platform."""
@@ -43,7 +54,7 @@ class IntegrationStatusResponse(BaseModel):
 
 class PSNLinkRequest(BaseModel):
     """Request schema for linking PSN account."""
-    username: str = Field(..., min_length=3, max_length=16, description="PSN Online ID (username)")
+    username: str = Field(..., min_length=3, max_length=16, description="PSN Online ID")
 
 
 class SteamGame(BaseModel):
@@ -54,37 +65,70 @@ class SteamGame(BaseModel):
     img_icon_url: Optional[str] = None
 
 
-class PSNGame(BaseModel):
-    """PSN game from title stats with trophy mapping support."""
-    title_id: str
-    trophy_id: Optional[str] = None  # NPWR ID for mapping
-    name: str  # Display name (IGDB name if mapped, otherwise PSN name)
-    psn_name: Optional[str] = None  # Original PSN name
-    igdb_id: Optional[int] = None  # Mapped IGDB ID if available
-    igdb_name: Optional[str] = None  # Proper IGDB-formatted name
+class PSNLibraryGame(BaseModel):
+    """A PSN game matched to IGDB, ready for import."""
+    platform_id: str
+    platform_name: str
+    igdb_id: Optional[int] = None
+    igdb_name: Optional[str] = None
+    igdb_cover_url: Optional[str] = None
     image_url: Optional[str] = None
-    play_duration_minutes: int = 0
-    play_count: int = 0
+    playtime_minutes: int = 0
+    match_confidence: Optional[float] = None
+    match_method: Optional[str] = None
+    status: str = "pending"  # 'pending' | 'imported' | 'hidden'
 
 
-class SyncResult(BaseModel):
-    """Result of syncing games from a platform."""
-    games_found: int
-    games_imported: int
-    games_updated: int
+class ImportGameRequest(BaseModel):
+    """Single game import request."""
+    igdb_id: int
+    list_type: str = "played"
+
+
+class ImportGamesRequest(BaseModel):
+    """Bulk import request."""
+    games: List[ImportGameRequest]
+
+
+class ImportResponse(BaseModel):
+    """Import result."""
+    imported: int
+    skipped: int
     message: str
 
 
-# ============ STEAM ENDPOINTS ============
+class SyncResponse(BaseModel):
+    """Sync result with delta info."""
+    new_count: int
+    updated_count: int
+    total_count: int
+    message: str
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Steam Endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+class OpenIDParams(BaseModel):
+    """OpenID 2.0 callback parameters from Steam."""
+    openid_ns: str
+    openid_mode: str
+    openid_op_endpoint: Optional[str] = None
+    openid_claimed_id: str
+    openid_identity: str
+    openid_return_to: str
+    openid_response_nonce: str
+    openid_assoc_handle: str
+    openid_signed: str
+    openid_sig: str
+
 
 @router.get("/steam/auth-url")
 def get_steam_auth_url(
     return_url: Optional[str] = Query(None, description="Custom return URL after auth"),
     current_user: User = Depends(security.get_current_user)
 ):
-    """
-    Get the Steam OpenID login URL to redirect the user to.
-    """
+    """Get the Steam OpenID login URL."""
     if not settings.STEAM_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -103,30 +147,11 @@ def get_steam_auth_url(
 
 @router.get("/steam/callback")
 def steam_callback():
-    """
-    Callback endpoint for Steam OpenID authentication.
-    
-    Note: Steam redirects here but frontend handles the actual callback since
-    we need the JWT token context. This endpoint documents the expected flow.
-    """
+    """Steam OpenID callback (frontend handles actual validation)."""
     return {
         "message": "Steam callback - frontend handles OpenID validation",
-        "flow": "Frontend extracts OpenID params and calls POST /steam/link with full params"
+        "flow": "Frontend extracts OpenID params and calls POST /steam/link"
     }
-
-
-class OpenIDParams(BaseModel):
-    """OpenID 2.0 callback parameters from Steam."""
-    openid_ns: str
-    openid_mode: str
-    openid_op_endpoint: Optional[str] = None
-    openid_claimed_id: str
-    openid_identity: str
-    openid_return_to: str
-    openid_response_nonce: str
-    openid_assoc_handle: str
-    openid_signed: str
-    openid_sig: str
 
 
 @router.post("/steam/link")
@@ -135,19 +160,13 @@ def link_steam_account(
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Link a Steam account after OpenID authentication.
-    
-    Requires the full OpenID callback parameters for signature validation.
-    This prevents malicious users from linking arbitrary Steam accounts.
-    """
+    """Link a Steam account after OpenID authentication."""
     if not settings.STEAM_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Steam integration is not configured"
         )
     
-    # Convert Pydantic model to dict for validation
     query_params = {
         "openid.ns": openid_params.openid_ns,
         "openid.mode": openid_params.openid_mode,
@@ -163,7 +182,6 @@ def link_steam_account(
         query_params["openid.op_endpoint"] = openid_params.openid_op_endpoint
     
     try:
-        # Validate OpenID response and extract Steam ID
         steam_id = steam_service.validate_steam_callback(query_params)
         if not steam_id:
             raise HTTPException(
@@ -184,15 +202,12 @@ def link_steam_account(
         )
 
 
-
-@router.get("/steam/games", response_model=list[SteamGame])
+@router.get("/steam/games", response_model=List[SteamGame])
 def get_steam_games(
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get all games from the user's linked Steam account.
-    """
+    """Get all games from the user's linked Steam account."""
     link = steam_service.get_steam_link(db, current_user.id)
     if not link:
         raise HTTPException(
@@ -218,7 +233,61 @@ def get_steam_games(
         )
 
 
-# ============ PSN ENDPOINTS ============
+# ═══════════════════════════════════════════════════════════════════
+# PSN Endpoints
+# ═══════════════════════════════════════════════════════════════════
+
+class PSNProfilePreview(BaseModel):
+    """PSN profile preview for linking confirmation."""
+    online_id: str
+    account_id: Optional[str] = None
+    avatar_url: Optional[str] = None
+    trophy_level: Optional[int] = None
+    platinum: int = 0
+    gold: int = 0
+    silver: int = 0
+    bronze: int = 0
+
+
+@router.get("/psn/preview/{username}", response_model=PSNProfilePreview)
+def preview_psn_profile(
+    username: str,
+    current_user: User = Depends(security.get_current_user)
+):
+    """
+    Preview a PSN profile before linking.
+    
+    Returns profile info (avatar, online_id) for user confirmation.
+    """
+    if not settings.PSN_NPSSO:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PSN integration is not configured"
+        )
+    
+    try:
+        profile = psn_service.get_psn_profile(username)
+        return PSNProfilePreview(
+            online_id=profile.get("online_id", username),
+            account_id=profile.get("account_id"),
+            avatar_url=profile.get("avatar_url"),
+            trophy_level=profile.get("trophy_level"),
+            platinum=profile.get("platinum", 0),
+            gold=profile.get("gold", 0),
+            silver=profile.get("silver", 0),
+            bronze=profile.get("bronze", 0),
+        )
+    except psn_service.PSNServiceError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Profile not found or is private: {username}"
+        )
+
 
 @router.post("/psn/link")
 def link_psn_account(
@@ -230,6 +299,7 @@ def link_psn_account(
     Link a PSN account using your PSN username (Online ID).
     
     Note: Your PSN profile must be set to public for this to work.
+    Returns avatar URL for visual confirmation.
     """
     if not settings.PSN_NPSSO:
         raise HTTPException(
@@ -239,10 +309,15 @@ def link_psn_account(
     
     try:
         link = psn_service.link_psn_account(db, current_user.id, request.username)
+        
+        # Fetch profile with avatar for visual confirmation
+        profile = psn_service.get_psn_profile(request.username)
+        
         return {
             "message": "PSN account linked successfully",
             "platform_username": link.platform_username,
-            "platform_user_id": link.platform_user_id
+            "platform_user_id": link.platform_user_id,
+            "avatar_url": profile.get("avatar_url")
         }
     except psn_service.PSNServiceError as e:
         raise HTTPException(
@@ -251,56 +326,105 @@ def link_psn_account(
         )
 
 
-@router.get("/psn/games", response_model=list[PSNGame])
-def get_psn_games(
+@router.get("/psn/library", response_model=List[PSNLibraryGame])
+def get_psn_library(
+    include_hidden: bool = Query(False, description="Include hidden/skipped games"),
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get all games from the user's linked PSN account.
-    Uses trophy data for clean official game names.
+    Get cached PSN library from database.
+    
+    Returns games from local cache. Use POST /psn/sync to refresh from PSN.
+    Fast (~50ms) because it reads from database, not PSN API.
     """
+    from ..services import platform_sync_service
+    
     link = psn_service.get_psn_link(db, current_user.id)
     if not link:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No PSN account linked"
+            detail="No PSN account linked. Go to Settings to link your PSN."
+        )
+    
+    # Get cached games from database
+    games = platform_sync_service.get_cached_games(
+        db, current_user.id, 'psn', include_hidden=include_hidden
+    )
+    
+    # Convert to response schema
+    result = [
+        PSNLibraryGame(
+            platform_id=g.platform_id,
+            platform_name=g.platform_name,
+            igdb_id=g.igdb_id,
+            igdb_name=g.igdb_name,
+            igdb_cover_url=g.igdb_cover_url,
+            image_url=g.platform_image_url,
+            playtime_minutes=g.playtime_minutes or 0,
+            match_confidence=g.match_confidence,
+            match_method=g.match_method if g.status != 'hidden' else 'skipped',
+            status=g.status  # 'pending' | 'imported' | 'hidden'
+        )
+        for g in games
+    ]
+    
+    logger.info(f"[PSN] Library read for user {current_user.id}: {len(result)} games from cache")
+    return result
+
+
+@router.post("/psn/sync", response_model=SyncResponse)
+def sync_psn_library(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Sync PSN library from PlayStation Network.
+    
+    Fetches games from PSN API, matches to IGDB, and caches in database.
+    Returns delta info (new games, updated games).
+    
+    This is the slow operation (~10-20s) that calls the PSN API.
+    After syncing, GET /psn/library will be fast.
+    """
+    from ..services import platform_sync_service
+    
+    link = psn_service.get_psn_link(db, current_user.id)
+    if not link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No PSN account linked. Go to Settings to link your PSN."
         )
     
     try:
-        # Use new function that includes trophy IDs
-        games = psn_service.get_games_with_trophy_ids(link.platform_username)
+        # Get user's existing library igdb_ids for filtering
+        existing_igdb_ids = set(
+            igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
+                UserGame, UserGame.game_id == GameModel.id
+            ).filter(UserGame.user_id == current_user.id).all()
+        )
         
-        # Look up existing mappings for each game
-        from ..services import mapping_service
+        # Migrate any old preferences first
+        platform_sync_service.migrate_preferences(db, current_user.id)
         
-        result = []
-        for g in games:
-            # Check if we have a mapping for this trophy ID
-            igdb_id = None
-            igdb_name = None
-            if g.get("trophy_id"):
-                mapping_info = mapping_service.get_mapping_with_game_info(db, g["trophy_id"])
-                if mapping_info:
-                    igdb_id = mapping_info["igdb_id"]
-                    igdb_name = mapping_info["igdb_name"]
-            
-            # Use IGDB name if available, otherwise use cleaned PSN name
-            display_name = igdb_name if igdb_name else g["name"]
-            
-            result.append(PSNGame(
-                title_id=g["title_id"],
-                trophy_id=g.get("trophy_id"),
-                name=display_name,
-                psn_name=g.get("psn_name"),
-                igdb_id=igdb_id,
-                igdb_name=igdb_name,
-                image_url=g.get("image_url"),
-                play_duration_minutes=g.get("play_duration_minutes", 0),
-                play_count=g.get("play_count", 0)
-            ))
+        # Sync with PSN
+        result = platform_sync_service.sync_psn_library(
+            db=db,
+            user_id=current_user.id,
+            username=link.platform_username,
+            existing_igdb_ids=existing_igdb_ids
+        )
         
-        return result
+        # Update last synced timestamp
+        psn_service.update_last_synced(db, current_user.id)
+        
+        return SyncResponse(
+            new_count=result["new_count"],
+            updated_count=result["updated_count"],
+            total_count=result["total_count"],
+            message=f"Synced {result['total_count']} games from PlayStation ({result['new_count']} new)"
+        )
+        
     except psn_service.PSNServiceError as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -308,45 +432,206 @@ def get_psn_games(
         )
 
 
-class SaveMappingRequest(BaseModel):
-    """Request to save a PSN trophy ID to IGDB game ID mapping."""
-    trophy_id: str
-    igdb_id: int
-    psn_name: str
-
-
-@router.post("/psn/mapping")
-def save_psn_mapping(
-    request: SaveMappingRequest,
+@router.post("/psn/import", response_model=ImportResponse)
+def import_psn_games(
+    request: ImportGamesRequest,
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Save a PSN trophy ID to IGDB game ID mapping.
-    Called after a successful game import to cache the match.
+    Import matched games directly to user library.
+    
+    For games not in the local database, fetches from IGDB first.
+    Idempotent - importing the same game twice just skips it.
     """
-    from ..services import mapping_service
+    from ..core.igdb_service import fetch_from_igdb, process_igdb_data
+    from ..services import platform_sync_service
     
-    mapping = mapping_service.save_mapping(
-        db=db,
-        trophy_id=request.trophy_id,
-        igdb_id=request.igdb_id,
-        psn_name=request.psn_name,
-        verified=False  # Auto-matched
+    imported = 0
+    skipped = 0
+    
+    for game_req in request.games:
+        # Find game in local database
+        game = db.query(GameModel).filter(
+            GameModel.igdb_id == game_req.igdb_id
+        ).first()
+        
+        if not game:
+            # Fetch from IGDB and create
+            try:
+                igdb_response = fetch_from_igdb(game_id=game_req.igdb_id)
+                if igdb_response and len(igdb_response) > 0:
+                    igdb_data = process_igdb_data(igdb_response[0])
+                    if igdb_data:
+                        game = GameModel(
+                            igdb_id=igdb_data.igdb_id,
+                            name=igdb_data.name,
+                            slug=igdb_data.slug,
+                            summary=igdb_data.summary,
+                            cover_image=igdb_data.cover_image,
+                            first_release_date=igdb_data.first_release_date,
+                            rating=igdb_data.rating,
+                            rating_count=igdb_data.rating_count or 0,
+                        )
+                        db.add(game)
+                        db.flush()
+            except Exception as e:
+                logger.warning(f"[PSN Import] Failed to fetch IGDB game {game_req.igdb_id}: {e}")
+        
+        if not game:
+            logger.warning(f"[PSN Import] Game not found: igdb_id={game_req.igdb_id}")
+            skipped += 1
+            continue
+        
+        # Check if already in library
+        existing = db.query(UserGame).filter(
+            UserGame.user_id == current_user.id,
+            UserGame.game_id == game.id
+        ).first()
+        
+        if existing:
+            skipped += 1
+            continue
+        
+        # Add to library
+        user_game = UserGame(
+            user_id=current_user.id,
+            game_id=game.id,
+            status=game_req.list_type,
+            import_source="psn"
+        )
+        db.add(user_game)
+        imported += 1
+        
+        # Mark as imported in the sync cache for this igdb_id
+        # Find the cached game by igdb_id and mark it
+        from ..models.user_platform_game import UserPlatformGame
+        cached_game = db.query(UserPlatformGame).filter(
+            UserPlatformGame.user_id == current_user.id,
+            UserPlatformGame.platform == 'psn',
+            UserPlatformGame.igdb_id == game_req.igdb_id
+        ).first()
+        if cached_game:
+            cached_game.status = 'imported'
+    
+    db.commit()
+    
+    logger.info(f"[PSN Import] User {current_user.id}: imported={imported}, skipped={skipped}")
+    
+    return ImportResponse(
+        imported=imported,
+        skipped=skipped,
+        message=f"Imported {imported} games to your library"
     )
+
+
+@router.get("/psn/health")
+def psn_health():
+    """Check if PSN integration is healthy (NPSSO token valid)."""
+    return psn_service.check_psn_health()
+
+
+# ═══════════════════════════════════════════════════════════════════
+# PSN Preferences (Skip / Manual Match)
+# ═══════════════════════════════════════════════════════════════════
+
+class SkipGameRequest(BaseModel):
+    """Request to skip (hide) a PSN game."""
+    platform_id: str = Field(..., description="PSN title_id")
+
+
+class FixMatchRequest(BaseModel):
+    """Request to manually match a PSN game to IGDB."""
+    platform_id: str = Field(..., description="PSN title_id")
+    igdb_id: int = Field(..., description="IGDB game ID")
+    igdb_name: Optional[str] = Field(None, description="IGDB game name")
+    igdb_cover_url: Optional[str] = Field(None, description="IGDB cover URL")
+
+
+@router.post("/psn/preferences/skip")
+def skip_psn_game(
+    request: SkipGameRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mark a PSN game as hidden.
     
-    return {"status": "saved", "trophy_id": request.trophy_id, "igdb_id": request.igdb_id}
+    The game will not appear in library sync unless include_hidden=True.
+    """
+    from ..services import platform_sync_service
+    
+    game = platform_sync_service.update_game_status(
+        db, current_user.id, 'psn', request.platform_id, 'hidden'
+    )
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found in sync cache. Try syncing first."
+        )
+    return {"message": "Game hidden", "platform_id": request.platform_id}
 
 
+@router.post("/psn/preferences/match")
+def fix_psn_match(
+    request: FixMatchRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save a manual IGDB match for a PSN game.
+    
+    This override will persist across re-syncs.
+    """
+    from ..services import platform_sync_service
+    
+    game = platform_sync_service.update_game_match(
+        db, current_user.id, 'psn', request.platform_id,
+        request.igdb_id, request.igdb_name, request.igdb_cover_url
+    )
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found in sync cache. Try syncing first."
+        )
+    return {
+        "message": "Match saved", 
+        "platform_id": request.platform_id, 
+        "igdb_id": request.igdb_id
+    }
+
+
+@router.delete("/psn/preferences/{platform_id}")
+def restore_psn_game(
+    platform_id: str,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Restore a hidden game (change status back to pending).
+    """
+    from ..services import platform_sync_service
+    
+    game = platform_sync_service.update_game_status(
+        db, current_user.id, 'psn', platform_id, 'pending'
+    )
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found in sync cache"
+        )
+    return {"message": "Game restored", "platform_id": platform_id}
+
+# ═══════════════════════════════════════════════════════════════════
+# Status & Unlink (Shared)
+# ═══════════════════════════════════════════════════════════════════
 
 @router.get("/status", response_model=IntegrationStatusResponse)
 def get_integration_status(
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get the status of all platform integrations for the current user.
-    """
+    """Get the status of all platform integrations for the current user."""
     steam_link = steam_service.get_steam_link(db, current_user.id)
     psn_link = psn_service.get_psn_link(db, current_user.id)
     
@@ -374,9 +659,7 @@ def unlink_platform(
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Unlink a platform account.
-    """
+    """Unlink a platform account."""
     if platform == "steam":
         success = steam_service.unlink_steam_account(db, current_user.id)
     elif platform == "psn":
@@ -394,139 +677,3 @@ def unlink_platform(
         )
     
     return {"message": f"{platform.upper()} account unlinked successfully"}
-
-
-# ============ MATCHING ENDPOINT ============
-
-class MatchGameRequest(BaseModel):
-    """Request to match a game to IGDB."""
-    platform: str = Field(..., description="Platform: 'steam' or 'psn'")
-    platform_id: str = Field(..., description="Platform's game ID (appid or title_id)")
-    name: str = Field(..., description="Game name from platform")
-    original_name: Optional[str] = None
-    trophy_id: Optional[str] = None  # PSN trophy list ID for mapping
-
-
-class MatchGameResponse(BaseModel):
-    """Response with matched IGDB game info."""
-    igdb_id: Optional[int] = None
-    igdb_name: Optional[str] = None
-    match_method: str  # cached, external_id, slug, search, fuzzy, none
-    match_confidence: float  # 0.0 - 1.0
-    matched: bool
-
-
-class BatchGameItem(BaseModel):
-    """Single game in a batch match request (uses top-level platform)."""
-    platform_id: str = Field(..., description="Platform's game ID (appid or title_id)")
-    name: str = Field(..., description="Game name from platform")
-    original_name: Optional[str] = None
-    trophy_id: Optional[str] = None  # PSN trophy list ID for mapping
-
-
-class BatchMatchRequest(BaseModel):
-    """Request to match multiple games."""
-    platform: str = Field(..., description="Platform: 'steam' or 'psn'")
-    games: list[BatchGameItem]
-
-
-class BatchMatchResponse(BaseModel):
-    """Response with batch match results."""
-    results: list[MatchGameResponse]
-    total: int
-    matched: int
-    unmatched: int
-
-
-@router.post("/match", response_model=MatchGameResponse)
-def match_game(
-    request: MatchGameRequest,
-    current_user: User = Depends(security.get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Match a single game to IGDB using enhanced matching.
-    
-    Priority order:
-    1. Cache (psn_igdb_mappings table)
-    2. External ID (IGDB external_games API)
-    3. Slug lookup (local DB)
-    4. Name search (local DB)
-    5. Fuzzy matching (Levenshtein distance)
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    from ..integrations.igdb.matcher import IGDBMatcher
-    from ..integrations.base import PlatformGame
-    
-    # Build PlatformGame object
-    platform_game = PlatformGame(
-        platform_id=request.platform_id,
-        name=request.name,
-        original_name=request.original_name,
-        extra={"trophy_id": request.trophy_id} if request.trophy_id else {}
-    )
-    
-    matcher = IGDBMatcher(db)
-    result = matcher.match(platform_game, request.platform)
-    
-    # Log result for debugging
-    if result.igdb_id:
-        logger.info(f"[Match] ✓ '{request.name}' → {result.igdb_name} (method: {result.match_method}, conf: {result.match_confidence:.2f})")
-    else:
-        logger.warning(f"[Match] ✗ '{request.name}' - No match found (platform_id: {request.platform_id})")
-    
-    return MatchGameResponse(
-        igdb_id=result.igdb_id,
-        igdb_name=result.igdb_name,
-        match_method=result.match_method,
-        match_confidence=result.match_confidence,
-        matched=result.igdb_id is not None
-    )
-
-
-@router.post("/match/batch", response_model=BatchMatchResponse)
-def match_games_batch(
-    request: BatchMatchRequest,
-    current_user: User = Depends(security.get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Match multiple games to IGDB in a single request.
-    
-    More efficient than calling /match for each game individually.
-    """
-    from ..integrations.igdb.matcher import IGDBMatcher
-    from ..integrations.base import PlatformGame
-    
-    matcher = IGDBMatcher(db)
-    results = []
-    matched_count = 0
-    
-    for game in request.games:
-        platform_game = PlatformGame(
-            platform_id=game.platform_id,
-            name=game.name,
-            original_name=game.original_name,
-            extra={"trophy_id": game.trophy_id} if game.trophy_id else {}
-        )
-        
-        result = matcher.match(platform_game, request.platform)
-        results.append(MatchGameResponse(
-            igdb_id=result.igdb_id,
-            igdb_name=result.igdb_name,
-            match_method=result.match_method,
-            match_confidence=result.match_confidence,
-            matched=result.igdb_id is not None
-        ))
-        
-        if result.igdb_id is not None:
-            matched_count += 1
-    
-    return BatchMatchResponse(
-        results=results,
-        total=len(request.games),
-        matched=matched_count,
-        unmatched=len(request.games) - matched_count
-    )

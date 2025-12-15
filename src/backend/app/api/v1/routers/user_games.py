@@ -177,5 +177,8 @@ def remove_game_from_collection(
         )
     
     db.delete(user_game)
+    
+    # Keep platform cache as-is; re-sync will reset to pending if needed
+
     db.commit()
     return {"message": "Game successfully removed from collection"} 
