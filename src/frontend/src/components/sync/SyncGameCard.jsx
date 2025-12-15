@@ -4,11 +4,7 @@ import { Check, X, RotateCcw, Wrench } from 'lucide-react';
 import './SyncGameCard.css';
 
 /**
- * Premium grid card for synced games.
- * Default: cover + platform badge only
- * Hover: blur + centered action icons
- * Skipped: show restore action on hover
- * Unmatched: show Fix action to manually search
+ * Grid card for synced games with hover actions.
  */
 const SyncGameCard = ({
     game,
@@ -25,9 +21,10 @@ const SyncGameCard = ({
     const isMatched = !!game.igdb_id;
     const isImported = game.status === 'imported';
     const isSkipped = game.status === 'skipped';
+    const isHidden = game.status === 'hidden';
+    const isInactive = isSkipped || isHidden; // Games that need restore action
 
-    // Matched: show IGDB data (what user will see in library)
-    // Unmatched: show PSN data (what we got from PlayStation)
+    // Use IGDB data for matched games, PSN data for unmatched
     const useIgdbCover = isMatched && game.igdb_cover_url;
     const coverUrl = isMatched
         ? (game.igdb_cover_url || game.image_url)
@@ -35,7 +32,7 @@ const SyncGameCard = ({
     const displayName = isMatched ? game.igdb_name : game.platform_name;
 
     const handleCardClick = (e) => {
-        if (isImported || isSkipped) return;
+        if (isImported || isInactive) return;
         if (e.target.closest('.sync-card-action')) return;
         onSelect?.(game.id);
     };
@@ -68,7 +65,7 @@ const SyncGameCard = ({
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            if (!isImported && !isSkipped) {
+            if (!isImported && !isInactive) {
                 onSelect?.(game.id);
             }
         }
@@ -76,7 +73,7 @@ const SyncGameCard = ({
 
     return (
         <div
-            className={`sync-card ${selected ? 'selected' : ''} ${isImported ? 'imported' : ''} ${isSkipped ? 'skipped' : ''} ${!isMatched ? 'unmatched' : ''} ${fading ? 'fading' : ''}`}
+            className={`sync-card ${selected ? 'selected' : ''} ${isImported ? 'imported' : ''} ${isInactive ? 'skipped' : ''} ${!isMatched ? 'unmatched' : ''} ${fading ? 'fading' : ''}`}
             onClick={handleCardClick}
             onKeyDown={handleKeyDown}
             tabIndex={isImported ? -1 : 0}
@@ -106,7 +103,7 @@ const SyncGameCard = ({
                 )}
 
                 {/* Hover overlay - actions for active games */}
-                {showActions && !isImported && !isSkipped && (
+                {showActions && !isImported && !isInactive && (
                     <div className="sync-card-overlay">
                         {/* Import button - only for matched games */}
                         {isMatched && (
@@ -139,24 +136,16 @@ const SyncGameCard = ({
                     </div>
                 )}
 
-                {/* Hover overlay - unskip/remove for skipped games */}
-                {isSkipped && (
+                {/* Hover overlay - restore for hidden/skipped games */}
+                {isInactive && (
                     <div className="sync-card-overlay skipped-overlay">
                         <button
                             className="sync-card-action restore"
                             onClick={handleUnskip}
-                            title="Restore to Needs Review"
+                            title="Restore"
                         >
                             <RotateCcw size={16} />
                             <span>Restore</span>
-                        </button>
-                        <button
-                            className="sync-card-action delete"
-                            onClick={handleDelete}
-                            title="Remove permanently"
-                        >
-                            <X size={16} />
-                            <span>Remove</span>
                         </button>
                     </div>
                 )}

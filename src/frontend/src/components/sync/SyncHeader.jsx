@@ -4,14 +4,12 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 
 /**
- * Simple header with back link, title, and stats.
- * Import All moved to bulk bar for minimal design.
+ * Simple header with back link, title, and pending stats.
  */
 const SyncHeader = ({
     platformName,
-    readyCount,
-    unmatchedCount,
-    importedCount,
+    readyCount = 0,
+    unmatchedCount = 0,
 }) => {
     const totalPending = readyCount + unmatchedCount;
 
@@ -22,9 +20,11 @@ const SyncHeader = ({
                 Settings
             </Link>
             <h1 className="sync-title">{platformName} Library</h1>
-            <p className="sync-subtitle">
-                {totalPending} games · {importedCount} imported
-            </p>
+            {totalPending > 0 && (
+                <p className="sync-subtitle">
+                    {totalPending} games to review
+                </p>
+            )}
         </div>
     );
 };

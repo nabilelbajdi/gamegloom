@@ -1,12 +1,12 @@
 // hooks/useSyncReview.js
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getSyncedGames, syncPlatform, updateSyncedGame, importSyncedGames } from '../api';
+import { getPSNLibrary, syncPSNLibrary, importPSNGames, skipPSNGame, fixPSNMatch, restorePSNGame } from '../api';
 import useUserGameStore from '../store/useUserGameStore';
 import useToastStore from '../store/useToastStore';
 
 /**
- * Custom hook encapsulating all sync review page state and logic.
- * Separates concerns from UI rendering.
+ * Custom hook for PSN/Steam sync review.
+ * Uses database-cached library data for fast loads.
  */
 export const useSyncReview = (platform) => {
     const { fetchCollection } = useUserGameStore();
@@ -19,6 +19,7 @@ export const useSyncReview = (platform) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [processProgress, setProcessProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState(null);
+    const [needsSync, setNeedsSync] = useState(false);  // True if DB cache is empty
 
     // UI state
     const [activeTab, setActiveTab] = useState('ready');
@@ -26,42 +27,60 @@ export const useSyncReview = (platform) => {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [fadingIds, setFadingIds] = useState(new Set());
     const [fixingGame, setFixingGame] = useState(null);
+    const [importedIds, setImportedIds] = useState(new Set());
+    const [skippedIds, setSkippedIds] = useState(new Set());
 
     const platformName = platform === 'psn' ? 'PlayStation' : 'Steam';
-    const [hasInitialSynced, setHasInitialSynced] = useState(false);
 
     // ─────────────────────────────────────────────────────────────
-    // Data Loading
+    // Data Loading (from database cache - fast ~50ms)
     // ─────────────────────────────────────────────────────────────
 
     const loadGames = useCallback(async () => {
+        if (platform !== 'psn') {
+            setError('Only PSN is supported for now');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             setIsLoading(true);
             setError(null);
-            const data = await getSyncedGames(platform);
-            setGames(data);
+
+            // Fetch from database cache (includes hidden)
+            const data = await getPSNLibrary(true);
+
+            if (data.length === 0) {
+                // No cached data - user needs to sync first
+                setNeedsSync(true);
+                setGames([]);
+            } else {
+                setNeedsSync(false);
+                // Add unique IDs - use status from API directly
+                const gamesWithIds = data.map((g) => ({
+                    ...g,
+                    id: g.platform_id
+                    // status comes from API: 'pending' | 'imported' | 'hidden'
+                }));
+                setGames(gamesWithIds);
+            }
+
             setSelectedIds(new Set());
             setFadingIds(new Set());
-            return data.length;
+            setImportedIds(new Set());
+            setSkippedIds(new Set());
+
         } catch (err) {
             setError(err.message);
-            return 0;
+            toast.error('Failed to load: ' + err.message);
         } finally {
             setIsLoading(false);
         }
-    }, [platform]);
+    }, [platform, toast]);
 
-    // Initial load + auto-sync if empty (first-time users)
+    // Load on mount
     useEffect(() => {
-        const initLoad = async () => {
-            const count = await loadGames();
-            // Auto-sync on first visit if no games synced yet
-            if (count === 0 && !hasInitialSynced) {
-                setHasInitialSynced(true);
-                handleInitialSync();
-            }
-        };
-        initLoad();
+        loadGames();
     }, [platform]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Clear selection when switching tabs
@@ -70,78 +89,83 @@ export const useSyncReview = (platform) => {
     }, [activeTab]);
 
     // ─────────────────────────────────────────────────────────────
-    // Sync Actions
+    // Sync = Fetch from PSN API and update database cache
     // ─────────────────────────────────────────────────────────────
 
-    // Initial sync (no toast for "no games" since it's expected)
-    const handleInitialSync = async () => {
-        try {
-            setIsSyncing(true);
-            setError(null);
-
-            await syncPlatform(platform);
-            const newData = await getSyncedGames(platform);
-            setGames(newData);
-
-            if (newData.length > 0) {
-                toast.success(`Found ${newData.length} games from ${platformName}`);
-            }
-            // Don't show "no games" toast on initial sync - empty state handles it
-        } catch (err) {
-            setError(err.message);
-            toast.error('Sync failed: ' + err.message);
-        } finally {
-            setIsSyncing(false);
-        }
-    };
-
-    // Manual re-sync (user clicks button)
     const handleSync = useCallback(async () => {
+        setIsSyncing(true);
+        setError(null);
+
         try {
-            setIsSyncing(true);
-            setError(null);
+            const result = await syncPSNLibrary();
 
-            const prevCount = games.length;
-            await syncPlatform(platform);
-
-            const newData = await getSyncedGames(platform);
-            setGames(newData);
-
-            const diff = newData.length - prevCount;
-            if (diff > 0) {
-                toast.success(`Synced ${diff} new games`);
-            } else if (newData.length > 0) {
-                toast.info('No new games found');
+            if (result.new_count > 0) {
+                toast.success(`Found ${result.new_count} new games!`);
             } else {
-                toast.info('No games found');
+                toast.success('Sync complete. Library is up to date.');
             }
+
+            await loadGames();
+
         } catch (err) {
             setError(err.message);
-            toast.error('Sync failed: ' + err.message);
+            toast.error('Failed to sync: ' + err.message);
         } finally {
             setIsSyncing(false);
         }
-    }, [platform, games.length, toast, platformName]);
+    }, [loadGames, platformName, toast]);
 
 
     // ─────────────────────────────────────────────────────────────
-    // Game Status Actions (with fade animation)
+    // Import Actions
     // ─────────────────────────────────────────────────────────────
 
-    const updateGameWithFade = useCallback(async (gameId, newStatus, apiCall) => {
+    const handleConfirm = useCallback(async (gameId) => {
+        const game = games.find(g => g.id === gameId);
+        if (!game || !game.igdb_id) return;
+
         try {
             setFadingIds(prev => new Set([...prev, gameId]));
-            await apiCall();
+
+            await importPSNGames([{ igdb_id: game.igdb_id, list_type: 'played' }]);
+
+
+            setTimeout(() => {
+                setImportedIds(prev => new Set([...prev, gameId]));
+                setFadingIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(gameId);
+                    return next;
+                });
+                fetchCollection();
+                toast.success(`Imported: ${game.igdb_name || game.platform_name}`);
+            }, 300);
+        } catch (err) {
+            setError(err.message);
+            setFadingIds(prev => {
+                const next = new Set(prev);
+                next.delete(gameId);
+                return next;
+            });
+            toast.error('Import failed: ' + err.message);
+        }
+    }, [games, fetchCollection, toast]);
+
+    const handleSkip = useCallback(async (gameId) => {
+        const game = games.find(g => g.id === gameId);
+        if (!game) return;
+
+        setFadingIds(prev => new Set([...prev, gameId]));
+
+        try {
+            await skipPSNGame(game.platform_id);
+
+
 
             setTimeout(() => {
                 setGames(prev => prev.map(g =>
-                    g.id === gameId ? { ...g, status: newStatus } : g
+                    g.id === gameId ? { ...g, status: 'hidden', match_method: 'skipped' } : g
                 ));
-                setSelectedIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(gameId);
-                    return next;
-                });
                 setFadingIds(prev => {
                     const next = new Set(prev);
                     next.delete(gameId);
@@ -149,45 +173,45 @@ export const useSyncReview = (platform) => {
                 });
             }, 300);
         } catch (err) {
-            setError(err.message);
             setFadingIds(prev => {
                 const next = new Set(prev);
                 next.delete(gameId);
                 return next;
             });
+            toast.error('Failed to skip: ' + err.message);
         }
-    }, []);
-
-    const handleSkip = useCallback((gameId) => {
-        updateGameWithFade(gameId, 'skipped', () =>
-            updateSyncedGame(gameId, { status: 'skipped' })
-        );
-    }, [updateGameWithFade]);
+    }, [games, toast]);
 
     const handleUnskip = useCallback(async (gameId) => {
+        const game = games.find(g => g.id === gameId);
+        if (!game) return;
+
         try {
-            await updateSyncedGame(gameId, { status: 'pending' });
+            await restorePSNGame(game.platform_id);
+
             setGames(prev => prev.map(g =>
-                g.id === gameId ? { ...g, status: 'pending' } : g
+                g.id === gameId ? { ...g, status: 'pending', match_method: null } : g
             ));
+
+
+
+            toast.success('Game restored');
         } catch (err) {
-            setError(err.message);
+            toast.error('Failed to restore: ' + err.message);
         }
-    }, []);
+    }, [games, toast]);
 
     const handleDelete = useCallback(async (gameId) => {
+        const game = games.find(g => g.id === gameId);
+        if (!game) return;
+
+        setFadingIds(prev => new Set([...prev, gameId]));
+
         try {
-            setFadingIds(prev => new Set([...prev, gameId]));
-            const { deleteSyncedGame } = await import('../api');
-            await deleteSyncedGame(gameId);
+            await skipPSNGame(game.platform_id);
 
             setTimeout(() => {
                 setGames(prev => prev.filter(g => g.id !== gameId));
-                setSelectedIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(gameId);
-                    return next;
-                });
                 setFadingIds(prev => {
                     const next = new Set(prev);
                     next.delete(gameId);
@@ -195,81 +219,154 @@ export const useSyncReview = (platform) => {
                 });
             }, 300);
         } catch (err) {
-            setError(err.message);
             setFadingIds(prev => {
                 const next = new Set(prev);
                 next.delete(gameId);
                 return next;
             });
+            toast.error('Failed to hide: ' + err.message);
         }
-    }, []);
-
-    const handleConfirm = useCallback((gameId) => {
-        updateGameWithFade(gameId, 'imported', async () => {
-            await importSyncedGames([gameId]);
-            fetchCollection();
-        });
-    }, [updateGameWithFade, fetchCollection]);
+    }, [games, toast]);
 
     // ─────────────────────────────────────────────────────────────
     // Bulk Actions
     // ─────────────────────────────────────────────────────────────
 
-    const handleBulkAction = useCallback(async (action, newStatus) => {
+    const handleImport = useCallback(async () => {
         if (selectedIds.size === 0) return;
 
-        const ids = [...selectedIds];
+        const selectedGames = games.filter(g =>
+            selectedIds.has(g.id) && g.igdb_id && !importedIds.has(g.id)
+        );
+
+        if (selectedGames.length === 0) return;
+
         setIsProcessing(true);
-        setProcessProgress({ current: 0, total: ids.length });
+        setProcessProgress({ current: 0, total: selectedGames.length });
+        setFadingIds(new Set(selectedGames.map(g => g.id)));
 
         try {
-            setFadingIds(new Set(ids));
+            const gamesToImport = selectedGames.map(g => ({
+                igdb_id: g.igdb_id,
+                list_type: 'played'
+            }));
 
-            // Progress simulation
-            const progressInterval = setInterval(() => {
-                setProcessProgress(prev => ({
-                    ...prev,
-                    current: Math.min(prev.current + 1, prev.total - 1)
-                }));
-            }, 150);
-
-            await action(ids);
-
-            clearInterval(progressInterval);
-            setProcessProgress({ current: ids.length, total: ids.length });
-
-            if (newStatus === 'imported') {
-                fetchCollection();
-                toast.success(`Successfully imported ${ids.length} games`);
-            }
+            await importPSNGames(gamesToImport);
 
             setTimeout(() => {
-                setGames(prev => prev.map(g =>
-                    selectedIds.has(g.id) ? { ...g, status: newStatus } : g
-                ));
+                setImportedIds(prev => {
+                    const next = new Set(prev);
+                    selectedGames.forEach(g => next.add(g.id));
+                    return next;
+                });
                 setSelectedIds(new Set());
                 setFadingIds(new Set());
                 setIsProcessing(false);
                 setProcessProgress({ current: 0, total: 0 });
+                fetchCollection();
+                toast.success(`Imported ${selectedGames.length} games`);
             }, 300);
         } catch (err) {
             setError(err.message);
             setIsProcessing(false);
             setFadingIds(new Set());
-            setProcessProgress({ current: 0, total: 0 });
+            toast.error('Import failed: ' + err.message);
         }
-    }, [selectedIds, fetchCollection, toast]);
-
-    const handleImport = useCallback(() => {
-        handleBulkAction(importSyncedGames, 'imported');
-    }, [handleBulkAction]);
+    }, [selectedIds, games, importedIds, fetchCollection, toast]);
 
     const handleBulkSkip = useCallback(() => {
-        handleBulkAction(
-            (ids) => Promise.all(ids.map(id => updateSyncedGame(id, { status: 'skipped' }))),
-            'skipped'
+        if (selectedIds.size === 0) return;
+
+        setFadingIds(new Set(selectedIds));
+
+        setTimeout(() => {
+            setSkippedIds(prev => {
+                const next = new Set(prev);
+                selectedIds.forEach(id => next.add(id));
+                return next;
+            });
+            setSelectedIds(new Set());
+            setFadingIds(new Set());
+            toast.info(`Skipped ${selectedIds.size} games`);
+        }, 300);
+    }, [selectedIds, toast]);
+
+    const handleImportAllReady = useCallback(async () => {
+        const readyGames = games.filter(g =>
+            g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id)
         );
-    }, [handleBulkAction]);
+
+        if (readyGames.length === 0) return;
+
+        setIsProcessing(true);
+        setProcessProgress({ current: 0, total: readyGames.length });
+        setFadingIds(new Set(readyGames.map(g => g.id)));
+
+        try {
+            const gamesToImport = readyGames.map(g => ({
+                igdb_id: g.igdb_id,
+                list_type: 'played'
+            }));
+
+            await importPSNGames(gamesToImport);
+
+            setTimeout(() => {
+                setImportedIds(prev => {
+                    const next = new Set(prev);
+                    readyGames.forEach(g => next.add(g.id));
+                    return next;
+                });
+                setFadingIds(new Set());
+                setIsProcessing(false);
+                setProcessProgress({ current: 0, total: 0 });
+                setSelectedIds(new Set());
+                fetchCollection();
+                toast.success(`🎉 Imported ${readyGames.length} games!`);
+            }, 500);
+        } catch (err) {
+            setError(err.message);
+            setIsProcessing(false);
+            setFadingIds(new Set());
+            toast.error('Import failed: ' + err.message);
+        }
+    }, [games, importedIds, skippedIds, fetchCollection, toast]);
+
+    const handleSkipAllUnmatched = useCallback(() => {
+        const unmatchedGames = games.filter(g =>
+            !g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id)
+        );
+
+        if (unmatchedGames.length === 0) return;
+
+        setFadingIds(new Set(unmatchedGames.map(g => g.id)));
+
+        setTimeout(() => {
+            setSkippedIds(prev => {
+                const next = new Set(prev);
+                unmatchedGames.forEach(g => next.add(g.id));
+                return next;
+            });
+            setFadingIds(new Set());
+            toast.info(`Skipped ${unmatchedGames.length} unmatched games`);
+        }, 300);
+    }, [games, importedIds, skippedIds, toast]);
+
+    // ─────────────────────────────────────────────────────────────
+    // Computed: apply imported/skipped status locally
+    // ─────────────────────────────────────────────────────────────
+
+    const gamesWithStatus = useMemo(() => {
+        // Apply locally tracked imported/skipped status
+        // Note: 'hidden' status comes from API (match_method === 'skipped')
+        return games.map(g => ({
+            ...g,
+            status: importedIds.has(g.id)
+                ? 'imported'
+                : skippedIds.has(g.id)
+                    ? 'skipped'
+                    : g.status // Keep 'hidden' or 'pending' from original
+        }));
+    }, [games, importedIds, skippedIds]);
 
     // ─────────────────────────────────────────────────────────────
     // Selection
@@ -287,6 +384,27 @@ export const useSyncReview = (platform) => {
         setSelectedIds(new Set());
     }, []);
 
+    const selectAllVisible = useCallback(() => {
+        // Filter games inline to avoid circular deps with filteredGames
+        let visible = gamesWithStatus;
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            visible = visible.filter(g =>
+                g.platform_name?.toLowerCase().includes(query) ||
+                g.igdb_name?.toLowerCase().includes(query)
+            );
+        }
+
+        const selectableIds = visible
+            .filter(g => {
+                if (activeTab === 'ready') return g.igdb_id && g.status === 'pending';
+                if (activeTab === 'unmatched') return !g.igdb_id && g.status === 'pending';
+                return false;
+            })
+            .map(g => g.id);
+        setSelectedIds(new Set(selectableIds));
+    }, [gamesWithStatus, searchQuery, activeTab]);
+
     // ─────────────────────────────────────────────────────────────
     // Fix Match Modal
     // ─────────────────────────────────────────────────────────────
@@ -296,62 +414,64 @@ export const useSyncReview = (platform) => {
     }, []);
 
     const handleGameFixed = useCallback(async (updatedGame) => {
+        // Save the manual match AND import the game
         try {
-            // Import immediately since user confirmed the match
-            await importSyncedGames([updatedGame.id]);
+            // Save the match preference (persists across re-syncs)
+            await fixPSNMatch(updatedGame.platform_id, updatedGame.igdb_id, updatedGame.igdb_name, updatedGame.igdb_cover_url);
 
-            // Update in state as imported
+            // Now import the game to library
+            await importPSNGames([{ igdb_id: updatedGame.igdb_id, list_type: 'played' }]);
+
+            // Update local state
             setGames(prev => prev.map(g =>
                 g.id === updatedGame.id
-                    ? { ...updatedGame, status: 'imported' }
+                    ? { ...g, igdb_id: updatedGame.igdb_id, igdb_name: updatedGame.igdb_name, igdb_cover_url: updatedGame.igdb_cover_url }
                     : g
             ));
-
-            // Refresh library
+            setImportedIds(prev => new Set([...prev, updatedGame.id]));
             fetchCollection();
-
             toast.success(`Imported: ${updatedGame.igdb_name}`);
         } catch (err) {
             toast.error(`Failed to import: ${err.message}`);
         }
-    }, [toast, fetchCollection]);
+    }, [fetchCollection, toast]);
 
     const closeFixModal = useCallback(() => {
         setFixingGame(null);
     }, []);
 
     // ─────────────────────────────────────────────────────────────
-    // Filtering & Computed Values
+    // Filtering
     // ─────────────────────────────────────────────────────────────
 
     const filterByTab = useCallback((gamesList, tab) => {
         switch (tab) {
             case 'ready':
-                // Ready = has IGDB match (user can verify visually, fix if wrong)
                 return gamesList.filter(g =>
                     g.igdb_id &&
                     g.status !== 'imported' &&
-                    g.status !== 'skipped'
+                    g.status !== 'skipped' &&
+                    g.status !== 'hidden'
                 );
             case 'unmatched':
-                // Unmatched = no IGDB match (user must fix to import)
                 return gamesList.filter(g =>
                     !g.igdb_id &&
                     g.status !== 'imported' &&
-                    g.status !== 'skipped'
+                    g.status !== 'skipped' &&
+                    g.status !== 'hidden'
                 );
             case 'skipped':
-                return gamesList.filter(g => g.status === 'skipped');
-            case 'imported':
-                return gamesList.filter(g => g.status === 'imported');
+                // Games that are skipped or hidden (both mean skipped)
+                return gamesList.filter(g =>
+                    g.status === 'skipped' || g.status === 'hidden'
+                );
             default:
                 return gamesList;
         }
     }, []);
 
-
     const filteredGames = useMemo(() => {
-        let result = games;
+        let result = gamesWithStatus;
 
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -362,128 +482,16 @@ export const useSyncReview = (platform) => {
         }
 
         return filterByTab(result, activeTab);
-    }, [games, activeTab, searchQuery, filterByTab]);
+    }, [gamesWithStatus, activeTab, searchQuery, filterByTab]);
 
     const counts = useMemo(() => ({
-        ready: filterByTab(games, 'ready').length,
-        unmatched: filterByTab(games, 'unmatched').length,
-        skipped: filterByTab(games, 'skipped').length,
-        imported: filterByTab(games, 'imported').length,
-    }), [games, filterByTab]);
+        ready: filterByTab(gamesWithStatus, 'ready').length,
+        unmatched: filterByTab(gamesWithStatus, 'unmatched').length,
+        skipped: filterByTab(gamesWithStatus, 'skipped').length,
+    }), [gamesWithStatus, filterByTab]);
 
-    const selectAllVisible = useCallback(() => {
-        const selectableIds = filteredGames
-            .filter(g => {
-                if (activeTab === 'ready') return g.igdb_id && g.status !== 'imported';
-                if (activeTab === 'unmatched') return !g.igdb_id && g.status !== 'imported' && g.status !== 'skipped';
-                return false;
-            })
-            .map(g => g.id);
-        setSelectedIds(prev => new Set([...prev, ...selectableIds]));
-    }, [filteredGames, activeTab]);
-
-    // ─────────────────────────────────────────────────────────────
-    // Import All Ready (One-Click)
-    // ─────────────────────────────────────────────────────────────
-
-    const readyGames = useMemo(() => filterByTab(games, 'ready'), [games, filterByTab]);
-
-    const handleImportAllReady = useCallback(async () => {
-        if (readyGames.length === 0 || isProcessing) return;
-
-        const ids = readyGames.map(g => g.id);
-        setIsProcessing(true);
-        setProcessProgress({ current: 0, total: ids.length });
-
-        try {
-            setFadingIds(new Set(ids));
-
-            const progressInterval = setInterval(() => {
-                setProcessProgress(prev => ({
-                    ...prev,
-                    current: Math.min(prev.current + 1, prev.total - 1)
-                }));
-            }, 100);
-
-            await importSyncedGames(ids);
-
-            clearInterval(progressInterval);
-            setProcessProgress({ current: ids.length, total: ids.length });
-
-            fetchCollection();
-
-            // Celebration message for big imports
-            if (ids.length >= 10) {
-                toast.success(`🎉 Imported all ${ids.length} games!`);
-            } else {
-                toast.success(`Imported ${ids.length} games`);
-            }
-
-            setTimeout(() => {
-                setGames(prev => prev.map(g =>
-                    ids.includes(g.id) ? { ...g, status: 'imported' } : g
-                ));
-                setSelectedIds(new Set());
-                setFadingIds(new Set());
-                setIsProcessing(false);
-                setProcessProgress({ current: 0, total: 0 });
-            }, 300);
-        } catch (err) {
-            setError(err.message);
-            toast.error('Import failed: ' + err.message);
-            setIsProcessing(false);
-            setFadingIds(new Set());
-            setProcessProgress({ current: 0, total: 0 });
-        }
-    }, [readyGames, isProcessing, fetchCollection, toast]);
-
-    // ─────────────────────────────────────────────────────────────
-    // Skip All Review (One-Click)
-    // ─────────────────────────────────────────────────────────────
-
-    const unmatchedGames = useMemo(() => filterByTab(games, 'unmatched'), [games, filterByTab]);
-
-    const handleSkipAllUnmatched = useCallback(async () => {
-        if (unmatchedGames.length === 0 || isProcessing) return;
-
-        const ids = unmatchedGames.map(g => g.id);
-        setIsProcessing(true);
-        setProcessProgress({ current: 0, total: ids.length });
-
-        try {
-            setFadingIds(new Set(ids));
-
-            const progressInterval = setInterval(() => {
-                setProcessProgress(prev => ({
-                    ...prev,
-                    current: Math.min(prev.current + 1, prev.total - 1)
-                }));
-            }, 50);
-
-            await Promise.all(ids.map(id => updateSyncedGame(id, { status: 'skipped' })));
-
-            clearInterval(progressInterval);
-            setProcessProgress({ current: ids.length, total: ids.length });
-
-            toast.info(`Skipped ${ids.length} games`);
-
-            setTimeout(() => {
-                setGames(prev => prev.map(g =>
-                    ids.includes(g.id) ? { ...g, status: 'skipped' } : g
-                ));
-                setSelectedIds(new Set());
-                setFadingIds(new Set());
-                setIsProcessing(false);
-                setProcessProgress({ current: 0, total: 0 });
-            }, 300);
-        } catch (err) {
-            setError(err.message);
-            toast.error('Skip failed: ' + err.message);
-            setIsProcessing(false);
-            setFadingIds(new Set());
-            setProcessProgress({ current: 0, total: 0 });
-        }
-    }, [unmatchedGames, isProcessing, toast]);
+    const readyGames = useMemo(() => filterByTab(gamesWithStatus, 'ready'), [gamesWithStatus, filterByTab]);
+    const unmatchedGames = useMemo(() => filterByTab(gamesWithStatus, 'unmatched'), [gamesWithStatus, filterByTab]);
 
     // ─────────────────────────────────────────────────────────────
     // Keyboard Shortcuts
@@ -491,21 +499,17 @@ export const useSyncReview = (platform) => {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            // Don't trigger if typing in input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-            // Ctrl/Cmd + A - Select all visible
             if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
                 e.preventDefault();
                 selectAllVisible();
             }
 
-            // Escape - Clear selection
             if (e.key === 'Escape') {
                 clearSelection();
             }
 
-            // Enter - Import selected (if on ready tab) or skip (if on unmatched tab)
             if (e.key === 'Enter' && selectedIds.size > 0) {
                 e.preventDefault();
                 if (activeTab === 'ready') {
@@ -527,7 +531,7 @@ export const useSyncReview = (platform) => {
     return {
         // State
         games: filteredGames,
-        allGames: games,
+        allGames: gamesWithStatus,
         counts,
         readyCount: readyGames.length,
         unmatchedCount: unmatchedGames.length,
@@ -536,6 +540,7 @@ export const useSyncReview = (platform) => {
         isProcessing,
         processProgress,
         error,
+        needsSync,
         activeTab,
         searchQuery,
         selectedIds,

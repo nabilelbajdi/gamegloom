@@ -1,7 +1,7 @@
 // components/sync/FixMatchModal.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Search, Loader2, Check } from 'lucide-react';
-import { searchGames, updateSyncedGame } from '../../api';
+import { searchGames } from '../../api';
 import debounce from 'lodash/debounce';
 import './FixMatchModal.css';
 
@@ -66,15 +66,16 @@ const FixMatchModal = ({ game, onClose, onFixed }) => {
             setError(null);
 
             const selectedGame = results.find(r => r.igdb_id === selectedId);
-            await updateSyncedGame(game.id, { igdb_id: selectedId });
 
+            // For ephemeral flow: just pass the match info to parent
+            // The parent (useSyncReview.handleGameFixed) will handle the import
             onFixed({
                 ...game,
                 igdb_id: selectedId,
                 igdb_name: selectedGame?.name,
+                igdb_cover_url: selectedGame?.cover_image || selectedGame?.coverImage,
                 match_confidence: 1.0,
                 match_method: 'manual',
-                status: 'pending'
             });
             onClose();
         } catch (err) {

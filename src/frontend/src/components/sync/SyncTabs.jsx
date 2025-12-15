@@ -3,17 +3,15 @@ import React from 'react';
 import { RefreshCw, Search, X } from 'lucide-react';
 
 const TAB_INFO = {
-    ready: { title: 'Ready' },
-    unmatched: { title: 'Unmatched' },
+    ready: { title: 'Ready to Import' },
+    unmatched: { title: 'Needs Review' },
     skipped: { title: 'Skipped' },
-    imported: { title: 'Imported' },
 };
 
 const TAB_DESCRIPTIONS = {
     ready: 'Matched to our database. Verify the cover looks right, then import.',
     unmatched: "Couldn't find a match. Use Fix to search for the correct game.",
     skipped: 'Games you chose to skip. Hover to restore or remove.',
-    imported: 'Successfully added to your library.',
 };
 
 const SyncTabs = ({
@@ -32,8 +30,7 @@ const SyncTabs = ({
                     {Object.keys(TAB_INFO).map(key => (
                         <button
                             key={key}
-                            className={`sync-tab ${activeTab === key ? 'active' : ''} ${key === 'skipped' || key === 'imported' ? 'secondary' : ''
-                                }`}
+                            className={`sync-tab ${activeTab === key ? 'active' : ''} ${key === 'skipped' ? 'secondary' : ''}`}
                             onClick={() => onTabChange(key)}
                         >
                             {TAB_INFO[key].title} <span>{counts[key]}</span>

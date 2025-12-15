@@ -1,36 +1,30 @@
 // components/sync/SyncEmptyState.jsx
 import React from 'react';
-import { Gamepad2, Clock, CheckCircle2, Ban, Search } from 'lucide-react';
+import { CheckCircle2, Ban, Search } from 'lucide-react';
 import './SyncEmptyState.css';
 
 const EMPTY_STATES = {
     ready: {
-        icon: Gamepad2,
-        title: 'No games ready to import',
-        description: 'Games with high-confidence matches will appear here.',
-        color: 'primary',
+        icon: CheckCircle2,
+        title: 'All done!',
+        description: "You've imported all matched games.",
+        color: 'success',
     },
     unmatched: {
-        icon: Search,
-        title: 'All games matched!',
-        description: "Great news — we found matches for all your games.",
+        icon: CheckCircle2,
+        title: 'No games need review',
+        description: 'All your games were matched successfully.',
         color: 'success',
     },
     skipped: {
         icon: Ban,
         title: 'No skipped games',
-        description: 'Games you choose to skip will appear here.',
-        color: 'muted',
-    },
-    imported: {
-        icon: CheckCircle2,
-        title: 'No imported games yet',
-        description: 'Import games from the Ready tab to see them here.',
+        description: 'Games you skip will appear here.',
         color: 'muted',
     },
     search: {
         icon: Search,
-        title: 'No results found',
+        title: 'No results',
         description: 'Try a different search term.',
         color: 'muted',
     },

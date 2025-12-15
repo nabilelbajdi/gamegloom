@@ -33,6 +33,7 @@
     opacity: 0;
     transform: scale(0.95) translateY(8px);
     pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .sync-card.imported {

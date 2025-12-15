@@ -1,6 +1,7 @@
 // pages/SyncReviewPage.jsx
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
+import { Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import useSyncReview from '../hooks/useSyncReview';
 import SyncHeader from '../components/sync/SyncHeader';
 import SyncTabs from '../components/sync/SyncTabs';
@@ -11,13 +12,13 @@ import { SyncGridSkeleton } from '../components/sync/SyncCardSkeleton';
 import './SyncReviewPage.css';
 
 /**
- * Sync Review Page
- * 
- * Displays games synced from external platforms (PSN/Steam) and allows
- * users to review, import, skip, or fix matches before adding to library.
+ * Game imports page - review synced games before adding to library.
+ * Auto-sync only triggers when navigating with triggerSync state (post-link).
  */
 const SyncReviewPage = () => {
     const { platform } = useParams();
+    const location = useLocation();
+    const autoSyncTriggered = useRef(false);
 
     const {
         // State
@@ -28,6 +29,7 @@ const SyncReviewPage = () => {
         isProcessing,
         processProgress,
         error,
+        needsSync,
         activeTab,
         searchQuery,
         selectedIds,
@@ -46,7 +48,6 @@ const SyncReviewPage = () => {
         handleSkipAllUnmatched,
         handleBulkSkip,
         toggleSelect,
-        selectAllVisible,
         clearSelection,
         setActiveTab,
         setSearchQuery,
@@ -55,7 +56,15 @@ const SyncReviewPage = () => {
         closeFixModal,
     } = useSyncReview(platform);
 
-    // Loading state - show skeleton grid
+    // Auto-sync when navigating here after linking (triggerSync state)
+    useEffect(() => {
+        if (location.state?.triggerSync && !autoSyncTriggered.current && !isSyncing) {
+            autoSyncTriggered.current = true;
+            handleSync();
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, handleSync, isSyncing]);
+
     if (isLoading) {
         return (
             <div className="sync-page">
@@ -71,6 +80,67 @@ const SyncReviewPage = () => {
         );
     }
 
+    // Syncing state - show spinner
+    if (isSyncing) {
+        return (
+            <div className="sync-page">
+                <div className="sync-container">
+                    <div className="sync-empty-state">
+                        <Loader2 className="sync-empty-icon animate-spin" size={48} />
+                        <h2>Syncing your {platformName} library…</h2>
+                        <p>This may take a minute. Feel free to explore the app — we'll have your games ready when you return.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Empty state - no sync run yet
+    if (needsSync) {
+        return (
+            <div className="sync-page">
+                <div className="sync-container">
+                    <div className="sync-empty-state">
+                        <RefreshCw className="sync-empty-icon" size={48} />
+                        <h2>No games to import yet</h2>
+                        <p>Sync your {platformName} library to see your games here.</p>
+                        <button
+                            onClick={handleSync}
+                            className="sync-empty-button"
+                        >
+                            Sync Library
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Check if library is up to date (synced but no pending games)
+    const totalPending = counts.ready + counts.unmatched;
+    const isUpToDate = totalPending === 0 && counts.skipped === 0;
+
+    // Up to date state - synced but nothing to do
+    if (isUpToDate) {
+        return (
+            <div className="sync-page">
+                <div className="sync-container">
+                    <div className="sync-empty-state">
+                        <CheckCircle2 className="sync-empty-icon sync-empty-success" size={48} />
+                        <h2>Your library is up to date</h2>
+                        <p>All your {platformName} games have been imported. Check back after playing new games.</p>
+                        <button
+                            onClick={handleSync}
+                            className="sync-empty-button secondary"
+                        >
+                            Re-sync Library
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const showImport = activeTab === 'ready';
     const showSkip = activeTab === 'unmatched';
 
@@ -81,7 +151,6 @@ const SyncReviewPage = () => {
                     platformName={platformName}
                     readyCount={counts.ready}
                     unmatchedCount={counts.unmatched}
-                    importedCount={counts.imported}
                 />
 
                 {error && (
@@ -98,6 +167,7 @@ const SyncReviewPage = () => {
                     onSearchChange={setSearchQuery}
                     isSyncing={isSyncing}
                     onSync={handleSync}
+                    needsSync={needsSync}
                 />
 
                 <SyncGrid
@@ -128,15 +198,15 @@ const SyncReviewPage = () => {
                     showImport={showImport}
                     showSkip={showSkip}
                 />
-            </div>
 
-            {fixingGame && (
-                <FixMatchModal
-                    game={fixingGame}
-                    onClose={closeFixModal}
-                    onFixed={handleGameFixed}
-                />
-            )}
+                {fixingGame && (
+                    <FixMatchModal
+                        game={fixingGame}
+                        onClose={closeFixModal}
+                        onFixed={handleGameFixed}
+                    />
+                )}
+            </div>
         </div>
     );
 };

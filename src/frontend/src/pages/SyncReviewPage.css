@@ -150,6 +150,33 @@
     padding-bottom: 8px;
 }
 
+/* Show Hidden Toggle */
+.sync-toggle-hidden {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-gray-500);
+    background: var(--color-gray-900);
+    border: 1px solid var(--color-gray-800);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sync-toggle-hidden:hover {
+    color: var(--color-gray-300);
+    border-color: var(--color-gray-700);
+}
+
+.sync-toggle-hidden.active {
+    color: var(--color-warning, #f59e0b);
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.1);
+}
+
 /* Search - minimal underlined input */
 .sync-search {
     display: flex;
@@ -283,6 +310,71 @@
     color: var(--color-gray-600);
 }
 
+/* Empty State - clean centered action */
+.sync-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    min-height: 400px;
+}
+
+.sync-empty-state .sync-empty-icon {
+    color: var(--color-gray-600);
+    margin-bottom: 24px;
+}
+
+.sync-empty-state h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 8px;
+}
+
+.sync-empty-state p {
+    font-size: 14px;
+    color: var(--color-gray-500);
+    margin: 0 0 24px;
+    max-width: 400px;
+}
+
+.sync-empty-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: black;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sync-empty-button:hover {
+    filter: brightness(0.9);
+    transform: translateY(-1px);
+}
+
+.sync-empty-button.secondary {
+    color: var(--color-gray-300);
+    background: transparent;
+    border: 1px solid var(--color-gray-700);
+}
+
+.sync-empty-button.secondary:hover {
+    border-color: var(--color-gray-600);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.sync-empty-success {
+    color: #10b981;
+}
+
 /* Sticky Bulk Bar */
 .sync-bulk-bar {
     position: fixed;
@@ -291,7 +383,7 @@
     right: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 14px 24px;
     background: rgba(12, 12, 12, 0.95);
     backdrop-filter: blur(12px);

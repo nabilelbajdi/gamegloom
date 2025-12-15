@@ -3,9 +3,8 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 /**
- * Bulk action bar - shows when games are selected.
- * Ready tab: [Clear] ... [Import all X] [Import Y games]
- * Review tab: [Clear] ... [Skip all X] [Skip Y games]
+ * Bulk action bar - shows when games are selected OR when there are games to import/skip.
+ * Actions grouped on the right.
  */
 const SyncBulkBar = ({
     selectedCount,
@@ -21,42 +20,52 @@ const SyncBulkBar = ({
     showImport,
     showSkip,
 }) => {
-    // Only show when there's a selection
-    if (selectedCount === 0) return null;
+    // Show bar if there's a selection OR if there are ready games to import all
+    const hasReadyGames = showImport && readyCount > 0;
+    const hasUnmatchedGames = showSkip && unmatchedCount > 0;
+
+    if (selectedCount === 0 && !hasReadyGames && !hasUnmatchedGames) return null;
 
     return (
         <div className="sync-bulk-bar">
-            <div className="sync-bulk-left">
-                <button className="sync-bulk-clear" onClick={onClear}>
-                    Clear
-                </button>
-            </div>
-
             <div className="sync-bulk-actions">
-                {/* Import all - only on Ready tab */}
-                {showImport && readyCount > selectedCount && (
+                {/* Clear - only show when there's a selection */}
+                {selectedCount > 0 && (
+                    <button className="sync-bulk-clear" onClick={onClear}>
+                        Clear
+                    </button>
+                )}
+
+                {/* Import all - on Ready tab when there are ready games */}
+                {showImport && readyCount > 0 && (
                     <button
                         className="sync-bulk-link"
-                        onClick={onImportAll}
+                        onClick={() => {
+                            onImportAll();
+                            onClear(); // Clear selection after import all
+                        }}
                         disabled={isProcessing}
                     >
                         Import all {readyCount}
                     </button>
                 )}
 
-                {/* Skip all - only on Unmatched tab */}
-                {showSkip && unmatchedCount > selectedCount && (
+                {/* Skip all - on Unmatched tab when there are unmatched games */}
+                {showSkip && unmatchedCount > 0 && (
                     <button
                         className="sync-bulk-link"
-                        onClick={onSkipAll}
+                        onClick={() => {
+                            onSkipAll();
+                            onClear();
+                        }}
                         disabled={isProcessing}
                     >
                         Skip all {unmatchedCount}
                     </button>
                 )}
 
-                {/* Import selected */}
-                {showImport && (
+                {/* Import selected - only when there's a selection */}
+                {showImport && selectedCount > 0 && (
                     <button
                         onClick={onImport}
                         disabled={isProcessing}
@@ -65,7 +74,7 @@ const SyncBulkBar = ({
                         {isProcessing ? (
                             <>
                                 <Loader2 size={14} className="animate-spin" />
-                                <span>Importing {processProgress.current}/{processProgress.total}...</span>
+                                <span>Importing {processProgress.current}/{processProgress.total}…</span>
                             </>
                         ) : (
                             <span>Import {selectedCount}</span>
@@ -73,14 +82,14 @@ const SyncBulkBar = ({
                     </button>
                 )}
 
-                {/* Skip selected */}
-                {showSkip && (
+                {/* Skip selected - only when there's a selection */}
+                {showSkip && selectedCount > 0 && (
                     <button
                         onClick={onSkip}
                         disabled={isProcessing}
                         className="sync-bulk-secondary"
                     >
-                        {isProcessing ? 'Skipping...' : `Skip ${selectedCount}`}
+                        {isProcessing ? 'Skipping…' : `Skip ${selectedCount}`}
                     </button>
                 )}
             </div>
