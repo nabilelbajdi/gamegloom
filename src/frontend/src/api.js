@@ -798,41 +798,46 @@ export const clearAllGames = async () => {
 // Sync API Functions
 // ============================================
 
+// ═══════════════════════════════════════════════════════════════════
+// PSN Sync API (Ephemeral Flow)
+// ═══════════════════════════════════════════════════════════════════
+// Note: The old /sync/* endpoints have been removed. 
+// PSN sync now uses the ephemeral flow via /integrations/psn/library and /integrations/psn/import.
+
 /**
- * Sync games from a platform (PSN/Steam)
- * POST /sync/{platform}
+ * Preview PSN profile before linking
+ * GET /integrations/psn/preview/{username}
  */
-export const syncPlatform = async (platform) => {
+export const previewPSNProfile = async (username) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const response = await fetch(`${BASE_URL}/sync/${platform}`, {
-    method: "POST",
+  const response = await fetch(`${BASE_URL}/integrations/psn/preview/${encodeURIComponent(username)}`, {
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     }
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || `Failed to sync ${platform}`);
+    throw new Error(error.detail || "Profile not found or is private");
   }
 
   return await response.json();
 };
 
 /**
- * Get synced games for a platform
- * GET /sync/{platform}/games
+ * Fetch cached PSN library from database (fast, ~50ms)
+ * GET /integrations/psn/library
+ * @param {boolean} includeHidden - Whether to include hidden/skipped games
  */
-export const getSyncedGames = async (platform, status = null) => {
+export const getPSNLibrary = async (includeHidden = false) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const url = status
-    ? `${BASE_URL}/sync/${platform}/games?status=${status}`
-    : `${BASE_URL}/sync/${platform}/games`;
+  const url = includeHidden
+    ? `${BASE_URL}/integrations/psn/library?include_hidden=true`
+    : `${BASE_URL}/integrations/psn/library`;
 
   const response = await fetch(url, {
     headers: {
@@ -841,69 +846,127 @@ export const getSyncedGames = async (platform, status = null) => {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch synced games");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to fetch PSN library");
   }
 
   return await response.json();
 };
 
 /**
- * Update a synced game (status, target list, or fix match)
- * PATCH /sync/games/{id}
+ * Sync PSN library from PlayStation Network (slow, ~10-20s)
+ * Fetches from PSN API, matches to IGDB, caches in database.
+ * POST /integrations/psn/sync
+ * @returns {Promise<{new_count: number, updated_count: number, total_count: number, message: string}>}
  */
-export const updateSyncedGame = async (gameId, updates) => {
+export const syncPSNLibrary = async () => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const response = await fetch(`${BASE_URL}/sync/games/${gameId}`, {
-    method: "PATCH",
+  const response = await fetch(`${BASE_URL}/integrations/psn/sync`, {
+    method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(updates)
+    }
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update game");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to sync PSN library");
   }
 
   return await response.json();
 };
 
 /**
- * Import confirmed synced games to library
- * POST /sync/import
+ * Import games directly to library (ephemeral flow)
+ * POST /integrations/psn/import
  */
-export const importSyncedGames = async (gameIds) => {
+export const importPSNGames = async (games) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const response = await fetch(`${BASE_URL}/sync/import`, {
+  const response = await fetch(`${BASE_URL}/integrations/psn/import`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ game_ids: gameIds })
+    body: JSON.stringify({ games })
   });
 
   if (!response.ok) {
-    throw new Error("Failed to import games");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to import games");
   }
 
   return await response.json();
 };
 
 /**
- * Delete a synced game (permanently remove from sync list)
- * DELETE /sync/games/{id}
+ * Skip (hide) a PSN game - persists across sessions
+ * POST /integrations/psn/preferences/skip
  */
-export const deleteSyncedGame = async (gameId) => {
+export const skipPSNGame = async (platformId) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const response = await fetch(`${BASE_URL}/sync/games/${gameId}`, {
+  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/skip`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ platform_id: platformId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to skip game");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Save a manual IGDB match for a PSN game - persists across sessions
+ * POST /integrations/psn/preferences/match
+ */
+export const fixPSNMatch = async (platformId, igdbId, igdbName = null, igdbCoverUrl = null) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/match`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      platform_id: platformId,
+      igdb_id: igdbId,
+      igdb_name: igdbName,
+      igdb_cover_url: igdbCoverUrl
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to save match");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Restore a hidden game / clear a manual match
+ * DELETE /integrations/psn/preferences/{platformId}
+ */
+export const restorePSNGame = async (platformId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/${encodeURIComponent(platformId)}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`
@@ -911,7 +974,8 @@ export const deleteSyncedGame = async (gameId) => {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to delete game");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to restore game");
   }
 
   return await response.json();

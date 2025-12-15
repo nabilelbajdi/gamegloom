@@ -4,6 +4,7 @@ import { fetchIntegrationStatus, unlinkPlatform, getSteamAuthUrl, linkSteamAccou
 import { Loader2 } from 'lucide-react';
 import PSNConnectModal from './PSNConnectModal';
 import IntegrationCard from '../common/IntegrationCard';
+import { formatDistanceToNow } from 'date-fns';
 
 const IntegrationsTab = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -100,6 +101,7 @@ const IntegrationsTab = () => {
     };
 
     const openImportPage = (platform) => {
+        // Navigate to sync page (staging area) without auto-triggering
         navigate(`/sync/${platform}`);
     };
 
@@ -146,7 +148,7 @@ const IntegrationsTab = () => {
                     description="Import your Steam library"
                     connected={!!status.steam}
                     username={status.steam?.platform_username || status.steam?.platform_user_id}
-                    lastSynced={status.steam?.last_synced_at ? new Date(status.steam.last_synced_at).toLocaleDateString() : null}
+                    lastSynced={status.steam?.last_synced_at ? formatDistanceToNow(new Date(status.steam.last_synced_at), { addSuffix: true }) : null}
                     loading={connectingPlatform === 'steam' || unlinkingPlatform === 'steam'}
                     onConnect={handleConnectSteam}
                     onDisconnect={() => handleUnlink('steam')}
@@ -159,7 +161,7 @@ const IntegrationsTab = () => {
                     description="Import PlayStation games"
                     connected={!!status.psn}
                     username={status.psn?.platform_username || status.psn?.platform_user_id}
-                    lastSynced={status.psn?.last_synced_at ? new Date(status.psn.last_synced_at).toLocaleDateString() : null}
+                    lastSynced={status.psn?.last_synced_at ? formatDistanceToNow(new Date(status.psn.last_synced_at), { addSuffix: true }) : null}
                     loading={connectingPlatform === 'psn' || unlinkingPlatform === 'psn'}
                     onConnect={() => setShowPSNModal(true)}
                     onDisconnect={() => handleUnlink('psn')}

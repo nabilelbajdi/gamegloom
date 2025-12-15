@@ -60,7 +60,7 @@ const IntegrationCard = ({
                                 ) : (
                                     <RefreshCw size={14} />
                                 )}
-                                Sync
+                                Manage
                             </button>
                             <button
                                 onClick={onDisconnect}

@@ -475,6 +475,13 @@ export default function Navbar() {
                     My Lists
                   </Link>
                   <Link
+                    to="/sync/psn"
+                    className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
+                    role="menuitem"
+                  >
+                    Import Games
+                  </Link>
+                  <Link
                     to="/settings"
                     className="block px-3 py-1.5 text-xs text-gray-300 hover:text-white hover:bg-gray-800 transition-colors duration-200 my-0.5"
                     role="menuitem"
