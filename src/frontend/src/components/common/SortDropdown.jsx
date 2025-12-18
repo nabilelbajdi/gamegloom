@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 
 const LIBRARY_SORT_OPTIONS = [
+  { value: "last_played", label: "Recently Played" },
+  { value: "playtime_high", label: "Playtime (Most)" },
   { value: "added_new", label: "Date Added (Newest)" },
   { value: "name_asc", label: "Name (A-Z)" },
   { value: "rating_high", label: "Rating (High to Low)" },
@@ -16,16 +18,27 @@ const SEARCH_SORT_OPTIONS = [
   { value: "release_new", label: "Release Date (Newest)" }
 ];
 
+const SYNC_SORT_OPTIONS = [
+  { value: "last_played", label: "Recently Played" },
+  { value: "playtime_high", label: "Playtime (Most)" },
+  { value: "name_asc", label: "Name (A-Z)" }
+];
+
 const SortDropdown = ({
   sortOption = "added_new",
   onSortChange,
-  isSearchPage = false
+  isSearchPage = false,
+  isSyncPage = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Choose the appropriate sort options based on whether this is a search page
-  const SORT_OPTIONS = isSearchPage ? SEARCH_SORT_OPTIONS : LIBRARY_SORT_OPTIONS;
+  // Choose the appropriate sort options based on page type
+  const SORT_OPTIONS = isSyncPage
+    ? SYNC_SORT_OPTIONS
+    : isSearchPage
+      ? SEARCH_SORT_OPTIONS
+      : LIBRARY_SORT_OPTIONS;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,7 +60,7 @@ const SortDropdown = ({
 
   const getCurrentSortLabel = () => {
     const option = SORT_OPTIONS.find(opt => opt.value === sortOption);
-    return option ? option.label : isSearchPage ? "Relevance" : "Date Added (Newest)";
+    return option ? option.label : "Recently Played";
   };
 
   return (
@@ -55,8 +68,8 @@ const SortDropdown = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${isOpen
-            ? "bg-surface/80 text-white"
-            : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
+          ? "bg-surface/80 text-white"
+          : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
           } transition-all`}
       >
         <ArrowUpDown className="w-3.5 h-3.5" />
@@ -75,8 +88,8 @@ const SortDropdown = ({
                 key={option.value}
                 onClick={() => handleSortSelect(option.value)}
                 className={`w-full text-left px-3 py-1.5 rounded text-[13px] flex items-center cursor-pointer ${sortOption === option.value
-                    ? "bg-surface/80 text-white font-semibold"
-                    : "text-gray-400 hover:bg-surface hover:text-white"
+                  ? "bg-surface/80 text-white font-semibold"
+                  : "text-gray-400 hover:bg-surface hover:text-white"
                   } transition-colors`}
               >
                 {sortOption === option.value && (

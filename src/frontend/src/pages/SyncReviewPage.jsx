@@ -32,6 +32,7 @@ const SyncReviewPage = () => {
         needsSync,
         activeTab,
         searchQuery,
+        sortOption,
         selectedIds,
         fadingIds,
         fixingGame,
@@ -51,6 +52,7 @@ const SyncReviewPage = () => {
         clearSelection,
         setActiveTab,
         setSearchQuery,
+        setSortOption,
         handleFixGame,
         handleGameFixed,
         closeFixModal,
@@ -165,6 +167,8 @@ const SyncReviewPage = () => {
                     counts={counts}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
+                    sortOption={sortOption}
+                    onSortChange={setSortOption}
                     isSyncing={isSyncing}
                     onSync={handleSync}
                     needsSync={needsSync}

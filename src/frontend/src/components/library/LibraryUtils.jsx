@@ -68,7 +68,22 @@ export const sortGames = (games, sortOption) => {
     case "added-old":
     case "added_old":
       return [...games].sort((a, b) => new Date(a.added_at || 0) - new Date(b.added_at || 0));
+    case "playtime_high":
+      return [...games].sort((a, b) => (b.playtime_minutes || 0) - (a.playtime_minutes || 0));
+    case "playtime_low":
+      return [...games].sort((a, b) => (a.playtime_minutes || 0) - (b.playtime_minutes || 0));
+    case "last_played":
+      // Sort by last_played_at, with null values at the end
+      return [...games].sort((a, b) => {
+        const aDate = a.last_played_at ? new Date(a.last_played_at) : null;
+        const bDate = b.last_played_at ? new Date(b.last_played_at) : null;
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        return bDate - aDate;
+      });
     default:
+      // Default to date added (newest first)
       return [...games].sort((a, b) => new Date(b.added_at || 0) - new Date(a.added_at || 0));
   }
 }; 

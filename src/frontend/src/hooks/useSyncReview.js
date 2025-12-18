@@ -24,6 +24,7 @@ export const useSyncReview = (platform) => {
     // UI state
     const [activeTab, setActiveTab] = useState('ready');
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOption, setSortOption] = useState('last_played');
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [fadingIds, setFadingIds] = useState(new Set());
     const [fixingGame, setFixingGame] = useState(null);
@@ -470,6 +471,31 @@ export const useSyncReview = (platform) => {
         }
     }, []);
 
+    // Sort games by option
+    const sortGamesByOption = useCallback((gamesList, option) => {
+        switch (option) {
+            case 'last_played':
+                return [...gamesList].sort((a, b) => {
+                    const aDate = a.last_played_at ? new Date(a.last_played_at) : null;
+                    const bDate = b.last_played_at ? new Date(b.last_played_at) : null;
+                    if (!aDate && !bDate) return 0;
+                    if (!aDate) return 1;
+                    if (!bDate) return -1;
+                    return bDate - aDate;
+                });
+            case 'playtime_high':
+                return [...gamesList].sort((a, b) => (b.playtime_minutes || 0) - (a.playtime_minutes || 0));
+            case 'name_asc':
+                return [...gamesList].sort((a, b) => {
+                    const aName = a.igdb_name || a.platform_name || '';
+                    const bName = b.igdb_name || b.platform_name || '';
+                    return aName.localeCompare(bName);
+                });
+            default:
+                return gamesList;
+        }
+    }, []);
+
     const filteredGames = useMemo(() => {
         let result = gamesWithStatus;
 
@@ -481,8 +507,9 @@ export const useSyncReview = (platform) => {
             );
         }
 
-        return filterByTab(result, activeTab);
-    }, [gamesWithStatus, activeTab, searchQuery, filterByTab]);
+        const tabFiltered = filterByTab(result, activeTab);
+        return sortGamesByOption(tabFiltered, sortOption);
+    }, [gamesWithStatus, activeTab, searchQuery, filterByTab, sortOption, sortGamesByOption]);
 
     const counts = useMemo(() => ({
         ready: filterByTab(gamesWithStatus, 'ready').length,
@@ -543,6 +570,7 @@ export const useSyncReview = (platform) => {
         needsSync,
         activeTab,
         searchQuery,
+        sortOption,
         selectedIds,
         fadingIds,
         fixingGame,
@@ -563,6 +591,7 @@ export const useSyncReview = (platform) => {
         clearSelection,
         setActiveTab,
         setSearchQuery,
+        setSortOption,
         handleFixGame,
         handleGameFixed,
         closeFixModal,

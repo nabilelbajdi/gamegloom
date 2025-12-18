@@ -1,6 +1,7 @@
 // components/sync/SyncTabs.jsx
 import React from 'react';
 import { RefreshCw, Search, X } from 'lucide-react';
+import SortDropdown from '../common/SortDropdown';
 
 const TAB_INFO = {
     ready: { title: 'Ready to Import' },
@@ -20,6 +21,8 @@ const SyncTabs = ({
     counts,
     searchQuery,
     onSearchChange,
+    sortOption,
+    onSortChange,
     isSyncing,
     onSync,
 }) => {
@@ -39,6 +42,11 @@ const SyncTabs = ({
                 </div>
 
                 <div className="sync-tabs-actions">
+                    <SortDropdown
+                        sortOption={sortOption}
+                        onSortChange={onSortChange}
+                        isSyncPage={true}
+                    />
                     <div className="sync-search">
                         <Search size={14} />
                         <input
