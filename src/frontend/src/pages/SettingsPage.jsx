@@ -1,60 +1,321 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Link2, ChevronRight } from 'lucide-react';
-import IntegrationsTab from '../components/settings/IntegrationsTab';
+import { Loader2, ChevronRight, Trash2 } from 'lucide-react';
+import { fetchIntegrationStatus, unlinkPlatform, getSteamAuthUrl, linkSteamAccount, clearAllGames } from '../api';
+import BrandLogo from '../components/common/BrandLogo';
+import PSNConnectModal from '../components/settings/PSNConnectModal';
+import useToastStore from '../store/useToastStore';
+import useUserGameStore from '../store/useUserGameStore';
+import { formatDistanceToNow } from 'date-fns';
+import './SettingsPage.css';
 
 const SettingsPage = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('integrations');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const toast = useToastStore();
+    const { fetchCollection } = useUserGameStore();
+
+    const [status, setStatus] = useState({ steam: null, psn: null });
+    const [isLoading, setIsLoading] = useState(true);
+    const [showPSNModal, setShowPSNModal] = useState(false);
+    const [actionLoading, setActionLoading] = useState(null);
+
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [clearInput, setClearInput] = useState('');
+    const clearInputRef = useRef(null);
+
+    const loadStatus = async () => {
+        try {
+            setIsLoading(true);
+            const data = await fetchIntegrationStatus();
+            setStatus(data);
+        } catch (error) {
+            console.error('Failed to load integration status:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadStatus();
+        handleSteamCallback();
+    }, []);
+
+    useEffect(() => {
+        if (isConfirming && clearInputRef.current) {
+            setTimeout(() => clearInputRef.current?.focus(), 100);
+        }
+    }, [isConfirming]);
+
+    const handleSteamCallback = async () => {
+        const steamCallback = searchParams.get('steam_callback');
+        const openidClaimedId = searchParams.get('openid.claimed_id');
+
+        if (steamCallback && openidClaimedId) {
+            const openidParams = {
+                openid_ns: searchParams.get('openid.ns') || '',
+                openid_mode: searchParams.get('openid.mode') || '',
+                openid_op_endpoint: searchParams.get('openid.op_endpoint') || '',
+                openid_claimed_id: searchParams.get('openid.claimed_id') || '',
+                openid_identity: searchParams.get('openid.identity') || '',
+                openid_return_to: searchParams.get('openid.return_to') || '',
+                openid_response_nonce: searchParams.get('openid.response_nonce') || '',
+                openid_assoc_handle: searchParams.get('openid.assoc_handle') || '',
+                openid_signed: searchParams.get('openid.signed') || '',
+                openid_sig: searchParams.get('openid.sig') || '',
+            };
+
+            try {
+                setActionLoading('steam');
+                await linkSteamAccount(openidParams);
+                await loadStatus();
+                toast.success('Steam account linked');
+            } catch (error) {
+                toast.error(`Failed to link Steam: ${error.message}`);
+            } finally {
+                setActionLoading(null);
+            }
+            setSearchParams({});
+        }
+    };
+
+    const handleConnectSteam = async () => {
+        try {
+            setActionLoading('steam');
+            const { auth_url } = await getSteamAuthUrl();
+            window.location.href = auth_url;
+        } catch (error) {
+            toast.error(`Failed to connect: ${error.message}`);
+            setActionLoading(null);
+        }
+    };
+
+    const handleDisconnect = async (platform) => {
+        const name = platform === 'psn' ? 'PlayStation' : 'Steam';
+        if (!confirm(`Disconnect ${name}?`)) return;
+
+        try {
+            setActionLoading(platform);
+            await unlinkPlatform(platform);
+            await loadStatus();
+            toast.success(`${name} disconnected`);
+        } catch (error) {
+            toast.error('Failed to disconnect');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleClearLibrary = async () => {
+        if (clearInput !== 'DELETE') return;
+
+        try {
+            setActionLoading('clear');
+            const result = await clearAllGames();
+            toast.success(`Cleared ${result.count} games`);
+            setIsConfirming(false);
+            setClearInput('');
+            fetchCollection();
+        } catch (error) {
+            toast.error('Failed to clear library');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const cancelClear = () => {
+        setIsConfirming(false);
+        setClearInput('');
+    };
 
     if (!user) {
         return (
-            <div className="container max-w-4xl mx-auto px-4 py-8 mt-20">
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-lg text-gray-500">Please log in to access settings.</p>
+            <div className="settings-page">
+                <div className="settings-container">
+                    <h1 className="settings-title">Settings</h1>
                 </div>
             </div>
         );
     }
 
-    const tabs = [
-        { id: 'integrations', label: 'Integrations', icon: Link2 },
-    ];
-
-    return (
-        <div className="min-h-screen bg-black pt-20">
-            <div className="container max-w-4xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Settings</h1>
-                    <p className="text-gray-400">Manage your account and connected platforms</p>
+    const renderSkeleton = () => (
+        <div className="settings-skeleton">
+            {[1, 2].map(i => (
+                <div key={i} className="settings-skeleton-row">
+                    <div className="settings-skeleton-icon" />
+                    <div className="settings-skeleton-text">
+                        <div className="settings-skeleton-line" style={{ width: '120px' }} />
+                        <div className="settings-skeleton-line" style={{ width: '80px' }} />
+                    </div>
+                    <div className="settings-skeleton-btn" />
                 </div>
+            ))}
+        </div>
+    );
 
-                {/* Tabs */}
-                <div className="flex gap-2 mb-8 border-b border-gray-800 pb-4">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        return (
+    const renderIntegration = (platform, name, data) => {
+        const isConnected = !!data;
+        const username = data?.platform_username || data?.platform_user_id;
+        const lastSynced = data?.last_synced_at;
+        const loading = actionLoading === platform;
+
+        return (
+            <div className="integration-row">
+                <div className="integration-icon">
+                    <BrandLogo platform={platform} size={36} connected={isConnected} showStatus />
+                </div>
+                <div className="integration-content">
+                    <h3 className={`integration-name ${!isConnected ? 'disconnected' : ''}`}>
+                        {name}
+                    </h3>
+                    <p className="integration-meta">
+                        {isConnected ? (
+                            username || 'Connected'
+                        ) : (
+                            'Not connected'
+                        )}
+                        {isConnected && lastSynced && (
+                            <> · Synced {formatDistanceToNow(new Date(lastSynced), { addSuffix: true })}</>
+                        )}
+                    </p>
+                </div>
+                <div className="integration-actions">
+                    {isConnected ? (
+                        <>
                             <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${activeTab === tab.id
-                                        ? 'bg-[var(--color-primary)] text-black font-semibold'
-                                        : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-                                    }`}
+                                onClick={() => navigate(`/sync/${platform}`)}
+                                className="integration-btn secondary"
+                                disabled={loading}
                             >
-                                <Icon size={18} />
-                                {tab.label}
+                                Manage
                             </button>
-                        );
-                    })}
-                </div>
-
-                {/* Tab Content */}
-                <div className="fade-in">
-                    {activeTab === 'integrations' && <IntegrationsTab />}
+                            <button
+                                onClick={() => handleDisconnect(platform)}
+                                className="integration-btn ghost"
+                                disabled={loading}
+                            >
+                                {loading ? <Loader2 size={16} className="animate-spin" /> : 'Disconnect'}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={platform === 'steam' ? handleConnectSteam : () => setShowPSNModal(true)}
+                            className="integration-btn primary"
+                            disabled={loading}
+                        >
+                            {loading ? <Loader2 size={14} className="animate-spin" /> : 'Connect'}
+                        </button>
+                    )}
                 </div>
             </div>
+        );
+    };
+
+    return (
+        <div className="settings-page">
+            <div className="settings-container">
+                <header className="settings-header">
+                    <h1 className="settings-title">Settings</h1>
+                </header>
+
+                {/* Platforms */}
+                <section className="settings-card">
+                    <div className="settings-card-header">
+                        <h2 className="settings-card-title">Platforms</h2>
+                    </div>
+                    {isLoading ? renderSkeleton() : (
+                        <>
+                            {/* Connected */}
+                            {(status.steam || status.psn) && (
+                                <>
+                                    <div className="settings-subheader">Connected</div>
+                                    {status.steam && renderIntegration('steam', 'Steam', status.steam)}
+                                    {status.psn && renderIntegration('psn', 'PlayStation', status.psn)}
+                                </>
+                            )}
+
+                            {/* Not connected */}
+                            {(!status.steam || !status.psn) && (
+                                <>
+                                    <div className="settings-subheader">Not connected</div>
+                                    {!status.steam && renderIntegration('steam', 'Steam', null)}
+                                    {!status.psn && renderIntegration('psn', 'PlayStation', null)}
+                                </>
+                            )}
+                        </>
+                    )}
+                </section>
+
+                {/* Data */}
+                <section className="settings-card">
+                    <div className="settings-card-header">
+                        <h2 className="settings-card-title">Data</h2>
+                    </div>
+
+                    <div className={`clear-row-wrapper ${isConfirming ? 'confirming' : ''}`}>
+                        <button
+                            className="clear-row"
+                            onClick={() => !isConfirming && setIsConfirming(true)}
+                            disabled={isConfirming}
+                        >
+                            <div className="clear-row-icon">
+                                <Trash2 size={18} />
+                            </div>
+                            <div className="clear-row-content">
+                                <p className="clear-row-title">
+                                    {isConfirming ? 'Type DELETE to confirm' : 'Clear library'}
+                                </p>
+                                <p className="clear-row-meta">
+                                    {isConfirming ? 'This action cannot be undone' : 'Remove all games from your collection'}
+                                </p>
+                            </div>
+                            <ChevronRight size={18} className="clear-row-chevron" />
+                        </button>
+
+                        {isConfirming && (
+                            <div className="clear-confirm-panel">
+                                <input
+                                    ref={clearInputRef}
+                                    type="text"
+                                    value={clearInput}
+                                    onChange={(e) => setClearInput(e.target.value.toUpperCase())}
+                                    placeholder="Type DELETE"
+                                    className="clear-confirm-input"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleClearLibrary()}
+                                />
+                                <div className="clear-confirm-actions">
+                                    <button className="clear-confirm-btn cancel" onClick={cancelClear}>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="clear-confirm-btn confirm"
+                                        onClick={handleClearLibrary}
+                                        disabled={clearInput !== 'DELETE' || actionLoading === 'clear'}
+                                    >
+                                        {actionLoading === 'clear' ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            'Clear'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            </div>
+
+            {showPSNModal && (
+                <PSNConnectModal
+                    onClose={() => setShowPSNModal(false)}
+                    onConnected={() => {
+                        setShowPSNModal(false);
+                        loadStatus();
+                    }}
+                />
+            )}
         </div>
     );
 };
