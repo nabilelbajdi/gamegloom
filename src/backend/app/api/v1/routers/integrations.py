@@ -74,6 +74,7 @@ class PSNLibraryGame(BaseModel):
     igdb_cover_url: Optional[str] = None
     image_url: Optional[str] = None
     playtime_minutes: int = 0
+    last_played_at: Optional[datetime] = None
     match_confidence: Optional[float] = None
     match_method: Optional[str] = None
     status: str = "pending"  # 'pending' | 'imported' | 'hidden'
@@ -362,6 +363,7 @@ def get_psn_library(
             igdb_cover_url=g.igdb_cover_url,
             image_url=g.platform_image_url,
             playtime_minutes=g.playtime_minutes or 0,
+            last_played_at=g.last_played_at,
             match_confidence=g.match_confidence,
             match_method=g.match_method if g.status != 'hidden' else 'skipped',
             status=g.status  # 'pending' | 'imported' | 'hidden'
@@ -493,24 +495,27 @@ def import_psn_games(
             skipped += 1
             continue
         
-        # Add to library
-        user_game = UserGame(
-            user_id=current_user.id,
-            game_id=game.id,
-            status=game_req.list_type,
-            import_source="psn"
-        )
-        db.add(user_game)
-        imported += 1
-        
-        # Mark as imported in the sync cache for this igdb_id
-        # Find the cached game by igdb_id and mark it
+        # Find cached game to get playtime data
         from ..models.user_platform_game import UserPlatformGame
         cached_game = db.query(UserPlatformGame).filter(
             UserPlatformGame.user_id == current_user.id,
             UserPlatformGame.platform == 'psn',
             UserPlatformGame.igdb_id == game_req.igdb_id
         ).first()
+        
+        # Add to library with playtime data from cache
+        user_game = UserGame(
+            user_id=current_user.id,
+            game_id=game.id,
+            status=game_req.list_type,
+            import_source="psn",
+            playtime_minutes=cached_game.playtime_minutes if cached_game else None,
+            last_played_at=cached_game.last_played_at if cached_game else None
+        )
+        db.add(user_game)
+        imported += 1
+        
+        # Mark as imported in the sync cache
         if cached_game:
             cached_game.status = 'imported'
     

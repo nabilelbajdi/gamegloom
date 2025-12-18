@@ -114,6 +114,7 @@ def sync_psn_library(
         image_url = game.get("image_url")
         playtime = game.get("play_duration_minutes", 0) or 0
         first_played = game.get("first_played")
+        last_played = game.get("last_played")
         
         if platform_id in existing_cache:
             # Existing game - check for updates and re-evaluate status
@@ -124,6 +125,23 @@ def sync_psn_library(
                 cached.playtime_minutes = playtime
                 cached.updated_at = now
                 updated_games.append(cached)
+            
+            # Update last_played_at if provided and newer
+            if last_played:
+                # Normalize timezone for comparison
+                last_played_utc = last_played
+                if hasattr(last_played, 'tzinfo') and last_played.tzinfo is not None:
+                    last_played_utc = last_played.replace(tzinfo=None)
+                
+                cached_last_played = cached.last_played_at
+                if cached_last_played and hasattr(cached_last_played, 'tzinfo') and cached_last_played.tzinfo is not None:
+                    cached_last_played = cached_last_played.replace(tzinfo=None)
+                
+                if not cached_last_played or last_played_utc > cached_last_played:
+                    cached.last_played_at = last_played
+                    if cached not in updated_games:
+                        cached.updated_at = now
+                        updated_games.append(cached)
             
             # Re-evaluate status based on library presence; preserve 'hidden'
             if cached.status != 'hidden':
@@ -162,6 +180,7 @@ def sync_psn_library(
                 status=status,
                 playtime_minutes=playtime,
                 first_played=first_played,
+                last_played_at=last_played,
                 last_synced_at=now
             )
             db.add(new_game)

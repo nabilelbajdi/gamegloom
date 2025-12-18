@@ -90,7 +90,9 @@ def get_user_collection(
             added_at=user_game.added_at,
             updated_at=user_game.updated_at,
             status=user_game.status,
-            game_type_name=game.game_type_name
+            game_type_name=game.game_type_name,
+            playtime_minutes=user_game.playtime_minutes,
+            last_played_at=user_game.last_played_at
         )
         
         if user_game.status == GameStatus.WANT_TO_PLAY:
