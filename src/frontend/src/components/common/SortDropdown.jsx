@@ -23,7 +23,7 @@ const SortDropdown = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+
   // Choose the appropriate sort options based on whether this is a search page
   const SORT_OPTIONS = isSearchPage ? SEARCH_SORT_OPTIONS : LIBRARY_SORT_OPTIONS;
 
@@ -33,7 +33,7 @@ const SortDropdown = ({
         setIsOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -52,17 +52,16 @@ const SortDropdown = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${
-          isOpen 
-            ? "bg-surface/80 text-white" 
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${isOpen
+            ? "bg-surface/80 text-white"
             : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
-        } transition-all`}
+          } transition-all`}
       >
         <ArrowUpDown className="w-3.5 h-3.5" />
         <span>Sort by: {getCurrentSortLabel()}</span>
-        <ChevronDown 
+        <ChevronDown
           className={`w-3 h-3 ${isOpen ? "text-white" : "text-gray-500"} transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
@@ -75,11 +74,10 @@ const SortDropdown = ({
               <button
                 key={option.value}
                 onClick={() => handleSortSelect(option.value)}
-                className={`w-full text-left px-3 py-1.5 rounded text-[13px] flex items-center cursor-pointer ${
-                  sortOption === option.value 
-                    ? "bg-surface/80 text-white font-semibold" 
+                className={`w-full text-left px-3 py-1.5 rounded text-[13px] flex items-center cursor-pointer ${sortOption === option.value
+                    ? "bg-surface/80 text-white font-semibold"
                     : "text-gray-400 hover:bg-surface hover:text-white"
-                } transition-colors`}
+                  } transition-colors`}
               >
                 {sortOption === option.value && (
                   <Check className="w-3 h-3 mr-1.5 text-primary" />

@@ -4,11 +4,11 @@ import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import GridGameCard from "../game/GridGameCard";
 
-const GameGrid = ({ 
-  title, 
-  viewAllLink, 
-  games, 
-  loading, 
+const GameGrid = ({
+  title,
+  viewAllLink,
+  games,
+  loading,
   emptyContent,
   columnCount = { default: 2, sm: 3, md: 4, lg: 5, xl: 6 },
   showResultCount = false,
@@ -33,7 +33,7 @@ const GameGrid = ({
       </div>
       <h3 className="text-xl font-semibold text-light mb-2">No games found</h3>
       <p className="text-gray-400 max-w-md mb-4">
-        {searchQuery 
+        {searchQuery
           ? `No games match your search for "${searchQuery}"`
           : "No games found in this category"}
       </p>

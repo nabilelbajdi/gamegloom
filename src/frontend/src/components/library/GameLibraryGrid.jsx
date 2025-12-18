@@ -5,32 +5,32 @@ import { EmptyLists } from "./EmptyState";
 import { getActiveGames, sortGames } from "./LibraryUtils";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
 
-const GameLibraryGrid = ({ 
-  collection, 
-  activeTab, 
-  selectedList, 
-  myLists, 
-  searchQuery, 
+const GameLibraryGrid = ({
+  collection,
+  activeTab,
+  selectedList,
+  myLists,
+  searchQuery,
   viewMode = "grid",
   sortOption,
   activeFilters
 }) => {
   // Get filtered and sorted games list
   const activeGamesList = useMemo(() => {
-    const filteredGames = getActiveGames(collection, activeTab, selectedList, myLists, searchQuery);    
-    
+    const filteredGames = getActiveGames(collection, activeTab, selectedList, myLists, searchQuery);
+
     // Apply content type filter if specified in activeFilters
-    const contentTypeFiltered = activeFilters.contentTypes?.length 
-      ? filteredGames.filter(game => 
-          game.game_type_name && (
-            activeFilters.contentTypes.includes(game.game_type_name) ||
-            (game.game_type_name === "Main Game" && activeFilters.contentTypes.includes("Base Game"))
-          )
+    const contentTypeFiltered = activeFilters.contentTypes?.length
+      ? filteredGames.filter(game =>
+        game.game_type_name && (
+          activeFilters.contentTypes.includes(game.game_type_name) ||
+          (game.game_type_name === "Main Game" && activeFilters.contentTypes.includes("Base Game"))
         )
+      )
       : filteredGames;
-    
+
     // Apply other filters
-    const filteredByOptions = contentTypeFiltered.filter(game => 
+    const filteredByOptions = contentTypeFiltered.filter(game =>
       gamePassesAllFilters(game, {
         genres: activeFilters.genres,
         themes: activeFilters.themes,
@@ -40,7 +40,7 @@ const GameLibraryGrid = ({
         minRating: activeFilters.minRating
       })
     );
-    
+
     return sortGames(filteredByOptions, sortOption);
   }, [activeTab, sortOption, searchQuery, activeFilters, collection, selectedList, myLists]);
 
@@ -63,7 +63,7 @@ const GameLibraryGrid = ({
     <>
       {/* Game Grid or List */}
       {viewMode === "grid" ? (
-        <GameGrid 
+        <GameGrid
           games={activeGamesList}
           loading={false}
           emptyContent={activeGamesList.length === 0 ? <NoGamesFound /> : null}

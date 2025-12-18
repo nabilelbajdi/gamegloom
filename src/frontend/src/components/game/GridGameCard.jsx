@@ -7,32 +7,32 @@ import useStatusDropdown from "../../hooks/useStatusDropdown";
 
 const GridGameCard = ({ game, starRating, smallStatus = false }) => {
   const { user } = useAuth();
-  const { 
+  const {
     showStatusDropdown,
-    coverImageRef, 
-    handleCoverMouseLeave, 
-    handleStatusChange 
+    coverImageRef,
+    handleCoverMouseLeave,
+    handleStatusChange
   } = useStatusDropdown();
-  
+
   return (
-    <Link 
+    <Link
       to={`/game/${game.slug || game.igdb_id}`}
       className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface transition-all duration-300 hover:shadow-xl"
     >
       {/* Game Cover */}
       <div className="h-full" ref={coverImageRef} onMouseLeave={handleCoverMouseLeave}>
-        <img 
-          src={game.coverImage || game.cover_image} 
-          alt={game.name} 
+        <img
+          src={game.coverImage || game.cover_image}
+          alt={game.name}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90"
         />
-        
+
         {/* Hover gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
+
         {/* Status Ribbon */}
         <div className={`absolute top-0 left-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
-          <GameCardStatus 
+          <GameCardStatus
             game={game}
             onStatusChange={handleStatusChange}
             showDropdown={showStatusDropdown}

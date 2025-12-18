@@ -1,7 +1,7 @@
 // Filter games by search query
 export const filterGamesBySearch = (games, searchQuery) => {
   if (!searchQuery) return games;
-  return games.filter(game => 
+  return games.filter(game =>
     game.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 };
@@ -9,13 +9,13 @@ export const filterGamesBySearch = (games, searchQuery) => {
 // Get active games based on tab selection
 export const getActiveGames = (collection, activeTab, selectedList, myLists, searchQuery) => {
   if (!collection) return [];
-  
+
   const allGames = [
     ...(collection.want_to_play || []),
     ...(collection.playing || []),
     ...(collection.played || [])
   ];
-  
+
   switch (activeTab) {
     case "all":
       return filterGamesBySearch(allGames, searchQuery);

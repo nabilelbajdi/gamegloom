@@ -24,14 +24,14 @@ const MyLibraryPage = () => {
   const { lists, fetchLists, listsLoading } = useUserListStore();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Component state
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("added_new");
   const [viewMode, setViewMode] = useState("grid");
   const [selectedList, setSelectedList] = useState(null);
-  
+
   // Filter states
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
@@ -47,7 +47,7 @@ const MyLibraryPage = () => {
     if (tabParam && ['all', 'want_to_play', 'playing', 'played', 'my_lists'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
-    
+
     // Handle list selection from URL parameter using slug
     const listSlugParam = params.get('list');
     if (listSlugParam && tabParam === 'my_lists' && lists.length > 0) {
@@ -61,7 +61,7 @@ const MyLibraryPage = () => {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    
+
     if (tabId === 'all') {
       navigate('/library', { replace: true });
     } else {
@@ -72,7 +72,7 @@ const MyLibraryPage = () => {
   // Function to handle list selection with URL update
   const handleListSelect = (listId) => {
     setSelectedList(listId);
-    
+
     // Find the list name and create a slug
     const selectedList = lists.find(list => list.id === listId);
     if (selectedList) {
@@ -91,48 +91,48 @@ const MyLibraryPage = () => {
 
   // Calculate total games count
   const totalGames = collection ? (
-    (collection.want_to_play?.length || 0) + 
-    (collection.playing?.length || 0) + 
+    (collection.want_to_play?.length || 0) +
+    (collection.playing?.length || 0) +
     (collection.played?.length || 0)
   ) : 0;
 
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
   const extractFilterOptions = () => {
     if (!collection) return { allGenres: [], allThemes: [], allPlatforms: [], allGameModes: [], allPlayerPerspectives: [], allContentTypes: [] };
-    
+
     const allGames = [
       ...(collection.want_to_play || []),
       ...(collection.playing || []),
       ...(collection.played || [])
     ];
-    
+
     const allGenres = [...new Set(allGames
       .filter(game => game.genres)
       .flatMap(game => {
-        let genres = typeof game.genres === 'string' 
+        let genres = typeof game.genres === 'string'
           ? game.genres.split(',').map(g => g.trim())
           : game.genres;
         return genres;
       })
     )].sort();
-    
+
     const allThemes = [...new Set(allGames
       .filter(game => game.themes)
-      .flatMap(game => typeof game.themes === 'string' 
+      .flatMap(game => typeof game.themes === 'string'
         ? game.themes.split(',').map(t => t.trim())
         : game.themes)
     )].sort();
 
     const allPlatforms = [...new Set(allGames
       .filter(game => game.platforms)
-      .flatMap(game => typeof game.platforms === 'string' 
+      .flatMap(game => typeof game.platforms === 'string'
         ? game.platforms.split(',').map(p => p.trim())
           .map(p => p.replace("PC (Microsoft Windows)", "PC")
-                    .replace("PlayStation 5", "PS5")
-                    .replace("PlayStation 4", "PS4")
-                    .replace("Nintendo Switch", "Switch")
-                    .replace("PlayStation 3", "PS3")
-                    .replace("PlayStation 2", "PS2"))
+            .replace("PlayStation 5", "PS5")
+            .replace("PlayStation 4", "PS4")
+            .replace("Nintendo Switch", "Switch")
+            .replace("PlayStation 3", "PS3")
+            .replace("PlayStation 2", "PS2"))
         : game.platforms)
     )].sort();
 
@@ -140,7 +140,7 @@ const MyLibraryPage = () => {
       .filter(game => game.gameModes || game.game_modes)
       .flatMap(game => {
         const modes = game.gameModes || game.game_modes;
-        return typeof modes === 'string' 
+        return typeof modes === 'string'
           ? modes.split(',').map(m => m.trim())
           : modes;
       })
@@ -150,7 +150,7 @@ const MyLibraryPage = () => {
       .filter(game => game.playerPerspectives || game.player_perspectives)
       .flatMap(game => {
         const perspectives = game.playerPerspectives || game.player_perspectives;
-        return typeof perspectives === 'string' 
+        return typeof perspectives === 'string'
           ? perspectives.split(',').map(p => p.trim())
           : perspectives;
       })
@@ -265,14 +265,14 @@ const MyLibraryPage = () => {
 
     // Apply search filter
     if (searchQuery) {
-      baseGames = baseGames.filter(game => 
+      baseGames = baseGames.filter(game =>
         game.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Apply content type filter
     if (contentTypeFilters.length > 0) {
-      baseGames = baseGames.filter(game => 
+      baseGames = baseGames.filter(game =>
         game.game_type_name && (
           contentTypeFilters.includes(game.game_type_name) ||
           (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
@@ -281,11 +281,11 @@ const MyLibraryPage = () => {
     }
 
     // Apply other filters
-    if (genreFilters.length > 0 || themeFilters.length > 0 || 
-        platformFilters.length > 0 || gameModeFilters.length > 0 || 
-        perspectiveFilters.length > 0 || minRatingFilter > 0) {
-      
-      baseGames = baseGames.filter(game => 
+    if (genreFilters.length > 0 || themeFilters.length > 0 ||
+      platformFilters.length > 0 || gameModeFilters.length > 0 ||
+      perspectiveFilters.length > 0 || minRatingFilter > 0) {
+
+      baseGames = baseGames.filter(game =>
         gamePassesAllFilters(game, {
           genres: genreFilters,
           themes: themeFilters,
@@ -316,7 +316,7 @@ const MyLibraryPage = () => {
       {/* Tabs Navigation */}
       <div className="sticky top-12 z-30 bg-black/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
         <div className="container mx-auto px-4 py-2">
-          <LibraryTabs 
+          <LibraryTabs
             activeTab={activeTab}
             setActiveTab={handleTabChange}
             collection={collection}
@@ -356,7 +356,7 @@ const MyLibraryPage = () => {
                   onTitleFilterChange={(value) => setSearchQuery(value)}
                 />
               </div>
-              
+
               {/* Right Column - Games */}
               <div className="flex-1">
                 {/* Card Container */}
@@ -384,7 +384,7 @@ const MyLibraryPage = () => {
                           <div className="flex items-center gap-2 order-0 sm:order-none">
                             {/* Filter Dropdown - Only visible on mobile */}
                             <div className="lg:hidden">
-                              <FilterDropdown 
+                              <FilterDropdown
                                 allGenres={allGenres}
                                 allThemes={allThemes}
                                 allPlatforms={allPlatforms}
@@ -415,7 +415,7 @@ const MyLibraryPage = () => {
                             />
                           </div>
                         </div>
-                        
+
                         {/* Active Filters Display */}
                         <ActiveFilters
                           genreFilters={genreFilters}
@@ -438,7 +438,7 @@ const MyLibraryPage = () => {
 
                       {/* Game Grid Display */}
                       <div className="p-5">
-                        <GameLibraryGrid 
+                        <GameLibraryGrid
                           collection={collection}
                           activeTab={activeTab}
                           selectedList={selectedList}
