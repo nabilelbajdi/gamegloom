@@ -36,6 +36,7 @@ class UserPlatformGame(Base):
     # Metadata
     playtime_minutes = Column(Integer, default=0)
     first_played = Column(DateTime, nullable=True)
+    last_played_at = Column(DateTime, nullable=True)  # Last played date from platform
     last_synced_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -66,5 +67,6 @@ class UserPlatformGame(Base):
             "match_method": self.match_method,
             "status": self.status,
             "playtime_minutes": self.playtime_minutes,
+            "last_played_at": self.last_played_at.isoformat() if self.last_played_at else None,
             "last_synced_at": self.last_synced_at.isoformat() if self.last_synced_at else None,
         }

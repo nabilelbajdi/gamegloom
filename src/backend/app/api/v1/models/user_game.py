@@ -32,6 +32,7 @@ class UserGame(Base):
     # Platform import tracking
     playtime_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Imported from Steam/PSN
     import_source: Mapped[ImportSource | None] = mapped_column(String(20), nullable=True, default=None)  # Where this entry came from
+    last_played_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # Last played date from platform
     
     # Relationships
     game = relationship("Game")

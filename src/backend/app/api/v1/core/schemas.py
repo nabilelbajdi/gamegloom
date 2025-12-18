@@ -178,6 +178,8 @@ class GameBasicInfo(BaseModel):
     updated_at: datetime
     status: GameStatus
     game_type_name: str | None = None
+    playtime_minutes: int | None = None
+    last_played_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
