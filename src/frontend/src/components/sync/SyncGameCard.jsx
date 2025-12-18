@@ -95,6 +95,16 @@ const SyncGameCard = ({
                     {game.platform === 'psn' ? 'PSN' : 'Steam'}
                 </div>
 
+                {/* Playtime badge */}
+                {game.playtime_minutes > 0 && (
+                    <div className="sync-card-playtime">
+                        {game.playtime_minutes >= 60
+                            ? `${Math.floor(game.playtime_minutes / 60)}h`
+                            : `${game.playtime_minutes}m`
+                        }
+                    </div>
+                )}
+
                 {/* Selected check */}
                 {selected && (
                     <div className="sync-card-check">

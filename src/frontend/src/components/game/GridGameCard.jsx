@@ -40,6 +40,24 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
           />
         </div>
 
+        {/* Rating badge - top right */}
+        {!starRating && game.rating !== "N/A" && game.rating !== undefined && game.rating !== null && !isNaN(parseFloat(game.rating)) && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-1 bg-black/60 rounded backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <Star className="w-3 h-3 text-primary fill-primary" />
+            <span className="text-[11px] font-semibold text-gray-300 translate-y-[1px]">{parseFloat(game.rating).toFixed(1)}</span>
+          </div>
+        )}
+
+        {/* Playtime badge - bottom right */}
+        {game.playtime_minutes > 0 && (
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 text-[11px] font-semibold text-white z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {game.playtime_minutes >= 60
+              ? `${Math.floor(game.playtime_minutes / 60)}h`
+              : `${game.playtime_minutes}m`
+            }
+          </div>
+        )}
+
         {/* Game information overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
           <h3 className="text-sm font-semibold text-white truncate">{game.name}</h3>
@@ -47,16 +65,6 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
             <span className="text-xs text-gray-300">
               {formatGenres(game.genres, 1)}
             </span>
-            {starRating ? (
-              starRating
-            ) : (
-              game.rating !== "N/A" && game.rating !== undefined && game.rating !== null && !isNaN(parseFloat(game.rating)) && (
-                <div className="flex items-center">
-                  <Star className="w-3 h-3 text-primary fill-primary" />
-                  <span className="text-xs text-gray-300 ml-1">{parseFloat(game.rating).toFixed(1)}</span>
-                </div>
-              )
-            )}
           </div>
         </div>
       </div>
