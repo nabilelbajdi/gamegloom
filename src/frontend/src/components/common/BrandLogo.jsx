@@ -1,8 +1,9 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 
 // Import SVG logos
-import SteamLogo from '../../assets/logos/steam.svg';
-import PlayStationLogo from '../../assets/logos/playstation.svg';
+import SteamLogo from '../../assets/logos/steam_logo.svg';
+import PlayStationLogo from '../../assets/logos/psn_logo.svg';
 
 const logos = {
     steam: SteamLogo,
@@ -11,17 +12,13 @@ const logos = {
 };
 
 /**
- * BrandLogo - Renders platform brand logos with proper styling
- * 
- * @param {string} platform - Platform identifier ('steam', 'psn', 'playstation')
- * @param {number} size - Size in pixels (default: 32)
- * @param {boolean} connected - Whether the platform is connected (affects opacity/grayscale)
- * @param {string} className - Additional CSS classes
+ * BrandLogo - Platform logo with optional connected indicator.
  */
 const BrandLogo = ({
     platform,
     size = 32,
-    connected = true,
+    connected = false,
+    showStatus = false,
     className = ''
 }) => {
     const logoSrc = logos[platform?.toLowerCase()];
@@ -31,20 +28,34 @@ const BrandLogo = ({
     }
 
     return (
-        <img
-            src={logoSrc}
-            alt={`${platform} logo`}
-            width={size}
-            height={size}
-            className={`
-        transition-all duration-300
-        ${connected ? 'opacity-100' : 'opacity-40 grayscale'}
-        ${className}
-      `}
-            style={{
-                filter: connected ? 'none' : 'grayscale(100%)',
-            }}
-        />
+        <div className={`brand-logo ${className}`} style={{ position: 'relative', width: size, height: size }}>
+            <img
+                src={logoSrc}
+                alt={`${platform} logo`}
+                width={size}
+                height={size}
+                style={{ display: 'block' }}
+            />
+            {showStatus && connected && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: -2,
+                        right: -2,
+                        width: 14,
+                        height: 14,
+                        background: '#1ed760',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid #1a1a1a',
+                    }}
+                >
+                    <Check size={8} color="black" strokeWidth={3} />
+                </div>
+            )}
+        </div>
     );
 };
 
