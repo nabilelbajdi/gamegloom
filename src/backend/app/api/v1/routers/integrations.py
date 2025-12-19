@@ -69,6 +69,7 @@ class PSNLibraryGame(BaseModel):
     """A PSN game matched to IGDB, ready for import."""
     platform_id: str
     platform_name: str
+    platform_category: Optional[str] = None  # 'ps4' | 'ps5' | 'ps4,ps5' (for aggregated)
     igdb_id: Optional[int] = None
     igdb_name: Optional[str] = None
     igdb_cover_url: Optional[str] = None
@@ -78,6 +79,15 @@ class PSNLibraryGame(BaseModel):
     match_confidence: Optional[float] = None
     match_method: Optional[str] = None
     status: str = "pending"  # 'pending' | 'imported' | 'hidden'
+
+
+def _get_platform_category(title_id: str) -> str:
+    """Get platform category from PSN title_id prefix."""
+    if title_id.startswith("PPSA"):
+        return "ps5"
+    elif title_id.startswith("CUSA"):
+        return "ps4"
+    return "ps4"  # Default to PS4 for unknown
 
 
 class ImportGameRequest(BaseModel):
@@ -338,6 +348,8 @@ def get_psn_library(
     
     Returns games from local cache. Use POST /psn/sync to refresh from PSN.
     Fast (~50ms) because it reads from database, not PSN API.
+    
+    Games with the same IGDB ID are aggregated (PS4/PS5 versions combined).
     """
     from ..services import platform_sync_service
     
@@ -353,11 +365,89 @@ def get_psn_library(
         db, current_user.id, 'psn', include_hidden=include_hidden
     )
     
-    # Convert to response schema
-    result = [
-        PSNLibraryGame(
+    # Aggregate by IGDB ID to combine PS4/PS5 versions of the same game
+    # Games without IGDB match (igdb_id=None) stay separate
+    aggregated = {}
+    unmatched = []
+    
+    for g in games:
+        category = _get_platform_category(g.platform_id)
+        
+        if g.igdb_id is None:
+            # Unmatched games stay separate
+            unmatched.append((g, category))
+        elif g.igdb_id in aggregated:
+            # Combine with existing entry
+            existing = aggregated[g.igdb_id]
+            existing["playtime_minutes"] += g.playtime_minutes or 0
+            
+            # Track all platform categories
+            if category not in existing["_categories"]:
+                existing["_categories"].add(category)
+            
+            # Keep the latest last_played_at
+            if g.last_played_at:
+                if not existing["last_played_at"] or g.last_played_at > existing["last_played_at"]:
+                    existing["last_played_at"] = g.last_played_at
+            
+            # Keep higher confidence match
+            if g.match_confidence and (not existing["match_confidence"] or g.match_confidence > existing["match_confidence"]):
+                existing["match_confidence"] = g.match_confidence
+                existing["match_method"] = g.match_method
+            
+            # If any version is imported, mark as imported
+            if g.status == 'imported':
+                existing["status"] = 'imported'
+            # If any version is hidden, mark as hidden (unless imported)
+            elif g.status == 'hidden' and existing["status"] != 'imported':
+                existing["status"] = 'hidden'
+        else:
+            # First entry for this IGDB ID
+            aggregated[g.igdb_id] = {
+                "platform_id": g.platform_id,
+                "platform_name": g.platform_name,
+                "_categories": {category},
+                "igdb_id": g.igdb_id,
+                "igdb_name": g.igdb_name,
+                "igdb_cover_url": g.igdb_cover_url,
+                "image_url": g.platform_image_url,
+                "playtime_minutes": g.playtime_minutes or 0,
+                "last_played_at": g.last_played_at,
+                "match_confidence": g.match_confidence,
+                "match_method": g.match_method if g.status != 'hidden' else 'skipped',
+                "status": g.status
+            }
+    
+    # Build result from aggregated + unmatched
+    result = []
+    
+    # Add aggregated matched games
+    for data in aggregated.values():
+        # Convert categories set to comma-separated string
+        categories = sorted(data["_categories"])
+        platform_category = ",".join(categories)
+        
+        result.append(PSNLibraryGame(
+            platform_id=data["platform_id"],
+            platform_name=data["platform_name"],
+            platform_category=platform_category,
+            igdb_id=data["igdb_id"],
+            igdb_name=data["igdb_name"],
+            igdb_cover_url=data["igdb_cover_url"],
+            image_url=data["image_url"],
+            playtime_minutes=data["playtime_minutes"],
+            last_played_at=data["last_played_at"],
+            match_confidence=data["match_confidence"],
+            match_method=data["match_method"],
+            status=data["status"]
+        ))
+    
+    # Add unmatched games
+    for g, category in unmatched:
+        result.append(PSNLibraryGame(
             platform_id=g.platform_id,
             platform_name=g.platform_name,
+            platform_category=category,
             igdb_id=g.igdb_id,
             igdb_name=g.igdb_name,
             igdb_cover_url=g.igdb_cover_url,
@@ -366,12 +456,10 @@ def get_psn_library(
             last_played_at=g.last_played_at,
             match_confidence=g.match_confidence,
             match_method=g.match_method if g.status != 'hidden' else 'skipped',
-            status=g.status  # 'pending' | 'imported' | 'hidden'
-        )
-        for g in games
-    ]
+            status=g.status
+        ))
     
-    logger.info(f"[PSN] Library read for user {current_user.id}: {len(result)} games from cache")
+    logger.info(f"[PSN] Library read for user {current_user.id}: {len(result)} games (aggregated from {len(games)} entries)")
     return result
 
 
@@ -432,6 +520,30 @@ def sync_psn_library(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(e)
         )
+
+
+@router.delete("/psn/cache")
+def clear_psn_cache(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear cached PSN library data.
+    
+    Use this to force a fresh sync after data structure changes.
+    The next sync will re-fetch all games from PSN and re-match to IGDB.
+    """
+    from ..models.user_platform_game import UserPlatformGame
+    
+    deleted_count = db.query(UserPlatformGame).filter(
+        UserPlatformGame.user_id == current_user.id,
+        UserPlatformGame.platform == 'psn'
+    ).delete()
+    
+    db.commit()
+    
+    logger.info(f"[PSN] Cache cleared for user {current_user.id}: {deleted_count} entries deleted")
+    return {"message": f"Cleared {deleted_count} cached games. Re-sync to fetch fresh data."}
 
 
 @router.post("/psn/import", response_model=ImportResponse)
@@ -495,28 +607,36 @@ def import_psn_games(
             skipped += 1
             continue
         
-        # Find cached game to get playtime data
+        # Find ALL cached games to get aggregated playtime data
+        # (for games with both PS4/PS5 versions, there may be multiple entries)
         from ..models.user_platform_game import UserPlatformGame
-        cached_game = db.query(UserPlatformGame).filter(
+        cached_games = db.query(UserPlatformGame).filter(
             UserPlatformGame.user_id == current_user.id,
             UserPlatformGame.platform == 'psn',
             UserPlatformGame.igdb_id == game_req.igdb_id
-        ).first()
+        ).all()
         
-        # Add to library with playtime data from cache
+        # Sum playtime across all versions (PS4 + PS5) and get most recent last_played
+        total_playtime = sum(g.playtime_minutes or 0 for g in cached_games) if cached_games else None
+        last_played = max(
+            (g.last_played_at for g in cached_games if g.last_played_at),
+            default=None
+        ) if cached_games else None
+        
+        # Add to library with aggregated playtime data from cache
         user_game = UserGame(
             user_id=current_user.id,
             game_id=game.id,
             status=game_req.list_type,
             import_source="psn",
-            playtime_minutes=cached_game.playtime_minutes if cached_game else None,
-            last_played_at=cached_game.last_played_at if cached_game else None
+            playtime_minutes=total_playtime,
+            last_played_at=last_played
         )
         db.add(user_game)
         imported += 1
         
-        # Mark as imported in the sync cache
-        if cached_game:
+        # Mark all versions as imported in the sync cache
+        for cached_game in cached_games:
             cached_game.status = 'imported'
     
     db.commit()

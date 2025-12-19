@@ -344,10 +344,13 @@ def match_game_to_igdb(
     # Step 4: Partial name search (prefix match, min 5 chars)
     clean_name = _clean_name(platform_name)
     if len(clean_name) >= 5:
-        game = db.query(Game).filter(
+        # Get all matching games, ordered by igdb_id (lower = original, not localized version)
+        candidates = db.query(Game).filter(
             Game.name.ilike(f"{clean_name}%")
-        ).first()
-        if game:
+        ).order_by(Game.igdb_id).limit(5).all()
+        
+        if candidates:
+            game = candidates[0]  # Take lowest igdb_id (usually the original/English version)
             logger.debug(f"[Match] {platform_name} → {game.name} (partial)")
             return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
     
@@ -387,22 +390,23 @@ def get_psn_games(username: str) -> list[dict]:
                 raise PSNServiceError(f"PSN user '{username}' not found")
             raise PSNServiceError(f"Failed to find PSN user: {e}")
         
-        games = []
+        # First, collect all games from title_stats
+        raw_games = []
         try:
             for stat in user.title_stats(limit=None):
-                name = _clean_psn_name(stat.name or "")
+                raw_name = stat.name or ""
                 
-                # Skip non-game apps
-                if is_non_game(name):
+                # Skip non-game apps early
+                if is_non_game(_clean_psn_name(raw_name)):
                     continue
                 
                 play_mins = 0
                 if stat.play_duration:
                     play_mins = int(stat.play_duration.total_seconds() / 60)
                 
-                games.append({
+                raw_games.append({
                     "title_id": stat.title_id,
-                    "name": name,
+                    "raw_name": raw_name,
                     "image_url": stat.image_url,
                     "play_duration_minutes": play_mins,
                     "play_count": stat.play_count or 0,
@@ -417,42 +421,44 @@ def get_psn_games(username: str) -> list[dict]:
                 )
             raise PSNServiceError(f"Failed to fetch games: {e}")
         
-        # Aggregate duplicates (PS4/PS5 versions) by game name
-        aggregated = {}
-        for game in games:
-            name = game["name"]
-            if name in aggregated:
-                aggregated[name]["play_duration_minutes"] += game["play_duration_minutes"]
-                aggregated[name]["play_count"] += game["play_count"]
-                
-                if game["last_played"] and (
-                    not aggregated[name]["last_played"] or 
-                    game["last_played"] > aggregated[name]["last_played"]
-                ):
-                    aggregated[name]["last_played"] = game["last_played"]
-                    
-                if game["first_played"] and (
-                    not aggregated[name]["first_played"] or 
-                    game["first_played"] < aggregated[name]["first_played"]
-                ):
-                    aggregated[name]["first_played"] = game["first_played"]
-                
-                # Keep image from entry with more playtime
-                if game["play_duration_minutes"] > aggregated[name].get("_max_playtime", 0):
-                    aggregated[name]["image_url"] = game["image_url"]
-                    aggregated[name]["title_id"] = game["title_id"]
-                    aggregated[name]["_max_playtime"] = game["play_duration_minutes"]
+        # Static mapping for known games where PSN name doesn't match the actual game
+        # This happens when games are "upgraded" (e.g., OW1 became OW2 on PSN)
+        # Keys are title_ids from PSN, values are the correct game names
+        TITLE_ID_OVERRIDE = {
+            # Overwatch 1 (original) - PSN shows as "Overwatch 2" but these are OW1 title_ids
+            "CUSA03974_00": "Overwatch",  # PS4 Overwatch 1
+            "CUSA04961_00": "Overwatch",  # PS4 Overwatch 1 (alternate region?)
+            # Note: PPSA07821_00, PPSA08257_00, CUSA34317_00 are actual OW2 title_ids
+        }
+        
+        logger.info(f"[PSN] Using static override map for {len(TITLE_ID_OVERRIDE)} known games")
+        
+        # Build final games list using override names where available
+        games = []
+        for game in raw_games:
+            title_id = game["title_id"]
+            raw_name = game["raw_name"]
+            
+            # Use static override if available, otherwise use current name
+            if title_id in TITLE_ID_OVERRIDE:
+                name = TITLE_ID_OVERRIDE[title_id]
             else:
-                aggregated[name] = game.copy()
-                aggregated[name]["_max_playtime"] = game["play_duration_minutes"]
+                name = _clean_psn_name(raw_name)
+            
+            games.append({
+                "title_id": title_id,
+                "name": name,
+                "image_url": game["image_url"],
+                "play_duration_minutes": game["play_duration_minutes"],
+                "play_count": game["play_count"],
+                "last_played": game["last_played"],
+                "first_played": game["first_played"],
+            })
         
-        # Clean up internal fields
-        result = list(aggregated.values())
-        for g in result:
-            g.pop("_max_playtime", None)
-        
-        logger.info(f"[PSN] Fetched {len(result)} games for user '{username}'")
-        return result
+        # Return all games individually - aggregation will happen in sync service
+        # after IGDB matching (so we combine by IGDB ID, not by name)
+        logger.info(f"[PSN] Fetched {len(games)} games for user '{username}'")
+        return games
         
     except PSNServiceError:
         raise
