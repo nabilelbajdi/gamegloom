@@ -57,6 +57,7 @@ class UserPlatformGame(Base):
         """Convert to dictionary for API response."""
         return {
             "id": self.id,
+            "platform": self.platform,  # 'steam' or 'psn'
             "platform_id": self.platform_id,
             "platform_name": self.platform_name,
             "platform_image_url": self.platform_image_url,

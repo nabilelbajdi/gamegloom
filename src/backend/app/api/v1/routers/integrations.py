@@ -23,7 +23,7 @@ from ..models.user_game import UserGame
 from ..models.game import Game as GameModel
 from ...db_setup import get_db
 from ...settings import settings
-from ..services import steam_service, psn_service
+from ..services import steam_service, psn_service, platform_sync_service
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,23 @@ class SteamGame(BaseModel):
     img_icon_url: Optional[str] = None
 
 
+class SteamLibraryGame(BaseModel):
+    platform: str = 'steam'  # Always 'steam' for this response
+    platform_id: str
+    platform_name: str
+    platform_image_url: Optional[str] = None  # Steam CDN cover
+    igdb_id: Optional[int] = None
+    igdb_name: Optional[str] = None
+    igdb_cover_url: Optional[str] = None
+    image_url: Optional[str] = None
+    playtime_minutes: int = 0
+    last_played_at: Optional[datetime] = None
+    match_confidence: Optional[float] = None
+    match_method: Optional[str] = None
+    status: str = 'pending'
+    platform_category: Optional[str] = "PC"
+
+
 class PSNLibraryGame(BaseModel):
     """A PSN game matched to IGDB, ready for import."""
     platform_id: str
@@ -92,8 +109,10 @@ def _get_platform_category(title_id: str) -> str:
 
 class ImportGameRequest(BaseModel):
     """Single game import request."""
+    platform_id: str
     igdb_id: int
     list_type: str = "played"
+
 
 
 class ImportGamesRequest(BaseModel):
@@ -114,6 +133,25 @@ class SyncResponse(BaseModel):
     updated_count: int
     total_count: int
     message: str
+
+
+class SkipGameRequest(BaseModel):
+    """Request to skip (hide) a game from sync."""
+    platform_id: str
+
+
+class FixMatchRequest(BaseModel):
+    """Request to manually match a platform game to IGDB."""
+    platform_id: str
+    igdb_id: int
+    igdb_name: Optional[str] = None
+    igdb_cover_url: Optional[str] = None
+
+
+class SteamLinkManualRequest(BaseModel):
+    """Request to link Steam account via manual identifier."""
+    identifier: str
+
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -213,12 +251,152 @@ def link_steam_account(
         )
 
 
-@router.get("/steam/games", response_model=List[SteamGame])
-def get_steam_games(
+class SteamProfilePreview(BaseModel):
+    """Steam profile preview for linking confirmation."""
+    steam_id: str
+    persona_name: str
+    avatar_url: Optional[str] = None
+    profile_url: Optional[str] = None
+    game_count: Optional[int] = None
+
+
+@router.get("/steam/preview/{identifier}", response_model=SteamProfilePreview)
+def preview_steam_profile(
+    identifier: str,
+    current_user: User = Depends(security.get_current_user)
+):
+    """
+    Preview a Steam profile before linking.
+    
+    Accepts: Steam64 ID, profile URL, custom URL, or vanity name.
+    Returns profile info (avatar, name) for user confirmation.
+    """
+    if not settings.STEAM_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Steam integration is not configured"
+        )
+    
+    # Resolve the identifier to a Steam64 ID
+    steam_id = steam_service.extract_steam_id_from_input(identifier)
+    
+    if not steam_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Could not resolve Steam ID. Check the username or URL."
+        )
+    
+    try:
+        # Get profile summary
+        profile = steam_service.get_steam_user_summary(steam_id)
+        
+        # Optionally get game count (fast, doesn't fetch full list)
+        game_count = None
+        try:
+            games = steam_service.get_owned_games(steam_id)
+            game_count = len(games) if games else 0
+        except Exception:
+            pass  # Non-critical, just skip if it fails
+        
+        return SteamProfilePreview(
+            steam_id=steam_id,
+            persona_name=profile.get("personaname", "Unknown"),
+            avatar_url=profile.get("avatarfull") or profile.get("avatar"),
+            profile_url=profile.get("profileurl"),
+            game_count=game_count
+        )
+    except steam_service.SteamServiceError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Profile not found or is private"
+        )
+
+
+@router.post("/steam/link-manual")
+
+def link_steam_account_manual(
+    request: SteamLinkManualRequest,
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all games from the user's linked Steam account."""
+    """Link a Steam account via manual ID, URL, or vanity name."""
+    if not settings.STEAM_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Steam integration is not configured"
+        )
+    
+    steam_id = steam_service.extract_steam_id_from_input(request.identifier)
+    
+    if not steam_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not resolve Steam ID. Please provide a valid SteamID64, Profile URL, or Custom URL name."
+        )
+    
+    try:
+        link = steam_service.link_steam_account(db, current_user.id, steam_id)
+        return {
+            "message": "Steam account linked successfully",
+            "platform_username": link.platform_username,
+            "platform_user_id": link.platform_user_id
+        }
+    except steam_service.SteamServiceError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.get("/steam/library", response_model=List[SteamLibraryGame])
+def get_steam_library(
+    include_hidden: bool = Query(False, description="Include hidden/skipped games"),
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all games from the user's cached Steam library."""
+    link = steam_service.get_steam_link(db, current_user.id)
+    if not link:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No Steam account linked"
+        )
+    
+    games = platform_sync_service.get_cached_games(
+        db, current_user.id, platform='steam', include_hidden=include_hidden
+    )
+    
+    return [
+        SteamLibraryGame(
+            platform_id=g.platform_id,
+            platform_name=g.platform_name,
+            igdb_id=g.igdb_id,
+            igdb_name=g.igdb_name,
+            igdb_cover_url=g.igdb_cover_url,
+            image_url=g.platform_image_url,
+            playtime_minutes=g.playtime_minutes or 0,
+            last_played_at=g.last_played_at,
+            match_confidence=g.match_confidence,
+            match_method=g.match_method,
+            status=g.status,
+            platform_category="PC"
+        )
+
+        for g in games
+    ]
+
+
+@router.post("/steam/sync", response_model=SyncResponse)
+def sync_steam_library(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Sync Steam library from Steam API to local cache."""
     link = steam_service.get_steam_link(db, current_user.id)
     if not link:
         raise HTTPException(
@@ -227,21 +405,140 @@ def get_steam_games(
         )
     
     try:
-        games = steam_service.get_owned_games(link.platform_user_id)
-        return [
-            SteamGame(
-                appid=g["appid"],
-                name=g.get("name", f"App {g['appid']}"),
-                playtime_minutes=g.get("playtime_forever", 0),
-                img_icon_url=g.get("img_icon_url")
-            )
-            for g in games
-        ]
+        # Get existing IGDB IDs for 'imported' status evaluation
+        from ..models.user_game import UserGame
+        existing_igdb_ids = set(
+            igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
+                UserGame, UserGame.game_id == GameModel.id
+            ).filter(UserGame.user_id == current_user.id).all()
+        )
+        
+        result = platform_sync_service.sync_steam_library(
+            db=db,
+            user_id=current_user.id,
+            steam_id=link.platform_user_id,
+            existing_igdb_ids=existing_igdb_ids
+        )
+        
+        return SyncResponse(
+            new_count=result["new_count"],
+            updated_count=result["updated_count"],
+            total_count=result["total_count"],
+            message=f"Synced {result['total_count']} games from Steam ({result['new_count']} new)"
+        )
     except steam_service.SteamServiceError as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(e)
         )
+    except Exception as e:
+        logger.error(f"Steam sync error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal sync error: {e}"
+        )
+
+
+@router.post("/steam/import", response_model=ImportResponse)
+def import_steam_games(
+    request: ImportGamesRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Import matched Steam games to user library.
+    Aggregates playtime from all platforms.
+    """
+    try:
+        # Convert Pydantic models to dicts for the service
+        games_dict = [g.dict() for g in request.games]
+        
+        imported, skipped = platform_sync_service.import_games_to_library(
+            db=db,
+            user_id=current_user.id,
+            platform='steam',
+            games_data=games_dict
+        )
+        
+        return ImportResponse(
+            imported=imported,
+            skipped=skipped,
+            message=f"Imported {imported} games to library"
+        )
+    except Exception as e:
+        logger.error(f"[Steam Import] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/steam/preferences/skip")
+def skip_steam_game(
+    request: SkipGameRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Hide a Steam game from sync."""
+    game = platform_sync_service.update_game_status(
+        db, current_user.id, 'steam', request.platform_id, 'hidden'
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found in sync cache")
+    return {"message": "Game hidden"}
+
+
+@router.post("/steam/preferences/match")
+def fix_steam_match(
+    request: FixMatchRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Manually match a Steam game to IGDB."""
+    game = platform_sync_service.update_game_match(
+        db, current_user.id, 'steam', request.platform_id,
+        request.igdb_id, request.igdb_name, request.igdb_cover_url
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found in sync cache")
+    return {"message": "Match saved"}
+
+
+@router.delete("/steam/preferences/{platform_id}")
+def restore_steam_game(
+    platform_id: str,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Restore a hidden Steam game."""
+    game = platform_sync_service.update_game_status(
+        db, current_user.id, 'steam', platform_id, 'pending'
+    )
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found in sync cache")
+    return {"message": "Game restored"}
+
+
+@router.delete("/steam/cache")
+def clear_steam_cache(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear cached Steam library data.
+    
+    Use this to force a fresh sync after data structure changes.
+    The next sync will re-fetch all games from Steam and re-match to IGDB.
+    """
+    from ..models.user_platform_game import UserPlatformGame
+    
+    deleted_count = db.query(UserPlatformGame).filter(
+        UserPlatformGame.user_id == current_user.id,
+        UserPlatformGame.platform == 'steam'
+    ).delete()
+    
+    db.commit()
+    
+    logger.info(f"[Steam] Cache cleared for user {current_user.id}: {deleted_count} entries deleted")
+    return {"message": f"Cleared {deleted_count} cached games. Re-sync to fetch fresh data."}
+
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -553,101 +850,28 @@ def import_psn_games(
     db: Session = Depends(get_db)
 ):
     """
-    Import matched games directly to user library.
-    
-    For games not in the local database, fetches from IGDB first.
-    Idempotent - importing the same game twice just skips it.
+    Import matched PSN games to user library.
+    Aggregates playtime from all platforms.
     """
-    from ..core.igdb_service import fetch_from_igdb, process_igdb_data
-    from ..services import platform_sync_service
-    
-    imported = 0
-    skipped = 0
-    
-    for game_req in request.games:
-        # Find game in local database
-        game = db.query(GameModel).filter(
-            GameModel.igdb_id == game_req.igdb_id
-        ).first()
+    try:
+        # Convert Pydantic models to dicts for the service
+        games_dict = [g.dict() for g in request.games]
         
-        if not game:
-            # Fetch from IGDB and create
-            try:
-                igdb_response = fetch_from_igdb(game_id=game_req.igdb_id)
-                if igdb_response and len(igdb_response) > 0:
-                    igdb_data = process_igdb_data(igdb_response[0])
-                    if igdb_data:
-                        game = GameModel(
-                            igdb_id=igdb_data.igdb_id,
-                            name=igdb_data.name,
-                            slug=igdb_data.slug,
-                            summary=igdb_data.summary,
-                            cover_image=igdb_data.cover_image,
-                            first_release_date=igdb_data.first_release_date,
-                            rating=igdb_data.rating,
-                            rating_count=igdb_data.rating_count or 0,
-                        )
-                        db.add(game)
-                        db.flush()
-            except Exception as e:
-                logger.warning(f"[PSN Import] Failed to fetch IGDB game {game_req.igdb_id}: {e}")
-        
-        if not game:
-            logger.warning(f"[PSN Import] Game not found: igdb_id={game_req.igdb_id}")
-            skipped += 1
-            continue
-        
-        # Check if already in library
-        existing = db.query(UserGame).filter(
-            UserGame.user_id == current_user.id,
-            UserGame.game_id == game.id
-        ).first()
-        
-        if existing:
-            skipped += 1
-            continue
-        
-        # Find ALL cached games to get aggregated playtime data
-        # (for games with both PS4/PS5 versions, there may be multiple entries)
-        from ..models.user_platform_game import UserPlatformGame
-        cached_games = db.query(UserPlatformGame).filter(
-            UserPlatformGame.user_id == current_user.id,
-            UserPlatformGame.platform == 'psn',
-            UserPlatformGame.igdb_id == game_req.igdb_id
-        ).all()
-        
-        # Sum playtime across all versions (PS4 + PS5) and get most recent last_played
-        total_playtime = sum(g.playtime_minutes or 0 for g in cached_games) if cached_games else None
-        last_played = max(
-            (g.last_played_at for g in cached_games if g.last_played_at),
-            default=None
-        ) if cached_games else None
-        
-        # Add to library with aggregated playtime data from cache
-        user_game = UserGame(
+        imported, skipped = platform_sync_service.import_games_to_library(
+            db=db,
             user_id=current_user.id,
-            game_id=game.id,
-            status=game_req.list_type,
-            import_source="psn",
-            playtime_minutes=total_playtime,
-            last_played_at=last_played
+            platform='psn',
+            games_data=games_dict
         )
-        db.add(user_game)
-        imported += 1
         
-        # Mark all versions as imported in the sync cache
-        for cached_game in cached_games:
-            cached_game.status = 'imported'
-    
-    db.commit()
-    
-    logger.info(f"[PSN Import] User {current_user.id}: imported={imported}, skipped={skipped}")
-    
-    return ImportResponse(
-        imported=imported,
-        skipped=skipped,
-        message=f"Imported {imported} games to your library"
-    )
+        return ImportResponse(
+            imported=imported,
+            skipped=skipped,
+            message=f"Imported {imported} games to library"
+        )
+    except Exception as e:
+        logger.error(f"[PSN Import] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/psn/health")
@@ -657,20 +881,8 @@ def psn_health():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# PSN Preferences (Skip / Manual Match)
+# PSN Endpoints
 # ═══════════════════════════════════════════════════════════════════
-
-class SkipGameRequest(BaseModel):
-    """Request to skip (hide) a PSN game."""
-    platform_id: str = Field(..., description="PSN title_id")
-
-
-class FixMatchRequest(BaseModel):
-    """Request to manually match a PSN game to IGDB."""
-    platform_id: str = Field(..., description="PSN title_id")
-    igdb_id: int = Field(..., description="IGDB game ID")
-    igdb_name: Optional[str] = Field(None, description="IGDB game name")
-    igdb_cover_url: Optional[str] = Field(None, description="IGDB cover URL")
 
 
 @router.post("/psn/preferences/skip")
@@ -684,7 +896,6 @@ def skip_psn_game(
     
     The game will not appear in library sync unless include_hidden=True.
     """
-    from ..services import platform_sync_service
     
     game = platform_sync_service.update_game_status(
         db, current_user.id, 'psn', request.platform_id, 'hidden'
@@ -708,7 +919,6 @@ def fix_psn_match(
     
     This override will persist across re-syncs.
     """
-    from ..services import platform_sync_service
     
     game = platform_sync_service.update_game_match(
         db, current_user.id, 'psn', request.platform_id,
@@ -735,7 +945,6 @@ def restore_psn_game(
     """
     Restore a hidden game (change status back to pending).
     """
-    from ..services import platform_sync_service
     
     game = platform_sync_service.update_game_status(
         db, current_user.id, 'psn', platform_id, 'pending'
@@ -784,7 +993,7 @@ def unlink_platform(
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Unlink a platform account."""
+    """Unlink a platform account and clear all cached data."""
     if platform == "steam":
         success = steam_service.unlink_steam_account(db, current_user.id)
     elif platform == "psn":
@@ -801,4 +1010,9 @@ def unlink_platform(
             detail=f"No {platform} account linked"
         )
     
+    # CRITICAL: Clear cached games to prevent stale data when re-linking
+    deleted_count = platform_sync_service.delete_platform_games(db, current_user.id, platform)
+    logger.info(f"[Unlink] Cleared {deleted_count} cached {platform} games for user {current_user.id}")
+    
     return {"message": f"{platform.upper()} account unlinked successfully"}
+

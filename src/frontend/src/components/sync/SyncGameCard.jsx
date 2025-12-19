@@ -24,12 +24,17 @@ const SyncGameCard = ({
     const isHidden = game.status === 'hidden';
     const isInactive = isSkipped || isHidden; // Games that need restore action
 
-    // Use IGDB data for matched games, PSN data for unmatched
-    const useIgdbCover = isMatched && game.igdb_cover_url;
-    const coverUrl = isMatched
-        ? (game.igdb_cover_url || game.image_url)
-        : game.image_url;
+    // Use IGDB data for matched games, platform data for unmatched
+    // Fallback chain: igdb_cover_url -> platform_image_url -> image_url
+    const coverUrl = game.igdb_cover_url || game.platform_image_url || game.image_url;
     const displayName = isMatched ? game.igdb_name : game.platform_name;
+
+    // Cover aspect ratio: portrait (3:4) for IGDB/Steam, square (1:1) for PSN
+    const getCoverClass = () => {
+        if (game.igdb_cover_url) return 'igdb-cover';
+        if (game.platform === 'steam') return 'igdb-cover';
+        return 'psn-cover';
+    };
 
     const handleCardClick = (e) => {
         if (isImported || isInactive) return;
@@ -80,8 +85,8 @@ const SyncGameCard = ({
             role="button"
             aria-pressed={selected}
         >
-            {/* Cover - different aspect ratio for IGDB (portrait) vs PSN (square) */}
-            <div className={`sync-card-cover ${useIgdbCover ? 'igdb-cover' : 'psn-cover'}`}>
+            {/* Cover - IGDB 3:4, Steam 2:3, PSN 1:1 */}
+            <div className={`sync-card-cover ${getCoverClass()}`}>
                 {coverUrl ? (
                     <img src={coverUrl} alt={game.platform_name} loading="lazy" />
                 ) : (

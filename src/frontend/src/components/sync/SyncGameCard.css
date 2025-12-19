@@ -63,7 +63,7 @@
     background: var(--color-gray-900);
 }
 
-/* IGDB covers are portrait (3:4 ratio) */
+/* IGDB and Steam covers are portrait (3:4 ratio = 133.33%) */
 .sync-card-cover.igdb-cover {
     padding-bottom: 133.33%;
 }
