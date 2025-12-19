@@ -9,11 +9,14 @@ const TAB_INFO = {
     skipped: { title: 'Skipped' },
 };
 
+
+
 const TAB_DESCRIPTIONS = {
     ready: 'These games have been automatically matched. Please verify them before adding to your library.',
     unmatched: "We couldn't automatically identify these games. Click Fix to search and match them manually.",
     skipped: 'Games you chose to hide from import. You can restore them at any time.',
 };
+
 
 const SyncTabs = ({
     activeTab,

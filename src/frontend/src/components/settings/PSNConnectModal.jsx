@@ -88,7 +88,7 @@ const PSNConnectModal = ({ onClose }) => {
                     <div className="psn-header">
                         <h2>PlayStation Import</h2>
                         <p>
-                            Let's bring your PlayStation games into GameGloom. Just a heads up — your PSN profile and trophies need to be public for this to work.
+                            Let's bring your PlayStation games into GameGloom. Just a heads up, your PSN profile and trophies need to be public for this to work.
                         </p>
                     </div>
                 )}

@@ -1,6 +1,9 @@
 // hooks/useSyncReview.js
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getPSNLibrary, syncPSNLibrary, importPSNGames, skipPSNGame, fixPSNMatch, restorePSNGame } from '../api';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import {
+    getPSNLibrary, syncPSNLibrary, importPSNGames, skipPSNGame, fixPSNMatch, restorePSNGame,
+    getSteamLibrary, syncSteamLibrary, importSteamGames, skipSteamGame, fixSteamMatch, restoreSteamGame
+} from '../api';
 import useUserGameStore from '../store/useUserGameStore';
 import useToastStore from '../store/useToastStore';
 
@@ -9,8 +12,11 @@ import useToastStore from '../store/useToastStore';
  * Uses database-cached library data for fast loads.
  */
 export const useSyncReview = (platform) => {
-    const { fetchCollection } = useUserGameStore();
-    const toast = useToastStore();
+    const fetchCollection = useUserGameStore(state => state.fetchCollection);
+    const toastSuccess = useToastStore(state => state.success);
+    const toastError = useToastStore(state => state.error);
+    const toastInfo = useToastStore(state => state.info);
+
 
     // Core state
     const [games, setGames] = useState([]);
@@ -20,6 +26,7 @@ export const useSyncReview = (platform) => {
     const [processProgress, setProcessProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState(null);
     const [needsSync, setNeedsSync] = useState(false);  // True if DB cache is empty
+    const [syncProgress, setSyncProgress] = useState(0);
 
     // UI state
     const [activeTab, setActiveTab] = useState('ready');
@@ -31,27 +38,56 @@ export const useSyncReview = (platform) => {
     const [importedIds, setImportedIds] = useState(new Set());
     const [skippedIds, setSkippedIds] = useState(new Set());
 
+    // For stable loadGames check without depending on games count
+    const gamesRef = useRef(games);
+    useEffect(() => { gamesRef.current = games; }, [games]);
+
     const platformName = platform === 'psn' ? 'PlayStation' : 'Steam';
+
+
+    // ─────────────────────────────────────────────────────────────
+    // Platform API Helper
+    // ─────────────────────────────────────────────────────────────
+
+    const api = useMemo(() => {
+        if (platform === 'psn') {
+            return {
+                getLibrary: getPSNLibrary,
+                syncLibrary: syncPSNLibrary,
+                importGames: importPSNGames,
+                skipGame: skipPSNGame,
+                fixMatch: fixPSNMatch,
+                restoreGame: restorePSNGame
+            };
+        } else {
+            return {
+                getLibrary: getSteamLibrary,
+                syncLibrary: syncSteamLibrary,
+                importGames: importSteamGames,
+                skipGame: skipSteamGame,
+                fixMatch: fixSteamMatch,
+                restoreGame: restoreSteamGame
+            };
+        }
+    }, [platform]);
 
     // ─────────────────────────────────────────────────────────────
     // Data Loading (from database cache - fast ~50ms)
     // ─────────────────────────────────────────────────────────────
 
-    const loadGames = useCallback(async () => {
-        if (platform !== 'psn') {
-            setError('Only PSN is supported for now');
-            setIsLoading(false);
-            return;
-        }
-
+    const loadGames = useCallback(async (silent = false) => {
         try {
-            setIsLoading(true);
+            // Only show skeletons if genuinely empty and not a silent refresh
+            if (!silent && gamesRef.current.length === 0) {
+                setIsLoading(true);
+            }
             setError(null);
 
             // Fetch from database cache (includes hidden)
-            const data = await getPSNLibrary(true);
+            const data = await api.getLibrary(true);
 
-            if (data.length === 0) {
+
+            if (!data || data.length === 0) {
                 // No cached data - user needs to sync first
                 setNeedsSync(true);
                 setGames([]);
@@ -73,16 +109,20 @@ export const useSyncReview = (platform) => {
 
         } catch (err) {
             setError(err.message);
-            toast.error('Failed to load: ' + err.message);
+            toastError('Failed to load: ' + err.message);
         } finally {
             setIsLoading(false);
         }
-    }, [platform, toast]);
+    }, [api, toastError]);
+
+
+
+
 
     // Load on mount
     useEffect(() => {
         loadGames();
-    }, [platform]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [platform, loadGames]);
 
     // Clear selection when switching tabs
     useEffect(() => {
@@ -90,31 +130,51 @@ export const useSyncReview = (platform) => {
     }, [activeTab]);
 
     // ─────────────────────────────────────────────────────────────
-    // Sync = Fetch from PSN API and update database cache
+    // Sync = Fetch from Platform API and update database cache
     // ─────────────────────────────────────────────────────────────
 
     const handleSync = useCallback(async () => {
         setIsSyncing(true);
+        setSyncProgress(0);
         setError(null);
 
+        // Simulated progress interval
+        const interval = setInterval(() => {
+            setSyncProgress(prev => {
+                if (prev >= 92) return prev;
+                // Slower increment as we approach the end
+                const inc = prev < 30 ? 4 : prev < 60 ? 2 : prev < 85 ? 1 : 0.3;
+                return Math.min(prev + inc, 92);
+            });
+        }, 300);
+
         try {
-            const result = await syncPSNLibrary();
+            const result = await api.syncLibrary();
+
+            setSyncProgress(100);
 
             if (result.new_count > 0) {
-                toast.success(`Found ${result.new_count} new games!`);
+                toastSuccess(`Found ${result.new_count} new games!`);
             } else {
-                toast.success('Sync complete. Library is up to date.');
+                toastSuccess('Sync complete. Library is up to date.');
             }
 
-            await loadGames();
+            await loadGames(true); // Silent refresh
 
         } catch (err) {
             setError(err.message);
-            toast.error('Failed to sync: ' + err.message);
+            toastError('Failed to sync: ' + err.message);
+            setSyncProgress(0);
         } finally {
+            clearInterval(interval);
             setIsSyncing(false);
+            // Keep at 100 for a moment then reset
+            setTimeout(() => setSyncProgress(0), 1500);
         }
-    }, [loadGames, platformName, toast]);
+    }, [api, loadGames, toastError, toastSuccess]);
+
+
+
 
 
     // ─────────────────────────────────────────────────────────────
@@ -128,7 +188,11 @@ export const useSyncReview = (platform) => {
         try {
             setFadingIds(prev => new Set([...prev, gameId]));
 
-            await importPSNGames([{ igdb_id: game.igdb_id, list_type: 'played' }]);
+            await api.importGames([{
+                platform_id: game.platform_id,
+                igdb_id: game.igdb_id,
+                list_type: 'played'
+            }]);
 
 
             setTimeout(() => {
@@ -139,7 +203,7 @@ export const useSyncReview = (platform) => {
                     return next;
                 });
                 fetchCollection();
-                toast.success(`Imported: ${game.igdb_name || game.platform_name}`);
+                toastSuccess(`Imported: ${game.igdb_name || game.platform_name}`);
             }, 300);
         } catch (err) {
             setError(err.message);
@@ -148,9 +212,10 @@ export const useSyncReview = (platform) => {
                 next.delete(gameId);
                 return next;
             });
-            toast.error('Import failed: ' + err.message);
+            toastError('Import failed: ' + err.message);
         }
-    }, [games, fetchCollection, toast]);
+    }, [games, api, fetchCollection, toastError, toastSuccess]);
+
 
     const handleSkip = useCallback(async (gameId) => {
         const game = games.find(g => g.id === gameId);
@@ -159,9 +224,7 @@ export const useSyncReview = (platform) => {
         setFadingIds(prev => new Set([...prev, gameId]));
 
         try {
-            await skipPSNGame(game.platform_id);
-
-
+            await api.skipGame(game.platform_id);
 
             setTimeout(() => {
                 setGames(prev => prev.map(g =>
@@ -179,28 +242,28 @@ export const useSyncReview = (platform) => {
                 next.delete(gameId);
                 return next;
             });
-            toast.error('Failed to skip: ' + err.message);
+            toastError('Failed to skip: ' + err.message);
         }
-    }, [games, toast]);
+    }, [games, api, toastError]);
+
 
     const handleUnskip = useCallback(async (gameId) => {
         const game = games.find(g => g.id === gameId);
         if (!game) return;
 
         try {
-            await restorePSNGame(game.platform_id);
+            await api.restoreGame(game.platform_id);
 
             setGames(prev => prev.map(g =>
                 g.id === gameId ? { ...g, status: 'pending', match_method: null } : g
             ));
 
-
-
-            toast.success('Game restored');
+            toastSuccess('Game restored');
         } catch (err) {
-            toast.error('Failed to restore: ' + err.message);
+            toastError('Failed to restore: ' + err.message);
         }
-    }, [games, toast]);
+    }, [games, api, toastError, toastSuccess]);
+
 
     const handleDelete = useCallback(async (gameId) => {
         const game = games.find(g => g.id === gameId);
@@ -209,7 +272,7 @@ export const useSyncReview = (platform) => {
         setFadingIds(prev => new Set([...prev, gameId]));
 
         try {
-            await skipPSNGame(game.platform_id);
+            await api.skipGame(game.platform_id);
 
             setTimeout(() => {
                 setGames(prev => prev.filter(g => g.id !== gameId));
@@ -225,9 +288,10 @@ export const useSyncReview = (platform) => {
                 next.delete(gameId);
                 return next;
             });
-            toast.error('Failed to hide: ' + err.message);
+            toastError('Failed to hide: ' + err.message);
         }
-    }, [games, toast]);
+    }, [games, api, toastError]);
+
 
     // ─────────────────────────────────────────────────────────────
     // Bulk Actions
@@ -248,11 +312,12 @@ export const useSyncReview = (platform) => {
 
         try {
             const gamesToImport = selectedGames.map(g => ({
+                platform_id: g.platform_id,
                 igdb_id: g.igdb_id,
                 list_type: 'played'
             }));
 
-            await importPSNGames(gamesToImport);
+            await api.importGames(gamesToImport);
 
             setTimeout(() => {
                 setImportedIds(prev => {
@@ -265,36 +330,49 @@ export const useSyncReview = (platform) => {
                 setIsProcessing(false);
                 setProcessProgress({ current: 0, total: 0 });
                 fetchCollection();
-                toast.success(`Imported ${selectedGames.length} games`);
+                toastSuccess(`Imported ${selectedGames.length} games`);
             }, 300);
         } catch (err) {
             setError(err.message);
             setIsProcessing(false);
             setFadingIds(new Set());
-            toast.error('Import failed: ' + err.message);
+            toastError('Import failed: ' + err.message);
         }
-    }, [selectedIds, games, importedIds, fetchCollection, toast]);
+    }, [selectedIds, games, importedIds, api, fetchCollection, toastError, toastSuccess]);
 
-    const handleBulkSkip = useCallback(() => {
+
+    const handleBulkSkip = useCallback(async () => {
         if (selectedIds.size === 0) return;
 
         setFadingIds(new Set(selectedIds));
 
-        setTimeout(() => {
-            setSkippedIds(prev => {
-                const next = new Set(prev);
-                selectedIds.forEach(id => next.add(id));
-                return next;
-            });
-            setSelectedIds(new Set());
+        try {
+            // Sequential skips for reliability
+            for (const id of selectedIds) {
+                const game = games.find(g => g.id === id);
+                if (game) await api.skipGame(game.platform_id);
+            }
+
+            setTimeout(() => {
+                setSkippedIds(prev => {
+                    const next = new Set(prev);
+                    selectedIds.forEach(id => next.add(id));
+                    return next;
+                });
+                setSelectedIds(new Set());
+                setFadingIds(new Set());
+                toastInfo(`Skipped ${selectedIds.size} games`);
+            }, 300);
+        } catch (err) {
+            toastError("Failed to skip some games");
             setFadingIds(new Set());
-            toast.info(`Skipped ${selectedIds.size} games`);
-        }, 300);
-    }, [selectedIds, toast]);
+        }
+    }, [selectedIds, games, api, toastError, toastInfo]);
+
 
     const handleImportAllReady = useCallback(async () => {
         const readyGames = games.filter(g =>
-            g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id)
+            g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id) && g.status === 'pending'
         );
 
         if (readyGames.length === 0) return;
@@ -305,11 +383,12 @@ export const useSyncReview = (platform) => {
 
         try {
             const gamesToImport = readyGames.map(g => ({
+                platform_id: g.platform_id,
                 igdb_id: g.igdb_id,
                 list_type: 'played'
             }));
 
-            await importPSNGames(gamesToImport);
+            await api.importGames(gamesToImport);
 
             setTimeout(() => {
                 setImportedIds(prev => {
@@ -322,35 +401,47 @@ export const useSyncReview = (platform) => {
                 setProcessProgress({ current: 0, total: 0 });
                 setSelectedIds(new Set());
                 fetchCollection();
-                toast.success(`🎉 Imported ${readyGames.length} games!`);
+                toastSuccess(`🎉 Imported ${readyGames.length} games!`);
             }, 500);
         } catch (err) {
             setError(err.message);
             setIsProcessing(false);
             setFadingIds(new Set());
-            toast.error('Import failed: ' + err.message);
+            toastError('Import failed: ' + err.message);
         }
-    }, [games, importedIds, skippedIds, fetchCollection, toast]);
+    }, [games, importedIds, skippedIds, api, fetchCollection, toastError, toastSuccess]);
 
-    const handleSkipAllUnmatched = useCallback(() => {
+
+    const handleSkipAllUnmatched = useCallback(async () => {
         const unmatchedGames = games.filter(g =>
-            !g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id)
+            !g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id) && g.status === 'pending'
         );
 
         if (unmatchedGames.length === 0) return;
 
         setFadingIds(new Set(unmatchedGames.map(g => g.id)));
 
-        setTimeout(() => {
-            setSkippedIds(prev => {
-                const next = new Set(prev);
-                unmatchedGames.forEach(g => next.add(g.id));
-                return next;
-            });
+        try {
+            for (const game of unmatchedGames) {
+                await api.skipGame(game.platform_id);
+            }
+
+            setTimeout(() => {
+                setSkippedIds(prev => {
+                    const next = new Set(prev);
+                    unmatchedGames.forEach(g => next.add(g.id));
+                    return next;
+                });
+                setFadingIds(new Set());
+                toastInfo(`Skipped ${unmatchedGames.length} unmatched games`);
+            }, 300);
+
+        } catch (err) {
+            toastError("Failed to skip some games");
             setFadingIds(new Set());
-            toast.info(`Skipped ${unmatchedGames.length} unmatched games`);
-        }, 300);
-    }, [games, importedIds, skippedIds, toast]);
+        }
+    }, [games, importedIds, skippedIds, api, toastError, toastInfo]);
+
 
     // ─────────────────────────────────────────────────────────────
     // Computed: apply imported/skipped status locally
@@ -418,10 +509,14 @@ export const useSyncReview = (platform) => {
         // Save the manual match AND import the game
         try {
             // Save the match preference (persists across re-syncs)
-            await fixPSNMatch(updatedGame.platform_id, updatedGame.igdb_id, updatedGame.igdb_name, updatedGame.igdb_cover_url);
+            await api.fixMatch(updatedGame.platform_id, updatedGame.igdb_id, updatedGame.igdb_name, updatedGame.igdb_cover_url);
 
             // Now import the game to library
-            await importPSNGames([{ igdb_id: updatedGame.igdb_id, list_type: 'played' }]);
+            await api.importGames([{
+                platform_id: updatedGame.platform_id,
+                igdb_id: updatedGame.igdb_id,
+                list_type: 'played'
+            }]);
 
             // Update local state
             setGames(prev => prev.map(g =>
@@ -431,11 +526,12 @@ export const useSyncReview = (platform) => {
             ));
             setImportedIds(prev => new Set([...prev, updatedGame.id]));
             fetchCollection();
-            toast.success(`Imported: ${updatedGame.igdb_name}`);
+            toastSuccess(`Imported: ${updatedGame.igdb_name}`);
         } catch (err) {
-            toast.error(`Failed to import: ${err.message}`);
+            toastError(`Failed to import: ${err.message}`);
         }
-    }, [fetchCollection, toast]);
+    }, [api, fetchCollection, toastError, toastSuccess]);
+
 
     const closeFixModal = useCallback(() => {
         setFixingGame(null);
@@ -470,6 +566,8 @@ export const useSyncReview = (platform) => {
                 return gamesList;
         }
     }, []);
+
+
 
     // Sort games by option
     const sortGamesByOption = useCallback((gamesList, option) => {
@@ -516,6 +614,8 @@ export const useSyncReview = (platform) => {
         unmatched: filterByTab(gamesWithStatus, 'unmatched').length,
         skipped: filterByTab(gamesWithStatus, 'skipped').length,
     }), [gamesWithStatus, filterByTab]);
+
+
 
     const readyGames = useMemo(() => filterByTab(gamesWithStatus, 'ready'), [gamesWithStatus, filterByTab]);
     const unmatchedGames = useMemo(() => filterByTab(gamesWithStatus, 'unmatched'), [gamesWithStatus, filterByTab]);
@@ -566,6 +666,7 @@ export const useSyncReview = (platform) => {
         isSyncing,
         isProcessing,
         processProgress,
+        syncProgress,
         error,
         needsSync,
         activeTab,
