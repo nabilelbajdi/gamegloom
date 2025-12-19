@@ -4,6 +4,7 @@ Steam integration service.
 Handles OpenID 2.0 authentication and Steam Web API calls.
 """
 import re
+import time
 import urllib.parse
 from datetime import datetime, timezone
 from typing import Optional
@@ -12,11 +13,60 @@ from sqlalchemy.orm import Session
 
 from ...settings import settings
 from ..models.user_platform_link import UserPlatformLink, PlatformType
+from ..models.game import Game
+from ..core.igdb_service import fetch_from_igdb
+from ..core.matching_utils import (
+    clean_name, clean_platform_name, generate_slug, 
+    slug_with_roman_numerals, pick_best_match
+)
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 # Steam OpenID constants
 STEAM_OPENID_URL = "https://steamcommunity.com/openid/login"
 STEAM_API_BASE = "https://api.steampowered.com"
+
+# Rate limit: Steam allows 100,000 requests/day
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 1.0  # seconds
+
+
+def _request_with_retry(method: str, url: str, max_retries: int = MAX_RETRIES, **kwargs) -> httpx.Response:
+    """
+    Make an HTTP request with exponential backoff retry for rate limits.
+    
+    Handles 403 (rate limit) and 429 (too many requests) with retries.
+    """
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            if method.lower() == "get":
+                response = httpx.get(url, **kwargs)
+            else:
+                response = httpx.post(url, **kwargs)
+            
+            # If rate limited, wait and retry
+            if response.status_code in (403, 429):
+                delay = RETRY_DELAY_BASE * (2 ** attempt)
+                logger.warning(f"[Steam] Rate limited (attempt {attempt + 1}/{max_retries}), waiting {delay}s...")
+                time.sleep(delay)
+                continue
+            
+            return response
+            
+        except httpx.RequestError as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                delay = RETRY_DELAY_BASE * (2 ** attempt)
+                logger.warning(f"[Steam] Request failed (attempt {attempt + 1}/{max_retries}): {e}, retrying in {delay}s...")
+                time.sleep(delay)
+            else:
+                raise
+    
+    # If we exhausted retries due to rate limiting, raise with last response
+    raise SteamServiceError(f"Rate limited after {max_retries} retries")
 
 
 class SteamServiceError(Exception):
@@ -136,6 +186,74 @@ def get_steam_user_summary(steam_id: str) -> dict:
         raise SteamServiceError(f"Failed to get Steam user summary: {e}")
 
 
+def resolve_vanity_url(vanity_url: str) -> Optional[str]:
+    """
+    Resolve a Steam vanity URL name to its 64-bit Steam ID.
+    
+    Args:
+        vanity_url: The custom name (e.g., 'gabelogannewell')
+        
+    Returns:
+        Steam64 ID string if found, None otherwise
+    """
+    if not settings.STEAM_API_KEY:
+        raise SteamServiceError("Steam API key not configured")
+        
+    url = f"{STEAM_API_BASE}/ISteamUser/ResolveVanityURL/v0001/"
+    params = {
+        "key": settings.STEAM_API_KEY,
+        "vanityurl": vanity_url,
+    }
+    
+    try:
+        response = httpx.get(url, params=params, timeout=10.0)
+        response.raise_for_status()
+        data = response.json()
+        
+        res = data.get("response", {})
+        if res.get("success") == 1:
+            return res.get("steamid")
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"[Steam] Failed to resolve vanity URL '{vanity_url}': {e}")
+        return None
+
+
+def extract_steam_id_from_input(input_str: str) -> Optional[str]:
+    """
+    Parse a Steam ID, custom URL, or profile URL into a 64-bit Steam ID.
+    
+    Handles:
+    - steamid64 (17 digits)
+    - profile url: https://steamcommunity.com/profiles/76561198012345678
+    - custom url: https://steamcommunity.com/id/myusername/
+    - vanity name: myusername
+    
+    Returns:
+    - Steam64 ID string if resolved, None otherwise
+    """
+    input_str = input_str.strip().rstrip('/')
+    
+    # 1. Check if it's already a 17-digit Steam64 ID
+    if re.match(r"^\d{17}$", input_str):
+        return input_str
+        
+    # 2. Extract from /profiles/ URL
+    profile_match = re.search(r"steamcommunity\.com/profiles/(\d{17})", input_str)
+    if profile_match:
+        return profile_match.group(1)
+        
+    # 3. Extract vanity name from /id/ URL or treat as vanity name directly
+    vanity_match = re.search(r"steamcommunity\.com/id/([^/?#]+)", input_str)
+    vanity_name = vanity_match.group(1) if vanity_match else input_str
+    
+    # Sanitize vanity name (disallow characters that shouldn't be in a custom URL)
+    if re.match(r"^[A-Za-z0-9_-]+$", vanity_name):
+        return resolve_vanity_url(vanity_name)
+        
+    return None
+
+
 def get_owned_games(steam_id: str, include_free_games: bool = True) -> list[dict]:
     """
     Get all games owned by a Steam user with playtime.
@@ -245,3 +363,159 @@ def get_steam_link(db: Session, user_id: int) -> Optional[UserPlatformLink]:
         UserPlatformLink.user_id == user_id,
         UserPlatformLink.platform == PlatformType.STEAM.value
     ).first()
+
+
+def match_game_to_igdb(
+    db: Session,
+    platform_id: str,
+    platform_name: str
+) -> tuple:
+    """
+    Match a Steam game to IGDB.
+    
+    Matching strategy:
+    1. IGDB external_games lookup (via Steam AppID) -> ~99% accuracy
+    2. Slug match with IGDB disambiguation suffixes
+    3. Roman numeral conversion (3→iii)
+    4. Partial name prefix match
+    
+    Returns:
+        (igdb_id, igdb_name, cover_url, confidence, method)
+    """
+    try:
+        app_id = int(platform_id)
+        
+        # Step 1: IGDB external_games lookup
+        # category 1 is Steam
+        query = f"fields game.id, game.name, game.cover.image_id; where category = 1 & uid = \"{app_id}\";"
+        external_data = fetch_from_igdb(query=query, endpoint="external_games")
+        
+        if external_data:
+            ext = external_data[0]
+            igdb_game = ext.get("game")
+            if igdb_game:
+                igdb_id = igdb_game["id"]
+                name = igdb_game["name"]
+                cover_id = igdb_game.get("cover", {}).get("image_id")
+                cover_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{cover_id}.jpg" if cover_id else None
+                
+                logger.debug(f"[Steam Match] {platform_name} ({app_id}) → {name} (appid)")
+                return (igdb_id, name, cover_url, 0.99, "appid")
+
+        # Step 2: Slug matching (fallback)
+        slug = generate_slug(platform_name)
+        candidates = db.query(Game).filter(
+            (Game.slug == slug) | 
+            (Game.slug.like(f"{slug}--%"))
+        ).all()
+        
+        if candidates:
+            game = pick_best_match(candidates)
+            if game:
+                confidence = 0.85 if game.slug == slug else 0.80
+                logger.debug(f"[Steam Match] {platform_name} → {game.name} (slug)")
+                return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
+
+        # Step 3: Roman numeral conversion
+        roman_slug = slug_with_roman_numerals(slug)
+        if roman_slug != slug:
+            candidates = db.query(Game).filter(
+                (Game.slug == roman_slug) | 
+                (Game.slug.like(f"{roman_slug}--%"))
+            ).all()
+            
+            if candidates:
+                game = pick_best_match(candidates)
+                if game:
+                    logger.debug(f"[Steam Match] {platform_name} → {game.name} (slug_roman)")
+                    return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
+
+        # Step 4: Partial name search
+        c_name = clean_name(platform_name)
+        if len(c_name) >= 5:
+            candidates = db.query(Game).filter(
+                Game.name.ilike(f"{c_name}%")
+            ).order_by(Game.igdb_id).limit(5).all()
+            
+            if candidates:
+                game = candidates[0]
+                logger.debug(f"[Steam Match] {platform_name} → {game.name} (partial)")
+                return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
+
+        return None, None, None, None, None
+
+    except Exception as e:
+        logger.error(f"[Steam Match] Error matching {platform_name}: {e}")
+        return None, None, None, None, None
+
+
+# Batch size for IGDB queries - IGDB returns max 500 results per query
+# Use 50 AppIDs per batch with limit 500 to ensure we get all matches
+IGDB_BATCH_SIZE = 50
+
+
+def batch_match_steam_appids(app_ids: list[str]) -> dict[str, tuple]:
+    """
+    Batch match multiple Steam AppIDs to IGDB in a single query.
+    
+    This dramatically improves sync performance for large libraries:
+    - 1000 games: 1000 API calls → ~20 batch calls
+    
+    Args:
+        app_ids: List of Steam AppID strings
+        
+    Returns:
+        Dict mapping app_id to (igdb_id, igdb_name, cover_url, confidence, method)
+        Missing entries = no match found (game not in IGDB or not linked to Steam)
+    """
+    if not app_ids:
+        return {}
+    
+    results = {}
+    total_batches = (len(app_ids) + IGDB_BATCH_SIZE - 1) // IGDB_BATCH_SIZE
+    
+    # Process in batches with rate limiting
+    for batch_num, i in enumerate(range(0, len(app_ids), IGDB_BATCH_SIZE)):
+        batch = app_ids[i:i + IGDB_BATCH_SIZE]
+        
+        try:
+            # Build OR query for multiple UIDs
+            # external_game_source = 1 is Steam (category field is DEPRECATED)
+            uid_conditions = " | ".join([f'uid = "{app_id}"' for app_id in batch])
+            query = f"fields game.id, game.name, game.cover.image_id, uid; where external_game_source = 1 & ({uid_conditions}); limit 500;"
+
+            
+            external_data = fetch_from_igdb(query=query, endpoint="external_games")
+            
+            batch_matched = 0
+            if external_data:
+                for ext in external_data:
+                    uid = str(ext.get("uid", ""))
+                    igdb_game = ext.get("game")
+                    
+                    if igdb_game and uid:
+                        igdb_id = igdb_game["id"]
+                        name = igdb_game["name"]
+                        cover_id = igdb_game.get("cover", {}).get("image_id") if igdb_game.get("cover") else None
+                        cover_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{cover_id}.jpg" if cover_id else None
+                        
+                        results[uid] = (igdb_id, name, cover_url, 0.99, "appid_batch")
+                        batch_matched += 1
+                        
+            logger.info(f"[Steam Batch] Batch {batch_num + 1}/{total_batches}: matched {batch_matched}/{len(batch)} games")
+            
+            # Rate limiting: IGDB allows 4 req/sec, so wait 0.3s between batches
+            if batch_num < total_batches - 1:
+                time.sleep(0.3)
+            
+        except Exception as e:
+            logger.error(f"[Steam Batch] Batch {batch_num + 1}/{total_batches} failed: {e}")
+            # Continue processing other batches even if one fails
+            continue
+    
+    logger.info(f"[Steam Batch] Total matched: {len(results)}/{len(app_ids)} via batch IGDB lookup")
+    
+    # Note: Games not matched here don't necessarily mean IGDB doesn't have them,
+    # it means IGDB's external_games table doesn't have a Steam AppID mapping for them.
+    # The fallback individual matching will try slug-based matching for these.
+    return results

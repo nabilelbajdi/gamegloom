@@ -20,6 +20,10 @@ from ...settings import settings
 from ..models.user_platform_link import UserPlatformLink, PlatformType
 from ..models.game import Game
 from ..models.psn_title_lookup import PsnTitleLookup
+from ..core.matching_utils import (
+    is_non_game, clean_name, clean_platform_name, generate_slug, 
+    slug_with_roman_numerals, pick_best_match
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,54 +33,8 @@ class PSNServiceError(Exception):
     pass
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Non-Game Blocklist - apps/media/demos to filter out during sync
-# ═══════════════════════════════════════════════════════════════════
+# Removed local is_non_game and patterns (now in matching_utils)
 
-NON_GAME_TITLES = {
-    # Media apps
-    "spotify", "netflix", "youtube", "amazon prime video", "hulu", "disney+",
-    "apple tv", "crunchyroll", "plex", "twitch", "hbo max", "peacock",
-    "paramount+", "amazon video", "vudu", "vidzone", "vrideo", "vrideo vr",
-    # Utilities & companions
-    "headset companion", "playstation app", "remote play", "share factory",
-    "media player", "playstation vue", "ps vue", "share factory studio",
-    "sharefactory",
-    # News/info apps
-    "ign", "gamespot", "polygon",
-    # Browser/social
-    "web browser", "internet browser",
-}
-
-NON_GAME_PATTERNS = [
-    r"demo disc",
-    r"playstation\s*vr demo",
-    r"^\s*demo\s*$",
-    r"trial version",
-    r"beta\s+(app|version|client)$",
-    r"companion app",
-    r"theme\s*(pack)?$",
-    r"avatar\s*(pack)?$",
-]
-
-_NON_GAME_PATTERNS = [re.compile(p, re.IGNORECASE) for p in NON_GAME_PATTERNS]
-
-
-def is_non_game(title: str) -> bool:
-    """Check if a title is a known non-game (app/media/demo)."""
-    if not title:
-        return False
-    
-    title_lower = title.lower().strip()
-    
-    if title_lower in NON_GAME_TITLES:
-        return True
-    
-    for pattern in _NON_GAME_PATTERNS:
-        if pattern.search(title):
-            return True
-    
-    return False
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -123,146 +81,16 @@ def check_psn_health() -> dict:
         return {"status": "error", "message": f"PSN API error: {e}"}
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Name Cleaning & Normalization
-# ═══════════════════════════════════════════════════════════════════
+# Removed local cleaning/slug functions (now in matching_utils)
 
-def _normalize_unicode(text: str) -> str:
-    """Normalize Unicode chars (ö→o, é→e) using NFD decomposition."""
-    normalized = unicodedata.normalize('NFD', text)
-    return ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
-
-
-def _clean_name(name: str) -> str:
-    """
-    Clean a game name for matching:
-    - Remove trademark symbols (™®©)
-    - Convert Unicode Roman numerals
-    - Fix spacing around numbers
-    - Normalize Unicode
-    """
-    # Unicode Roman numerals → ASCII equivalents
-    roman_map = {
-        'Ⅰ': 'I', 'Ⅱ': 'II', 'Ⅲ': 'III', 'Ⅳ': 'IV', 'Ⅴ': 'V',
-        'Ⅵ': 'VI', 'Ⅶ': 'VII', 'Ⅷ': 'VIII', 'Ⅸ': 'IX', 'Ⅹ': 'X',
-        'Ⅺ': 'XI', 'Ⅻ': 'XII',
-        'ⅰ': 'I', 'ⅱ': 'II', 'ⅲ': 'III', 'ⅳ': 'IV', 'ⅴ': 'V',
-        'ⅵ': 'VI', 'ⅶ': 'VII', 'ⅷ': 'VIII', 'ⅸ': 'IX', 'ⅹ': 'X',
-        'ⅺ': 'XI', 'ⅻ': 'XII',
-    }
-    
-    for unicode_char, ascii_equiv in roman_map.items():
-        if unicode_char in name:
-            name = re.sub(rf'([a-zA-Z])({re.escape(unicode_char)})', rf'\1 {ascii_equiv}', name)
-            name = name.replace(unicode_char, ascii_equiv)
-    
-    # Remove trademark symbols
-    name = name.replace("™", "").replace("®", "").replace("©", "")
-    
-    # Fix spacing around numbers (LittleBigPlanet3 → LittleBigPlanet 3)
-    name = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', name)
-    
-    return name.strip()
-
-
-def _clean_psn_name(name: str) -> str:
-    """
-    Clean a PSN game name for display and matching:
-    - Removes season/edition suffixes
-    - Removes trademark symbols
-    - Fixes common franchise naming issues
-    """
-    if not name:
-        return ""
-    
-    # Remove season/edition suffixes like "– Season 20: Vendetta"
-    if " – " in name:
-        name = name.split(" – ")[0]
-    if " - " in name:
-        parts = name.split(" - ")
-        if len(parts) == 2 and any(word in parts[1].lower() for word in ['season', 'update', 'edition', 'version']):
-            name = parts[0]
-    
-    name = _clean_name(name)
-    
-    # Fix common franchise naming (add colons where IGDB expects them)
-    franchise_fixes = {
-        'Call of Duty Ghosts': 'Call of Duty: Ghosts',
-        'Call of Duty Black Ops': 'Call of Duty: Black Ops',
-        'Call of Duty Modern Warfare': 'Call of Duty: Modern Warfare',
-        'Divinity : Original Sin': 'Divinity: Original Sin',
-    }
-    for wrong, correct in franchise_fixes.items():
-        if wrong in name:
-            name = name.replace(wrong, correct)
-    
-    # Fix spacing around colons
-    name = re.sub(r'\s*:\s*', ': ', name)
-    
-    # Clean up extra whitespace
-    return " ".join(name.split()).strip()
-
-
-def _generate_slug(name: str) -> str:
-    """Generate IGDB-compatible slug from game name."""
-    name = _clean_name(name)
-    name = _normalize_unicode(name)
-    
-    slug = name.lower()
-    slug = slug.replace('_', ' ')
-    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
-    slug = re.sub(r"\s+", "-", slug)
-    slug = re.sub(r"-+", "-", slug)
-    return slug.strip("-")
-
-
-# Arabic to Roman numeral mapping for slug conversion
-_ARABIC_TO_ROMAN = {
-    '10': 'x', '9': 'ix', '8': 'viii', '7': 'vii', '6': 'vi',
-    '5': 'v', '4': 'iv', '3': 'iii', '2': 'ii', '1': 'i',
-}
-
-
-def _slug_with_roman_numerals(slug: str) -> str:
-    """Convert trailing Arabic numeral in slug to Roman numeral."""
-    for arabic, roman in _ARABIC_TO_ROMAN.items():
-        if slug.endswith(f'-{arabic}'):
-            return slug[:-len(arabic)-1] + f'-{roman}'
-    return slug
 
 
 # ═══════════════════════════════════════════════════════════════════
 # IGDB Matching
 # ═══════════════════════════════════════════════════════════════════
 
-def _pick_best_match(candidates: list, first_played: datetime = None) -> Game:
-    """
-    Pick the best match from multiple candidate games.
-    Uses release date to disambiguate (e.g., 2015 Star Wars Battlefront vs 2004).
-    """
-    if len(candidates) == 1:
-        return candidates[0]
-    
-    if not first_played:
-        # No first_played info - prefer newer game
-        return max(candidates, key=lambda g: g.igdb_id or 0)
-    
-    from datetime import timedelta
-    
-    # Make first_played timezone-naive for comparison
-    if hasattr(first_played, 'tzinfo') and first_played.tzinfo is not None:
-        first_played = first_played.replace(tzinfo=None)
-    
-    # Allow games released up to ~2 months after first_played
-    cutoff = first_played + timedelta(days=60)
-    
-    valid = [g for g in candidates 
-             if g.first_release_date and g.first_release_date <= cutoff]
-    
-    if valid:
-        return max(valid, key=lambda g: g.first_release_date)
-    
-    return max(candidates, key=lambda g: g.igdb_id or 0)
+# Removed local pick_best_match (now in matching_utils)
+
 
 
 def match_game_to_igdb(
@@ -295,25 +123,25 @@ def match_game_to_igdb(
     ).first()
     
     if lookup:
-        clean_name = _clean_name(lookup.name)
+        c_name = clean_name(lookup.name)
         
         # Exact match
-        game = db.query(Game).filter(Game.name == clean_name).first()
+        game = db.query(Game).filter(Game.name == c_name).first()
         if game:
             logger.debug(f"[Match] {platform_name} → {game.name} (exact)")
             return (game.igdb_id, game.name, game.cover_image, 0.99, "exact")
         
         # Case-insensitive exact
-        game = db.query(Game).filter(Game.name.ilike(clean_name)).first()
+        game = db.query(Game).filter(Game.name.ilike(c_name)).first()
         if game:
             logger.debug(f"[Match] {platform_name} → {game.name} (iexact)")
             return (game.igdb_id, game.name, game.cover_image, 0.95, "iexact")
         
         # Use Sony lookup name for slug matching
-        platform_name = clean_name
+        platform_name = c_name
     
     # Step 2: Slug matching
-    slug = _generate_slug(platform_name)
+    slug = generate_slug(platform_name)
     
     candidates = db.query(Game).filter(
         (Game.slug == slug) | 
@@ -321,14 +149,14 @@ def match_game_to_igdb(
     ).all()
     
     if candidates:
-        game = _pick_best_match(candidates, first_played)
+        game = pick_best_match(candidates, first_played)
         if game:
             confidence = 0.85 if game.slug == slug else 0.80
             logger.debug(f"[Match] {platform_name} → {game.name} (slug)")
             return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
     
     # Step 3: Roman numeral conversion
-    roman_slug = _slug_with_roman_numerals(slug)
+    roman_slug = slug_with_roman_numerals(slug)
     if roman_slug != slug:
         candidates = db.query(Game).filter(
             (Game.slug == roman_slug) | 
@@ -336,17 +164,17 @@ def match_game_to_igdb(
         ).all()
         
         if candidates:
-            game = _pick_best_match(candidates, first_played)
+            game = pick_best_match(candidates, first_played)
             if game:
                 logger.debug(f"[Match] {platform_name} → {game.name} (slug_roman)")
                 return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
     
     # Step 4: Partial name search (prefix match, min 5 chars)
-    clean_name = _clean_name(platform_name)
-    if len(clean_name) >= 5:
+    c_name = clean_name(platform_name)
+    if len(c_name) >= 5:
         # Get all matching games, ordered by igdb_id (lower = original, not localized version)
         candidates = db.query(Game).filter(
-            Game.name.ilike(f"{clean_name}%")
+            Game.name.ilike(f"{c_name}%")
         ).order_by(Game.igdb_id).limit(5).all()
         
         if candidates:
@@ -397,7 +225,7 @@ def get_psn_games(username: str) -> list[dict]:
                 raw_name = stat.name or ""
                 
                 # Skip non-game apps early
-                if is_non_game(_clean_psn_name(raw_name)):
+                if is_non_game(clean_platform_name(raw_name)):
                     continue
                 
                 play_mins = 0
@@ -443,7 +271,7 @@ def get_psn_games(username: str) -> list[dict]:
             if title_id in TITLE_ID_OVERRIDE:
                 name = TITLE_ID_OVERRIDE[title_id]
             else:
-                name = _clean_psn_name(raw_name)
+                name = clean_platform_name(raw_name)
             
             games.append({
                 "title_id": title_id,
