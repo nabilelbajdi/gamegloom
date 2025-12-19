@@ -28,6 +28,7 @@ const SyncReviewPage = () => {
         isSyncing,
         isProcessing,
         processProgress,
+        syncProgress,
         error,
         needsSync,
         activeTab,
@@ -83,6 +84,9 @@ const SyncReviewPage = () => {
     }
 
     // Syncing state - show spinner
+    // Use indeterminate mode when progress is stuck (>= 85% for more than a moment)
+    const useIndeterminate = syncProgress >= 85 && syncProgress < 100;
+
     if (isSyncing) {
         return (
             <div className="sync-page">
@@ -90,12 +94,31 @@ const SyncReviewPage = () => {
                     <div className="sync-empty-state">
                         <Loader2 className="sync-empty-icon animate-spin" size={48} />
                         <h2>Syncing your {platformName} library…</h2>
-                        <p>This may take a minute. Feel free to explore the app — we'll have your games ready when you return.</p>
+                        <p>
+                            {useIndeterminate
+                                ? 'Matching games with our database. Large libraries may take a few minutes.'
+                                : 'This may take a minute. Feel free to explore the app.'
+                            }
+                        </p>
+
+                        <div className="sync-progress-container">
+                            <div
+                                className={`sync-progress-bar ${useIndeterminate ? 'indeterminate' : ''}`}
+                                style={useIndeterminate ? {} : { width: `${syncProgress}%` }}
+                            />
+                        </div>
+                        <div className="sync-progress-label">
+                            {useIndeterminate
+                                ? 'Processing games…'
+                                : syncProgress < 100 ? 'Identifying games...' : 'Finalizing...'
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
+
 
     // Empty state - no sync run yet
     if (needsSync) {
