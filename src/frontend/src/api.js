@@ -773,6 +773,27 @@ export const linkPSNAccount = async (username) => {
 };
 
 /**
+ * Preview a PSN profile before linking
+ */
+export const previewPSNProfile = async (username) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/psn/preview/${encodeURIComponent(username)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Profile not found or is private");
+  }
+
+  return await response.json();
+};
+
+/**
  * Clear all games from user's library
  * DELETE /user-games/all
  */
@@ -810,31 +831,23 @@ export const clearPsnCache = async () => {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to clear PSN cache");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to clear PSN cache");
   }
 
   return await response.json();
 };
 
-// ============================================
-// Sync API Functions
-// ============================================
-
-// ═══════════════════════════════════════════════════════════════════
-// PSN Sync API (Ephemeral Flow)
-// ═══════════════════════════════════════════════════════════════════
-// Note: The old /sync/* endpoints have been removed. 
-// PSN sync now uses the ephemeral flow via /integrations/psn/library and /integrations/psn/import.
-
 /**
- * Preview PSN profile before linking
- * GET /integrations/psn/preview/{username}
+ * Clear Steam cache
+ * DELETE /integrations/steam/cache
  */
-export const previewPSNProfile = async (username) => {
+export const clearSteamCache = async () => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const response = await fetch(`${BASE_URL}/integrations/psn/preview/${encodeURIComponent(username)}`, {
+  const response = await fetch(`${BASE_URL}/integrations/steam/cache`, {
+    method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -842,44 +855,39 @@ export const previewPSNProfile = async (username) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Profile not found or is private");
+    throw new Error(error.detail || "Failed to clear Steam cache");
   }
 
   return await response.json();
 };
 
+// ============================================
+// Sync Review API (PSN & Steam)
+// ============================================
+
+
 /**
- * Fetch cached PSN library from database (fast, ~50ms)
- * GET /integrations/psn/library
- * @param {boolean} includeHidden - Whether to include hidden/skipped games
+ * Get PSN library (cached)
  */
 export const getPSNLibrary = async (includeHidden = false) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
-  const url = includeHidden
-    ? `${BASE_URL}/integrations/psn/library?include_hidden=true`
-    : `${BASE_URL}/integrations/psn/library`;
-
-  const response = await fetch(url, {
+  const response = await fetch(`${BASE_URL}/integrations/psn/library?include_hidden=${includeHidden}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Failed to fetch PSN library");
+    throw new Error("Failed to fetch PSN library");
   }
 
   return await response.json();
 };
 
 /**
- * Sync PSN library from PlayStation Network (slow, ~10-20s)
- * Fetches from PSN API, matches to IGDB, caches in database.
- * POST /integrations/psn/sync
- * @returns {Promise<{new_count: number, updated_count: number, total_count: number, message: string}>}
+ * Sync PSN library from PSN API
  */
 export const syncPSNLibrary = async () => {
   const token = localStorage.getItem("token");
@@ -901,8 +909,7 @@ export const syncPSNLibrary = async () => {
 };
 
 /**
- * Import games directly to library (ephemeral flow)
- * POST /integrations/psn/import
+ * Import PSN games to library
  */
 export const importPSNGames = async (games) => {
   const token = localStorage.getItem("token");
@@ -919,15 +926,14 @@ export const importPSNGames = async (games) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Failed to import games");
+    throw new Error(error.detail || "Failed to import PSN games");
   }
 
   return await response.json();
 };
 
 /**
- * Skip (hide) a PSN game - persists across sessions
- * POST /integrations/psn/preferences/skip
+ * Hide a PSN game
  */
 export const skipPSNGame = async (platformId) => {
   const token = localStorage.getItem("token");
@@ -942,17 +948,12 @@ export const skipPSNGame = async (platformId) => {
     body: JSON.stringify({ platform_id: platformId })
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Failed to skip game");
-  }
-
+  if (!response.ok) throw new Error("Failed to skip game");
   return await response.json();
 };
 
 /**
- * Save a manual IGDB match for a PSN game - persists across sessions
- * POST /integrations/psn/preferences/match
+ * Manually match a PSN game
  */
 export const fixPSNMatch = async (platformId, igdbId, igdbName = null, igdbCoverUrl = null) => {
   const token = localStorage.getItem("token");
@@ -972,17 +973,12 @@ export const fixPSNMatch = async (platformId, igdbId, igdbName = null, igdbCover
     })
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Failed to save match");
-  }
-
+  if (!response.ok) throw new Error("Failed to fix match");
   return await response.json();
 };
 
 /**
- * Restore a hidden game / clear a manual match
- * DELETE /integrations/psn/preferences/{platformId}
+ * Restore a hidden PSN game
  */
 export const restorePSNGame = async (platformId) => {
   const token = localStorage.getItem("token");
@@ -995,9 +991,182 @@ export const restorePSNGame = async (platformId) => {
     }
   });
 
+  if (!response.ok) throw new Error("Failed to restore game");
+  return await response.json();
+};
+
+/**
+ * Preview Steam profile before linking
+ * GET /integrations/steam/preview/{identifier}
+ */
+export const previewSteamProfile = async (identifier) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/preview/${encodeURIComponent(identifier)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Failed to restore game");
+    throw new Error(error.detail || "Profile not found");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get Steam linked library games (cached)
+ */
+
+export const getSteamLibrary = async (includeHidden = false) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/library?include_hidden=${includeHidden}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to fetch Steam library");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Sync Steam library from Steam API
+ */
+export const syncSteamLibrary = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/sync`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to sync Steam library");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Import Steam games directly to library
+ */
+export const importSteamGames = async (games) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ games })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to import Steam games");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Hide a Steam game
+ */
+export const skipSteamGame = async (platformId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/skip`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ platform_id: platformId })
+  });
+
+  if (!response.ok) throw new Error("Failed to skip game");
+  return await response.json();
+};
+
+/**
+ * Manually match a Steam game
+ */
+export const fixSteamMatch = async (platformId, igdbId, igdbName = null, igdbCoverUrl = null) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/match`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      platform_id: platformId,
+      igdb_id: igdbId,
+      igdb_name: igdbName,
+      igdb_cover_url: igdbCoverUrl
+    })
+  });
+
+  if (!response.ok) throw new Error("Failed to fix match");
+  return await response.json();
+};
+
+/**
+ * Restore a hidden Steam game
+ */
+export const restoreSteamGame = async (platformId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/${encodeURIComponent(platformId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) throw new Error("Failed to restore game");
+  return await response.json();
+};
+
+/**
+ * Link Steam account manually via ID, URL or vanity name
+ */
+export const linkSteamManual = async (identifier) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/steam/link-manual`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ identifier })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to link Steam account");
   }
 
   return await response.json();
