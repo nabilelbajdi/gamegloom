@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2 } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, getSteamAuthUrl, linkSteamAccount, clearAllGames, clearPsnCache } from '../api';
+import { fetchIntegrationStatus, unlinkPlatform, clearAllGames } from '../api';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
+import SteamConnectModal from '../components/settings/SteamConnectModal';
 import useToastStore from '../store/useToastStore';
 import useUserGameStore from '../store/useUserGameStore';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,11 +21,14 @@ const SettingsPage = () => {
     const [status, setStatus] = useState({ steam: null, psn: null });
     const [isLoading, setIsLoading] = useState(true);
     const [showPSNModal, setShowPSNModal] = useState(false);
+    const [showSteamModal, setShowSteamModal] = useState(false);
     const [actionLoading, setActionLoading] = useState(null);
-
     const [isConfirming, setIsConfirming] = useState(false);
     const [clearInput, setClearInput] = useState('');
+    const callbackProcessed = useRef(false);
+
     const clearInputRef = useRef(null);
+
 
     const loadStatus = async () => {
         try {
@@ -50,11 +54,15 @@ const SettingsPage = () => {
     }, [isConfirming]);
 
     const handleSteamCallback = async () => {
+        if (callbackProcessed.current) return;
+
         const steamCallback = searchParams.get('steam_callback');
         const openidClaimedId = searchParams.get('openid.claimed_id');
 
         if (steamCallback && openidClaimedId) {
+            callbackProcessed.current = true;
             const openidParams = {
+
                 openid_ns: searchParams.get('openid.ns') || '',
                 openid_mode: searchParams.get('openid.mode') || '',
                 openid_op_endpoint: searchParams.get('openid.op_endpoint') || '',
@@ -81,16 +89,6 @@ const SettingsPage = () => {
         }
     };
 
-    const handleConnectSteam = async () => {
-        try {
-            setActionLoading('steam');
-            const { auth_url } = await getSteamAuthUrl();
-            window.location.href = auth_url;
-        } catch (error) {
-            toast.error(`Failed to connect: ${error.message}`);
-            setActionLoading(null);
-        }
-    };
 
     const handleDisconnect = async (platform) => {
         const name = platform === 'psn' ? 'PlayStation' : 'Steam';
@@ -130,17 +128,6 @@ const SettingsPage = () => {
         setClearInput('');
     };
 
-    const handleClearPsnCache = async () => {
-        try {
-            setActionLoading('psnCache');
-            const result = await clearPsnCache();
-            toast.success(result.message || 'PSN cache cleared');
-        } catch (error) {
-            toast.error('Failed to clear PSN cache');
-        } finally {
-            setActionLoading(null);
-        }
-    };
 
     if (!user) {
         return (
@@ -213,7 +200,7 @@ const SettingsPage = () => {
                         </>
                     ) : (
                         <button
-                            onClick={platform === 'steam' ? handleConnectSteam : () => setShowPSNModal(true)}
+                            onClick={platform === 'steam' ? () => setShowSteamModal(true) : () => setShowPSNModal(true)}
                             className="integration-btn primary"
                             disabled={loading}
                         >
@@ -316,26 +303,6 @@ const SettingsPage = () => {
                             </div>
                         )}
                     </div>
-
-                    {/* PSN Cache Clear (for testing) */}
-                    <button
-                        className="clear-row"
-                        onClick={handleClearPsnCache}
-                        disabled={actionLoading === 'psnCache'}
-                    >
-                        <div className="clear-row-icon">
-                            <Trash2 size={18} />
-                        </div>
-                        <div className="clear-row-content">
-                            <p className="clear-row-title">Clear PSN cache</p>
-                            <p className="clear-row-meta">Force fresh data on next PSN sync</p>
-                        </div>
-                        {actionLoading === 'psnCache' ? (
-                            <Loader2 size={18} className="animate-spin" style={{ marginLeft: 'auto', color: 'var(--color-gray-500)' }} />
-                        ) : (
-                            <ChevronRight size={18} className="clear-row-chevron" />
-                        )}
-                    </button>
                 </section>
             </div>
 
@@ -348,8 +315,19 @@ const SettingsPage = () => {
                     }}
                 />
             )}
+
+            {showSteamModal && (
+                <SteamConnectModal
+                    onClose={() => setShowSteamModal(false)}
+                    onConnected={() => {
+                        setShowSteamModal(false);
+                        loadStatus();
+                    }}
+                />
+            )}
         </div>
     );
+
 };
 
 export default SettingsPage;
