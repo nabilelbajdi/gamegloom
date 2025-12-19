@@ -25,7 +25,7 @@ const SYNC_SORT_OPTIONS = [
 ];
 
 const SortDropdown = ({
-  sortOption = "added_new",
+  sortOption = "last_played",
   onSortChange,
   isSearchPage = false,
   isSyncPage = false

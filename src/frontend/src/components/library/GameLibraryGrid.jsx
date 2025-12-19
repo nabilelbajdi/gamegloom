@@ -72,7 +72,7 @@ const GameLibraryGrid = ({
           isSearching={!!searchQuery}
           showResultCount={false}
           containerClassName="container mx-auto"
-          columnCount={{ default: 2, sm: 3, md: 4, lg: 4, xl: 4 }}
+          columnCount={{ default: 2, sm: 3, md: 4, lg: 5, xl: 5 }}
         />
       ) : (
         <GamesList
