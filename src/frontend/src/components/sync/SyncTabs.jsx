@@ -10,9 +10,9 @@ const TAB_INFO = {
 };
 
 const TAB_DESCRIPTIONS = {
-    ready: 'Matched to our database. Verify the cover looks right, then import.',
-    unmatched: "Couldn't find a match. Use Fix to search for the correct game.",
-    skipped: 'Games you chose to skip. Hover to restore or remove.',
+    ready: 'These games have been automatically matched. Please verify them before adding to your library.',
+    unmatched: "We couldn't automatically identify these games. Click Fix to search and match them manually.",
+    skipped: 'Games you chose to hide from import. You can restore them at any time.',
 };
 
 const SyncTabs = ({

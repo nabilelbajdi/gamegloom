@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2 } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, getSteamAuthUrl, linkSteamAccount, clearAllGames } from '../api';
+import { fetchIntegrationStatus, unlinkPlatform, getSteamAuthUrl, linkSteamAccount, clearAllGames, clearPsnCache } from '../api';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
 import useToastStore from '../store/useToastStore';
@@ -128,6 +128,18 @@ const SettingsPage = () => {
     const cancelClear = () => {
         setIsConfirming(false);
         setClearInput('');
+    };
+
+    const handleClearPsnCache = async () => {
+        try {
+            setActionLoading('psnCache');
+            const result = await clearPsnCache();
+            toast.success(result.message || 'PSN cache cleared');
+        } catch (error) {
+            toast.error('Failed to clear PSN cache');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     if (!user) {
@@ -304,6 +316,26 @@ const SettingsPage = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* PSN Cache Clear (for testing) */}
+                    <button
+                        className="clear-row"
+                        onClick={handleClearPsnCache}
+                        disabled={actionLoading === 'psnCache'}
+                    >
+                        <div className="clear-row-icon">
+                            <Trash2 size={18} />
+                        </div>
+                        <div className="clear-row-content">
+                            <p className="clear-row-title">Clear PSN cache</p>
+                            <p className="clear-row-meta">Force fresh data on next PSN sync</p>
+                        </div>
+                        {actionLoading === 'psnCache' ? (
+                            <Loader2 size={18} className="animate-spin" style={{ marginLeft: 'auto', color: 'var(--color-gray-500)' }} />
+                        ) : (
+                            <ChevronRight size={18} className="clear-row-chevron" />
+                        )}
+                    </button>
                 </section>
             </div>
 

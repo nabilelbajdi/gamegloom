@@ -794,6 +794,28 @@ export const clearAllGames = async () => {
   return await response.json();
 };
 
+/**
+ * Clear PSN cache (for testing/debugging)
+ * DELETE /integrations/psn/cache
+ */
+export const clearPsnCache = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/integrations/psn/cache`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to clear PSN cache");
+  }
+
+  return await response.json();
+};
+
 // ============================================
 // Sync API Functions
 // ============================================

@@ -90,11 +90,6 @@ const SyncGameCard = ({
                     </div>
                 )}
 
-                {/* Platform badge */}
-                <div className="sync-card-badge">
-                    {game.platform === 'psn' ? 'PSN' : 'Steam'}
-                </div>
-
                 {/* Playtime badge */}
                 {game.playtime_minutes > 0 && (
                     <div className="sync-card-playtime">
@@ -102,6 +97,13 @@ const SyncGameCard = ({
                             ? `${Math.floor(game.playtime_minutes / 60)}h`
                             : `${game.playtime_minutes}m`
                         }
+                    </div>
+                )}
+
+                {/* Platform category badge (PS4/PS5) */}
+                {game.platform_category && (
+                    <div className="sync-card-badge">
+                        {game.platform_category.toUpperCase().replace(',', '/')}
                     </div>
                 )}
 
@@ -161,16 +163,11 @@ const SyncGameCard = ({
                 )}
             </div>
 
-            {/* Title below card - IGDB name with PSN subtitle */}
+            {/* Title below card */}
             <div className="sync-card-info">
                 <div className="sync-card-title" title={displayName}>
                     {displayName}
                 </div>
-                {isMatched && game.igdb_name !== game.platform_name && (
-                    <div className="sync-card-subtitle" title={game.platform_name}>
-                        PSN: {game.platform_name}
-                    </div>
-                )}
             </div>
         </div>
     );

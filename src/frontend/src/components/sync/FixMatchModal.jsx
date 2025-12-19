@@ -131,7 +131,7 @@ const FixMatchModal = ({ game, onClose, onFixed }) => {
                 </div>
 
                 <p className="fix-hint">
-                    Select the correct match for this game
+                    Select the correct match below. You can adjust the search query to refine the results if needed.
                 </p>
             </div>
 
