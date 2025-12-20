@@ -64,13 +64,18 @@ const SyncReviewPage = () => {
         if (location.state?.triggerSync && !autoSyncTriggered.current && !isSyncing) {
             autoSyncTriggered.current = true;
             handleSync();
-            window.history.replaceState({}, document.title);
+            // Don't clear history state so we can use it for back navigation
         }
     }, [location.state, handleSync, isSyncing]);
 
+    // Determine back navigation based on where user came from
+    const backTo = location.state?.fromSettings
+        ? { path: '/settings', label: 'Settings' }
+        : { path: '/sync', label: 'Import Games' };
+
     if (isLoading) {
         return (
-            <div className="sync-page">
+            <div className={`sync-page ${platform === 'steam' ? 'steam-theme' : platform === 'psn' ? 'psn-theme' : ''}`}>
                 <div className="sync-container">
                     <div className="sync-header">
                         <div className="skeleton-back shimmer" style={{ width: 80, height: 16, borderRadius: 4 }} />
@@ -89,7 +94,7 @@ const SyncReviewPage = () => {
 
     if (isSyncing) {
         return (
-            <div className="sync-page">
+            <div className={`sync-page ${platform === 'steam' ? 'steam-theme' : platform === 'psn' ? 'psn-theme' : ''}`}>
                 <div className="sync-container">
                     <div className="sync-empty-state">
                         <Loader2 className="sync-empty-icon animate-spin" size={48} />
@@ -123,7 +128,7 @@ const SyncReviewPage = () => {
     // Empty state - no sync run yet
     if (needsSync) {
         return (
-            <div className="sync-page">
+            <div className={`sync-page ${platform === 'steam' ? 'steam-theme' : platform === 'psn' ? 'psn-theme' : ''}`}>
                 <div className="sync-container">
                     <div className="sync-empty-state">
                         <RefreshCw className="sync-empty-icon" size={48} />
@@ -148,7 +153,7 @@ const SyncReviewPage = () => {
     // Up to date state - synced but nothing to do
     if (isUpToDate) {
         return (
-            <div className="sync-page">
+            <div className={`sync-page ${platform === 'steam' ? 'steam-theme' : platform === 'psn' ? 'psn-theme' : ''}`}>
                 <div className="sync-container">
                     <div className="sync-empty-state">
                         <CheckCircle2 className="sync-empty-icon sync-empty-success" size={48} />
@@ -170,12 +175,13 @@ const SyncReviewPage = () => {
     const showSkip = activeTab === 'unmatched';
 
     return (
-        <div className="sync-page">
+        <div className={`sync-page ${platform === 'steam' ? 'steam-theme' : platform === 'psn' ? 'psn-theme' : ''}`}>
             <div className="sync-container">
                 <SyncHeader
                     platformName={platformName}
                     readyCount={counts.ready}
                     unmatchedCount={counts.unmatched}
+                    backTo={backTo}
                 />
 
                 {error && (

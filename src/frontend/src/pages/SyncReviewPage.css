@@ -1,9 +1,73 @@
 /* pages/SyncReviewPage.css */
 
+/* Platform Brand Colors */
+:root {
+    --steam-atlantis: #A1CD44;
+    --steam-malibu: #66C0F4;
+    --steam-mirage: #0a0a0a;
+
+    --psn-blue: #0070CC;
+    --psn-dark: #0a0a0a;
+}
+
 .sync-page {
     min-height: 100vh;
-    background: black;
+    background: #0a0a0a;
     padding-top: 80px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEAM THEME - accent colors only
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sync-page.steam-theme .sync-tab.active::after {
+    background: var(--steam-malibu);
+}
+
+.sync-page.steam-theme .sync-empty-button {
+    background: var(--steam-malibu);
+    color: #0a0a0a;
+}
+
+.sync-page.steam-theme .sync-bulk-primary {
+    background: var(--steam-malibu);
+    color: #0a0a0a;
+}
+
+.sync-page.steam-theme .sync-progress-bar {
+    background: linear-gradient(90deg, var(--steam-malibu), var(--steam-atlantis));
+    box-shadow: 0 0 15px rgba(102, 192, 244, 0.4);
+}
+
+.sync-page.steam-theme .sync-bulk-link:hover:not(:disabled) {
+    color: var(--steam-malibu);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PSN THEME - accent colors only
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sync-page.psn-theme .sync-tab.active::after {
+    background: var(--psn-blue);
+}
+
+.sync-page.psn-theme .sync-empty-button {
+    background: var(--psn-blue);
+    color: white;
+}
+
+.sync-page.psn-theme .sync-bulk-primary {
+    background: var(--psn-blue);
+    color: white;
+}
+
+.sync-page.psn-theme .sync-progress-bar {
+    background: linear-gradient(90deg, var(--psn-blue), #00a0ff);
+    box-shadow: 0 0 15px rgba(0, 112, 204, 0.4);
+}
+
+.sync-page.psn-theme .sync-bulk-link:hover:not(:disabled) {
+    color: var(--psn-blue);
 }
 
 .sync-container {

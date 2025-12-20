@@ -4,41 +4,53 @@
   /* Typography */
   --font-body: "Amazon Ember", sans-serif;
   --font-heading: "Amazon Ember", sans-serif;
-  
+
   /* Dark Mode */
-  --color-primary: #C8AA6E; /* Gold */
-  --color-primary-rgb: 200, 170, 110; /* RGB values for primary color */
-  --color-secondary: #7A5C95; /* Purple */
-  --color-want: #B24A4A; /* Red */
-  --color-completed: #4A855C; /* Green */
-  --color-flame: #e25822; /* Flame orange */
-  --color-dark: #0A0E17; /* Dark background */
-  --color-light: #E2E8F0; /* Light text color */
-  --color-surface-dark: #1A1A1C; /* Dark component background */
+  --color-primary: #C8AA6E;
+  /* Gold */
+  --color-primary-rgb: 200, 170, 110;
+  /* RGB values for primary color */
+  --color-secondary: #7A5C95;
+  /* Purple */
+  --color-want: #B24A4A;
+  /* Red */
+  --color-completed: #4A855C;
+  /* Green */
+  --color-flame: #e25822;
+  /* Flame orange */
+  --color-dark: #0A0E17;
+  /* Dark background */
+  --color-light: #E2E8F0;
+  /* Light text color */
+  --color-surface-dark: #1A1A1C;
+  /* Dark component background */
   --text-gradient: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
-  
+
   /* Light Mode */
-  --color-dark-light-mode: #E2E8F0; /* Main background in light mode */
-  --color-light-dark-mode: #0A0E17; /* Main text color in light mode */
-  --color-surface-light: #F5F5F7; /* Light component background */
-  
-  /* Navbar - Dark Mode */ 
+  --color-dark-light-mode: #E2E8F0;
+  /* Main background in light mode */
+  --color-light-dark-mode: #0A0E17;
+  /* Main text color in light mode */
+  --color-surface-light: #F5F5F7;
+  /* Light component background */
+
+  /* Navbar - Dark Mode */
   --navbar-bg: rgba(10, 14, 23, 0.8);
   --navbar-border: #C8AA6E;
   --navbar-text: #E2E8F0;
   --navbar-hover: #C8AA6E;
-  
+
   /* Navbar - Light Mode */
   --navbar-bg-light: rgba(229, 231, 235, 0.8);
   --navbar-border-light: #C8AA6E;
   --navbar-text-light: #0A0E17;
   --navbar-hover-light: #C8AA6E;
-  
+
   /* Effects & Animations */
   --card-hover-transform: scale(1.02);
   --button-hover-transform: scale(1.05);
   --transition-speed: 0.3s;
-  
+
   /* Animations */
   --animation-duration-normal: 500ms;
   --animation-duration-slow: 1000ms;
@@ -57,7 +69,10 @@
     font-family: var(--font-body);
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-heading);
     background: linear-gradient(135deg, #fff, #fbcea0 66%, #fbcfa0);
     -webkit-background-clip: text;
@@ -103,14 +118,16 @@
   /* Hover effects */
   .logo:hover {
     transform: scale(var(--logo-hover-scale));
-    opacity: 0.9; /* Slight fade on hover */
+    opacity: 0.9;
+    /* Slight fade on hover */
   }
-    
+
   /* Navbar */
   .nav-link {
     @apply relative px-4 py-3 transition-all duration-300;
     color: var(--navbar-text);
   }
+
   .nav-link:hover {
     color: var(--navbar-hover);
   }
@@ -126,6 +143,7 @@
     background-color: var(--navbar-hover);
     transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
   }
+
   .nav-link:hover::after {
     width: 100%;
     left: 0;
@@ -136,6 +154,7 @@
     @apply inline-block w-4 h-4 bg-cover transition-transform duration-200 cursor-pointer;
     color: var(--navbar-text);
   }
+
   .icon:hover {
     color: var(--navbar-hover);
     @apply scale-110;
@@ -146,6 +165,7 @@
     @apply px-6 py-1.5 text-dark font-semibold rounded-lg transition-all duration-300;
     background-color: var(--color-primary);
   }
+
   .btn-nav:hover {
     background-color: #efcb83;
     text-decoration: none;
@@ -158,6 +178,7 @@
     color: var(--color-dark);
     box-shadow: 0px 0px 8px rgba(200, 170, 110, 0.3);
   }
+
   .btn-hero:hover {
     transform: scale(1.05);
     box-shadow: 0px 0px 15px rgba(200, 170, 110, 0.5);
@@ -186,6 +207,7 @@
   .footer-link {
     @apply text-sm text-gray-400 transition-all duration-300;
   }
+
   .footer-link:hover {
     color: var(--color-primary);
     text-decoration: underline;
@@ -194,6 +216,7 @@
   .footer-icon {
     @apply w-6 h-6 text-gray-400 transition-all duration-300;
   }
+
   .footer-icon:hover {
     color: var(--color-primary);
     transform: scale(1.1);
@@ -202,9 +225,10 @@
   .social-link {
     @apply p-2 rounded-lg bg-gray-900 transition-all duration-300;
   }
+
   .social-link:hover {
     background-color: rgba(200, 170, 110, 0.5);
-}
+  }
 
   /* Newsletter Input */
   input::placeholder {
@@ -216,30 +240,35 @@
   .btn-subscribe {
     @apply px-4 text-light font-semibold transition-all text-sm;
   }
+
   .btn-subscribe:hover {
     color: var(--color-primary);
   }
-  
+
   .logo {
     height: var(--logo-height, 3rem);
   }
 
   /* Smooth Scroll Animation */
   @keyframes bounceSmooth {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0);
     }
+
     50% {
       transform: translateY(6px);
     }
   }
-  
+
   .animate-bounce-smooth {
     animation: bounceSmooth 1.2s infinite ease-in-out;
   }
 }
 
 @layer utilities {
+
   /* Flex & Grid */
   .flex-center {
     @apply flex items-center justify-center;
@@ -257,8 +286,8 @@
   /* Blurred Navbar Background */
   .navbar-blur {
     backdrop-filter: blur(16px);
-    background-color: rgba(10, 14, 23, 0.7);
-    border-bottom: 2px solid rgba(200, 170, 110, 0.1);
+    background-color: rgba(0, 0, 0, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .custom-border-gradient {
@@ -275,37 +304,44 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
     }
   }
-  
+
   /* Pop Up Animation */
   @keyframes popUp {
-    0% { 
+    0% {
       opacity: 0;
       transform: scale(0.8);
     }
+
     70% {
       transform: scale(1.05);
     }
-    100% { 
+
+    100% {
       opacity: 1;
       transform: scale(1);
     }
   }
-  
+
   .popup-animation {
     animation: popUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* Scrollbar Hide */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
+
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
   }
 }
 
@@ -322,8 +358,13 @@
 
 /* Progress bar animation for hero carousel */
 @keyframes progress {
-  0% { transform: scaleX(0); }
-  100% { transform: scaleX(1); }
+  0% {
+    transform: scaleX(0);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .animate-progress {
@@ -346,9 +387,17 @@
 
 /* Pulse animation for countdown timer */
 @keyframes subtlePulse {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
+  0% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.8;
+  }
 }
 
 .animate-pulse-subtle {
