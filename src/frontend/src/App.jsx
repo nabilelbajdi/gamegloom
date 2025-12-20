@@ -23,6 +23,7 @@ import ThemePage from "./pages/discover/ThemePage";
 import RecommendationsPage from "./pages/discover/RecommendationsPage";
 import SettingsPage from "./pages/SettingsPage";
 import SyncReviewPage from "./pages/SyncReviewPage";
+import ImportPage from "./pages/ImportPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
 
@@ -63,6 +64,7 @@ function AppContent() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/sync" element={<ImportPage />} />
         <Route path="/sync/:platform" element={<SyncReviewPage />} />
         <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="*" element={<NotFoundPage />} />

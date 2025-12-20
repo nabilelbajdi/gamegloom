@@ -1,0 +1,264 @@
+/* pages/ImportPage.css */
+
+.import-page {
+    min-height: 100vh;
+    background: #0a0a0a;
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+.import-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Loading */
+.import-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 0;
+    color: #666;
+}
+
+/* Header */
+.import-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.import-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+}
+
+.import-subtitle {
+    font-size: 15px;
+    color: #888;
+    margin: 0;
+    font-weight: 400;
+}
+
+/* Platform Grid */
+.import-platforms {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 48px;
+}
+
+/* Platform Card */
+.platform-card {
+    position: relative;
+    height: 240px;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.platform-card:hover {
+    transform: translateY(-4px);
+}
+
+.platform-card.connected:hover {
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+}
+
+.platform-card:not(.connected) {
+    opacity: 0.65;
+}
+
+.platform-card:not(.connected):hover {
+    opacity: 0.85;
+}
+
+/* Card Background */
+.platform-card-bg {
+    position: absolute;
+    inset: 0;
+}
+
+.platform-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.platform-card-gradient {
+    position: absolute;
+    inset: 0;
+}
+
+.platform-card-gradient.steam {
+    background: linear-gradient(to bottom,
+            rgba(27, 40, 56, 0.3) 0%,
+            rgba(27, 40, 56, 0.7) 50%,
+            rgba(27, 40, 56, 0.95) 100%);
+}
+
+.platform-card-gradient.psn {
+    background: linear-gradient(to bottom,
+            rgba(0, 48, 135, 0.2) 0%,
+            rgba(0, 30, 80, 0.7) 50%,
+            rgba(0, 20, 50, 0.95) 100%);
+}
+
+/* Card Content */
+.platform-card-content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+    z-index: 1;
+}
+
+.platform-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.platform-logo-wrap {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(8px);
+}
+
+.platform-logo {
+    width: 22px;
+    height: 22px;
+    color: #fff;
+}
+
+.platform-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+/* Card Bottom */
+.platform-card-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.platform-user {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.platform-username {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.platform-synced {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.platform-action {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s ease;
+}
+
+.platform-card:hover .platform-action {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.platform-connect {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.15s ease;
+}
+
+.platform-card:hover .platform-connect {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Coming Soon */
+.import-coming-soon {
+    text-align: center;
+    padding: 32px 0;
+    border-top: 1px solid #1a1a1a;
+}
+
+.coming-soon-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555;
+    margin-bottom: 12px;
+}
+
+.coming-soon-list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.coming-soon-item {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.coming-soon-divider {
+    color: #333;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    .import-platforms {
+        grid-template-columns: 1fr;
+    }
+
+    .platform-card {
+        height: 200px;
+    }
+
+    .import-header {
+        margin-bottom: 32px;
+    }
+
+    .import-title {
+        font-size: 26px;
+    }
+
+    .import-container {
+        padding: 0 16px;
+    }
+}
