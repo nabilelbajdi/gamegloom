@@ -40,3 +40,4 @@ scripts/**/*.log
 
 # User uploaded content
 src/backend/static/avatars/
+src/frontend/public/images/avatars/
