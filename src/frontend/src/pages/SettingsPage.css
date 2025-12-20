@@ -102,6 +102,281 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   Profile Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 24px 20px;
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-avatar-input {
+    display: none;
+}
+
+.profile-avatar-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: var(--settings-surface);
+    transition: transform 0.15s ease;
+}
+
+.profile-avatar-btn:hover {
+    transform: scale(1.02);
+}
+
+.profile-avatar-btn:disabled {
+    cursor: wait;
+}
+
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+    color: var(--settings-text);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.profile-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 50%;
+}
+
+.profile-avatar-btn:hover .profile-avatar-overlay,
+.profile-avatar-btn:disabled .profile-avatar-overlay {
+    opacity: 1;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-username {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--settings-text);
+    margin: 0 0 4px;
+    background: none;
+    -webkit-text-fill-color: var(--settings-text);
+}
+
+.profile-member-since {
+    font-size: 13px;
+    color: var(--settings-text-muted);
+    margin: 0;
+}
+
+/* Bio */
+.profile-bio-wrapper {
+    padding: 0 24px 20px;
+    border-top: 1px solid var(--settings-border);
+    margin-top: 4px;
+    padding-top: 16px;
+}
+
+.profile-bio-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.profile-bio-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--settings-text-muted);
+}
+
+.profile-bio-edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--settings-chip);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--settings-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.profile-bio-edit-btn:hover {
+    border-color: var(--settings-text-muted);
+    color: var(--settings-text);
+    background: var(--settings-hover);
+}
+
+.profile-bio-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--settings-text-secondary);
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.profile-bio-text.empty {
+    color: var(--settings-text-muted);
+    font-style: italic;
+}
+
+.profile-bio-display {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-input-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    text-align: left;
+}
+
+.profile-bio-display:hover {
+    border-color: var(--settings-text-muted);
+    background: var(--settings-elevated);
+}
+
+.profile-bio-display span {
+    font-size: 14px;
+    color: var(--settings-text);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.profile-bio-display span.placeholder {
+    color: var(--settings-text-muted);
+    font-style: italic;
+}
+
+.profile-bio-edit-icon {
+    color: var(--settings-text-muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: color 0.15s ease;
+}
+
+.profile-bio-display:hover .profile-bio-edit-icon {
+    color: var(--settings-text);
+}
+
+.profile-bio-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.5;
+    background: var(--settings-input-bg);
+    border: 1px solid var(--settings-text-muted);
+    border-radius: 6px;
+    color: var(--settings-text);
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.profile-bio-textarea::placeholder {
+    color: var(--settings-text-muted);
+}
+
+.profile-bio-textarea:focus {
+    border-color: var(--settings-text-secondary);
+}
+
+.profile-bio-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.profile-bio-counter {
+    font-size: 12px;
+    color: var(--settings-text-muted);
+}
+
+.profile-bio-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.profile-bio-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.profile-bio-btn.cancel {
+    background: var(--settings-chip);
+    color: var(--settings-text-secondary);
+}
+
+.profile-bio-btn.cancel:hover {
+    background: #444;
+    color: var(--settings-text);
+}
+
+.profile-bio-btn.save {
+    background: var(--settings-success);
+    color: white;
+}
+
+.profile-bio-btn.save:hover:not(:disabled) {
+    background: #1bc557;
+}
+
+.profile-bio-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    Settings Row
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -573,6 +848,30 @@
     .integration-btn {
         padding: 6px 12px;
         font-size: 12px;
+    }
+
+    /* Profile responsive */
+    .profile-section {
+        padding: 0 16px 16px;
+        gap: 16px;
+    }
+
+    .profile-avatar-btn {
+        width: 64px;
+        height: 64px;
+    }
+
+    .profile-avatar-placeholder {
+        font-size: 20px;
+    }
+
+    .profile-username {
+        font-size: 16px;
+    }
+
+    .profile-bio-wrapper {
+        padding: 0 16px 16px;
+        padding-top: 12px;
     }
 }
 
