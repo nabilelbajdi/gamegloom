@@ -27,6 +27,9 @@ from app.api.v1.routers.games import router as games_router
 from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.user_games import router as user_games_router
 
+# Import models to ensure SQLAlchemy can resolve relationships
+from app.api.v1.models.user_platform_link import UserPlatformLink  # noqa: F401
+
 # Create a minimal test app (avoids importing scheduler from main.py)
 test_app = FastAPI()
 test_app.include_router(auth_router, prefix="/api/v1")
