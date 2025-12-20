@@ -217,12 +217,21 @@ def pick_best_match(candidates: List[Game], first_played: Optional[datetime] = N
     # Allow games released up to ~2 months after first_played
     cutoff = first_played + timedelta(days=60)
     
+    def get_naive_release_date(g):
+        """Get release date as naive datetime for comparison."""
+        if not g.first_release_date:
+            return None
+        rd = g.first_release_date
+        if hasattr(rd, 'tzinfo') and rd.tzinfo is not None:
+            return rd.replace(tzinfo=None)
+        return rd
+    
     valid = [g for g in candidates 
-             if g.first_release_date and g.first_release_date <= cutoff]
+             if get_naive_release_date(g) and get_naive_release_date(g) <= cutoff]
     
     if valid:
         # Pick the most recent valid release (closest to first_played but before cutoff)
-        return max(valid, key=lambda g: g.first_release_date)
+        return max(valid, key=lambda g: get_naive_release_date(g))
     
     # Fallback to lowest ID
     return min(candidates, key=lambda g: g.igdb_id)

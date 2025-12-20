@@ -626,7 +626,12 @@ def update_library_stats(db: Session, user_id: int, igdb_ids: set = None):
             continue
 
         total_playtime = sum(e.playtime_minutes or 0 for e in cached_entries)
-        latest_played = max((e.last_played_at for e in cached_entries if e.last_played_at), default=None)
+        # Normalize datetimes to naive UTC for safe comparison across platforms
+        def to_naive(dt):
+            if dt and hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+                return dt.replace(tzinfo=None)
+            return dt
+        latest_played = max((to_naive(e.last_played_at) for e in cached_entries if e.last_played_at), default=None)
 
         # Update UserGame
         target_user_game = db.query(UserGame).join(Game).filter(
@@ -705,7 +710,12 @@ def import_games_to_library(db: Session, user_id: int, platform: str, games_data
         ).all()
         
         total_playtime = sum(e.playtime_minutes or 0 for e in cached_entries)
-        latest_played = max((e.last_played_at for e in cached_entries if e.last_played_at), default=None)
+        # Normalize datetimes to naive UTC for safe comparison across platforms
+        def to_naive(dt):
+            if dt and hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+                return dt.replace(tzinfo=None)
+            return dt
+        latest_played = max((to_naive(e.last_played_at) for e in cached_entries if e.last_played_at), default=None)
 
         if user_game:
             # Already in library - just update stats (aggregation)
