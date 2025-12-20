@@ -227,7 +227,7 @@ const SettingsPage = () => {
                     {isConnected ? (
                         <>
                             <button
-                                onClick={() => navigate(`/sync/${platform}`)}
+                                onClick={() => navigate(`/sync/${platform}`, { state: { fromSettings: true } })}
                                 className="integration-btn secondary"
                                 disabled={loading}
                             >

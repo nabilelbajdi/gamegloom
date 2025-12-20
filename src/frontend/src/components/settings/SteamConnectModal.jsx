@@ -49,7 +49,7 @@ const SteamConnectModal = ({ onClose }) => {
             // After showing success, redirect with auto-sync flag
             setTimeout(() => {
                 onClose();
-                navigate('/sync/steam', { state: { triggerSync: true } });
+                navigate('/sync/steam', { state: { triggerSync: true, fromSettings: true } });
             }, 1500);
         } catch (err) {
             setError(err.message || 'Failed to link account');

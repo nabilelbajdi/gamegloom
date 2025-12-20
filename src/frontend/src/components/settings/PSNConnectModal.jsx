@@ -55,7 +55,7 @@ const PSNConnectModal = ({ onClose }) => {
             // After showing success, redirect with auto-sync flag
             setTimeout(() => {
                 onClose();
-                navigate('/sync/psn', { state: { triggerSync: true } });
+                navigate('/sync/psn', { state: { triggerSync: true, fromSettings: true } });
             }, 1500);
         } catch (err) {
             setError(err.message || 'Failed to link account');
