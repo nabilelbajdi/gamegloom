@@ -880,7 +880,9 @@ export const getPSNLibrary = async (includeHidden = false) => {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch PSN library");
+    // Get actual error detail from backend (e.g., "No PSN account linked")
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to fetch PSN library");
   }
 
   return await response.json();

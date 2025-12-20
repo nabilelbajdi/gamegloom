@@ -108,8 +108,18 @@ export const useSyncReview = (platform) => {
             setSkippedIds(new Set());
 
         } catch (err) {
-            setError(err.message);
-            toastError('Failed to load: ' + err.message);
+            // 404 = no account linked or empty cache - that's fine, just show "needs sync"
+            // Error messages include: "No PSN account linked", "No Steam account linked", "Failed to fetch X library"
+            const msg = err.message?.toLowerCase() || '';
+            if (msg.includes('account linked') || msg.includes('not linked') || msg.includes('failed to fetch')) {
+                setNeedsSync(true);
+                setGames([]);
+                // No error toast - this is expected for first-time visitors
+            } else {
+                // Actual error
+                setError(err.message);
+                toastError('Failed to load: ' + err.message);
+            }
         } finally {
             setIsLoading(false);
         }
