@@ -19,9 +19,9 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
     setIsAvatarLoading(true);
     const cacheBustUrl = `${newAvatarUrl}?t=${new Date().getTime()}`;
     setAvatarUrl(cacheBustUrl);
-    
+
     if (onProfileUpdate) {
-      onProfileUpdate({...user, avatar: newAvatarUrl});
+      onProfileUpdate({ ...user, avatar: newAvatarUrl });
     }
   };
 
@@ -36,19 +36,8 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
 
   return (
     <>
-      {/* Background Banner */}
-      <div className="relative w-full h-72 md:h-96 overflow-hidden">
-        <img 
-          src="/images/emerald.jpg" 
-          alt="Profile banner" 
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-dark via-surface-dark/70 to-surface-dark/10"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-surface-dark/80 via-transparent to-surface-dark/80"></div>
-      </div>
-      
       {/* Profile Header*/}
-      <div className="w-full -mt-24 md:-mt-28 mb-8 relative z-10 bg-gradient-to-b from-surface-dark/40 via-surface-dark/30 to-surface-dark/25 backdrop-blur-[2px] shadow-[0_0_15px_rgba(0,0,0,0.2)]">
+      <div className="w-full mb-8 relative z-10 pt-8 pb-4 border-b border-[var(--border-subtle)]">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-start md:items-end gap-8 py-6 pt-0 md:py-8 md:pt-0">
             {/* Avatar */}
@@ -66,9 +55,9 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
                   onLoad={handleImageLoad}
                   onError={handleImageError}
                 />
-                
+
                 {/* Change avatar button */}
-                <button 
+                <button
                   onClick={() => setIsAvatarUploadOpen(true)}
                   className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer rounded-full"
                   disabled={isAvatarLoading}
@@ -92,7 +81,7 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
                     <span className="tracking-wide">Member since {joinDate}</span>
                   </div>
                 </div>
-                
+
                 {/* Quick Stats */}
                 {!isLoadingStats && (
                   <div className="flex flex-nowrap items-center gap-x-6 gap-y-2">
@@ -105,7 +94,7 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
                         <span className="text-gray-400 text-xs">Games</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <div className="p-1.5 rounded-full bg-primary/10">
                         <Star className="w-3.5 h-3.5 text-primary fill-primary" />
@@ -115,7 +104,7 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
                         <span className="text-gray-400 text-xs">Reviews</span>
                       </div>
                     </div>
-                    
+
                     {stats.average_rating !== null && (
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <div className="p-1.5 rounded-full bg-primary/10">
@@ -137,7 +126,7 @@ const ProfileHeader = ({ user, stats, isLoadingStats, onProfileUpdate }) => {
 
       {/* Avatar Upload Modal */}
       {isAvatarUploadOpen && (
-        <AvatarUpload 
+        <AvatarUpload
           currentAvatar={user.avatar}
           onAvatarUpdate={handleAvatarUpdate}
           onClose={() => setIsAvatarUploadOpen(false)}

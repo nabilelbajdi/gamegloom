@@ -1,25 +1,26 @@
-/* pages/SettingsPage.css - Premium Settings */
+/* pages/SettingsPage.css - Obsidian Theme */
 
 /* ═══════════════════════════════════════════════════════════════════
-   Color Palette
+   Color Aliases - Using Obsidian design tokens
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-    --settings-bg: #121212;
-    --settings-card: #1a1a1a;
-    --settings-surface: #242424;
-    --settings-elevated: #2a2a2a;
-    --settings-chip: #3a3a3a;
-    --settings-input-bg: #292929;
-    --settings-input-border: #303030;
-    --settings-border: rgba(255, 255, 255, 0.06);
-    --settings-text: #ffffff;
-    --settings-text-secondary: #a0a0a0;
-    --settings-text-muted: #6a6a6a;
-    --settings-hover: rgba(255, 255, 255, 0.04);
-    --settings-active: rgba(255, 255, 255, 0.06);
-    --settings-danger: #f15e6c;
-    --settings-success: #1ed760;
+    --settings-bg: var(--bg-base);
+    --settings-card: var(--bg-elevated-1);
+    --settings-surface: var(--bg-elevated-2);
+    --settings-elevated: var(--bg-elevated-3);
+    --settings-chip: var(--bg-elevated-3);
+    --settings-input-bg: var(--bg-input);
+    --settings-input-border: var(--border-default);
+    --settings-border: var(--border-subtle);
+    --settings-text: var(--text-primary);
+    --settings-text-secondary: var(--text-secondary);
+    --settings-text-muted: var(--text-muted);
+    --settings-hover: var(--overlay-light);
+    --settings-active: var(--border-subtle);
+    --settings-danger: var(--color-error);
+    --settings-success: var(--color-success);
+    --settings-accent: var(--color-primary);
 }
 
 /* ═══════════════════════════════════════════════════════════════════

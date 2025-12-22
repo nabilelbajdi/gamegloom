@@ -11,20 +11,20 @@ import { ChevronRight } from "lucide-react";
  * @param {React.ReactNode} props.icon - Optional icon to display before the title
  * @param {boolean} props.showGradient - Whether to show the gradient effect (default: true)
  */
-const SectionHeader = ({ 
-  title, 
-  viewAllLink, 
+const SectionHeader = ({
+  title,
+  viewAllLink,
   icon = null,
   showGradient = true
 }) => {
   return (
     <div className="flex justify-between items-center mb-6">
       {viewAllLink ? (
-        <Link 
-          to={viewAllLink} 
+        <Link
+          to={viewAllLink}
           className="group flex items-center hover:opacity-80 transition-all"
         >
-          <h2 className="text-2xl font-bold text-light group-hover:text-primary transition-colors relative flex items-center">
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors relative flex items-center">
             {icon && (
               <span className="mr-2 inline-flex">{icon}</span>
             )}
@@ -37,7 +37,7 @@ const SectionHeader = ({
         </Link>
       ) : (
         <div className="flex items-center">
-          <h2 className="text-2xl font-bold text-light relative flex items-center">
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] relative flex items-center">
             {icon && (
               <span className="mr-2 inline-flex">{icon}</span>
             )}

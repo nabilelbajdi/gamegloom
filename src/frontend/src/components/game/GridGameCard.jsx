@@ -5,7 +5,7 @@ import { formatGenres } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
 
-const GridGameCard = ({ game, starRating, smallStatus = false }) => {
+const GridGameCard = ({ game, starRating, smallStatus = false, compact = false }) => {
   const { user } = useAuth();
   const {
     showStatusDropdown,
@@ -17,7 +17,7 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
   return (
     <Link
       to={`/game/${game.slug || game.igdb_id}`}
-      className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface transition-all duration-300 hover:shadow-xl"
+      className="block group relative aspect-[3/4] rounded-lg overflow-hidden bg-[var(--bg-elevated-2)] border border-[var(--border-subtle)] transition-all duration-300 hover:shadow-xl hover:border-[var(--border-default)]"
     >
       {/* Game Cover */}
       <div className="h-full" ref={coverImageRef} onMouseLeave={handleCoverMouseLeave}>
@@ -42,9 +42,9 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
 
         {/* Rating badge - top right */}
         {!starRating && game.rating !== "N/A" && game.rating !== undefined && game.rating !== null && !isNaN(parseFloat(game.rating)) && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-1 bg-black/60 rounded backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Star className="w-3 h-3 text-primary fill-primary" />
-            <span className="text-[11px] font-semibold text-gray-300 translate-y-[1px]">{parseFloat(game.rating).toFixed(1)}</span>
+          <div className={`absolute ${compact ? 'top-1 right-1' : 'top-2 right-2'} flex items-center gap-0.5 ${compact ? 'px-1 py-0.5' : 'px-1.5 py-1'} bg-black/60 rounded backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+            <Star className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-primary fill-primary`} />
+            <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-semibold text-gray-300 -translate-y-px`}>{parseFloat(game.rating).toFixed(1)}</span>
           </div>
         )}
 
@@ -59,10 +59,10 @@ const GridGameCard = ({ game, starRating, smallStatus = false }) => {
         )}
 
         {/* Game information overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-          <h3 className="text-sm font-semibold text-white truncate">{game.name}</h3>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xs text-gray-300">
+        <div className={`absolute bottom-0 left-0 right-0 ${compact ? 'p-2' : 'p-3'} transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300`}>
+          <h3 className={`${compact ? 'text-xs' : 'text-sm'} font-semibold text-[var(--text-primary)] truncate`}>{game.name}</h3>
+          <div className="flex items-center justify-between mt-0.5">
+            <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-gray-300`}>
               {formatGenres(game.genres, 1)}
             </span>
           </div>

@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistance } from 'date-fns';
-import { 
-  Star, 
-  MessageCircleMore, 
-  PlayCircle, 
-  CheckCircle, 
-  Heart, 
-  Clock, 
+import {
+  Star,
+  MessageCircleMore,
+  PlayCircle,
+  CheckCircle,
+  Heart,
+  Clock,
   Timer,
   AlertCircle
 } from 'lucide-react';
@@ -19,7 +19,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
   const getActivityText = (activity) => {
     const gameName = activity.game?.name || 'a game';
     const username = user.username;
-    
+
     switch (activity.activity_type) {
       case 'game_status_updated':
         const statusMessages = {
@@ -76,7 +76,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
             </TruncatedText>
           </>
         );
-        
+
       case 'review_created':
         return (
           <>
@@ -94,7 +94,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
             </TruncatedText>
           </>
         );
-        
+
       case 'review_commented':
         return (
           <>
@@ -109,7 +109,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
             </TruncatedText>
           </>
         );
-        
+
       default:
         return <span>Activity with {gameName}</span>;
     }
@@ -123,8 +123,8 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
           showGradient={true}
         />
       </div>
-      
-      <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden">
+
+      <div className="bg-[var(--bg-elevated-1)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
         {isLoadingActivities ? (
           <div className="space-y-4 p-4">
             {[...Array(4)].map((_, i) => (
@@ -148,8 +148,8 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
           <div>
             <div className="divide-y divide-gray-800/30">
               {activities.slice(0, displayedActivities).map((activity) => (
-                <div 
-                  key={activity.id} 
+                <div
+                  key={activity.id}
                   className="flex items-start hover:bg-surface-dark/20 transition-colors px-4 py-4"
                 >
                   {/* Game Cover */}
@@ -158,7 +158,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
                       <ActivityFeedGameCover game={activity.game} className="flex-shrink-0" />
                     )}
                   </div>
-                  
+
                   {/* Activity Content */}
                   <div className="flex-1 min-w-0 pl-4">
                     <div className="text-gray-200 min-w-0">
@@ -172,7 +172,7 @@ const ActivityFeed = ({ activities, displayedActivities, isLoadingActivities, is
                 </div>
               ))}
             </div>
-            
+
             {/* Load More Button */}
             {(displayedActivities < activities.length || isLoadingMore) && (
               <div className="p-4 flex justify-center border-t border-gray-800/30">

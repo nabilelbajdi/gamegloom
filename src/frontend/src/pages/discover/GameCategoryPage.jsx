@@ -285,7 +285,7 @@ const GameCategoryPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
       {/* Header Section */}
       <CategoryHeader
         title={title}
@@ -293,7 +293,7 @@ const GameCategoryPage = ({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
+      <div className="flex-1 bg-[var(--bg-base)] pb-12">
         <div className="container mx-auto px-4 -mt-8">
           {/* Two-column layout */}
           <div className="flex flex-col lg:flex-row gap-6">

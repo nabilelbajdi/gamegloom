@@ -1,5 +1,5 @@
 import React from "react";
-import GameCard from "../../components/game/GameCard";
+import GridGameCard from "../../components/game/GridGameCard";
 
 const GamesGrid = ({
   games,
@@ -8,7 +8,7 @@ const GamesGrid = ({
   // Loading state
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {[...Array(12)].map((_, index) => (
           <div key={index} className="animate-pulse">
             <div className="aspect-[3/4] bg-gray-800/50 rounded-md"></div>
@@ -34,9 +34,9 @@ const GamesGrid = ({
 
   // Games grid
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {games.map((game) => (
-        <GameCard key={game.id} game={game} />
+        <GridGameCard key={game.id} game={game} />
       ))}
     </div>
   );

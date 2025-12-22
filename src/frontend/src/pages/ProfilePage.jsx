@@ -33,7 +33,7 @@ const ProfilePage = () => {
             fetchUserStats(),
             fetchUserActivities(15)
           ]);
-          
+
           setStats(userStats);
           setActivities(activitiesData.activities || []);
         } catch (err) {
@@ -78,26 +78,26 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="mt-14 bg-black">
-      <ProfileHeader 
-        user={user} 
-        stats={stats} 
-        isLoadingStats={isLoadingStats} 
+    <div className="mt-14 bg-[var(--bg-base)]">
+      <ProfileHeader
+        user={user}
+        stats={stats}
+        isLoadingStats={isLoadingStats}
         onProfileUpdate={(updatedUser) => checkAuth()}
       />
-      
+
       {/* Content Container */}
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative">
         {/* Two-column layout*/}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           {/* Left Column: Profile Bio and Activity Feed */}
           <div className="lg:col-span-2 space-y-8">
-            <ProfileBio 
-              user={user} 
-              bio={user.bio} 
-              onBioUpdate={(newBio) => checkAuth()} 
+            <ProfileBio
+              user={user}
+              bio={user.bio}
+              onBioUpdate={(newBio) => checkAuth()}
             />
-            <ActivityFeed 
+            <ActivityFeed
               activities={activities}
               displayedActivities={displayedActivities}
               isLoadingActivities={isLoadingActivities}
@@ -106,11 +106,11 @@ const ProfilePage = () => {
               user={user}
             />
           </div>
-          
+
           {/* Right Column: Game Stats */}
           <div className="lg:col-span-1 space-y-8">
             <RecommendedGames />
-            
+
             <GameProgress stats={stats} isLoadingStats={isLoadingStats} />
           </div>
         </div>

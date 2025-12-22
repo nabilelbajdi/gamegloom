@@ -10,14 +10,14 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [isExpandedBio, setIsExpandedBio] = useState(false);
-  
+
   const modalRef = useRef(null);
   const closeModal = () => {
     if (!isSaving) {
       setIsEditingBio(false);
     }
   };
-  
+
   useClickOutside(modalRef, closeModal);
 
   const handleSaveBio = async () => {
@@ -37,11 +37,11 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
 
   return (
     <div className="mt-0 mb-10 md:ml-0">
-      <div className="bg-surface-dark/30 rounded-xl border border-gray-800/20 overflow-hidden">
+      <div className="bg-[var(--bg-elevated-1)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
         <div className="p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs uppercase tracking-wider text-gray-400 font-medium">Bio</h3>
-            <button 
+            <button
               onClick={() => setIsEditingBio(true)}
               className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-surface-dark/20 transition-colors cursor-pointer"
             >
@@ -50,7 +50,7 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
           </div>
           {bio ? (
             <div>
-              <div 
+              <div
                 className={`text-gray-300 text-sm leading-relaxed ${!isExpandedBio ? 'line-clamp-3' : ''}`}
               >
                 {bio.split('\n').map((paragraph, index) => (
@@ -60,7 +60,7 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
                 ))}
               </div>
               {bio.split('\n').length > 1 || bio.length > 180 ? (
-                <button 
+                <button
                   onClick={() => setIsExpandedBio(!isExpandedBio)}
                   className="text-xs text-primary mt-1 hover:text-primary/90 transition-colors"
                 >
@@ -74,14 +74,14 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
 
           {/* Bio Edit Modal */}
           {isEditingBio && (
-            <motion.div 
+            <motion.div
               className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <motion.div 
+              <motion.div
                 ref={modalRef}
                 className="bg-surface-dark p-4 rounded-lg w-full max-w-md border border-gray-800/50 shadow-xl"
                 initial={{ scale: 0.9, y: 20 }}
@@ -93,7 +93,7 @@ const ProfileBio = ({ user, bio, onBioUpdate }) => {
                     <Edit className="w-5 h-5 text-primary" />
                     Edit Bio
                   </h3>
-                  <button 
+                  <button
                     onClick={closeModal}
                     className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
                   >
