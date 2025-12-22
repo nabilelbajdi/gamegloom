@@ -92,7 +92,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen bg-black flex relative overflow-hidden">
+    <div className="min-h-screen h-screen bg-[var(--bg-base)] flex relative overflow-hidden">
       {/* Back to Home Link */}
       <Link
         to="/"

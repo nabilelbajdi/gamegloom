@@ -36,7 +36,7 @@ const HomePage = () => {
     return (
         <>
             <Hero />
-            <div className="bg-gradient-to-b from-black/95 to-black">
+            <div className="bg-[var(--bg-base)]">
                 <div className="container mx-auto px-4 py-6">
                     <FeaturedAnticipatedGames />
                     <AnticipatedGames />

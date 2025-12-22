@@ -21,16 +21,16 @@ const GameOfTheYear = () => {
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-10"></div>
         {/* Top fade gradient */}
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black to-transparent z-10"></div>
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent z-10"></div>
         {/* Bottom fade gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent z-10"></div>
-        <img 
-          src={astroBot.artwork} 
-          alt={`${astroBot.name} - Game of the Year 2024`} 
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent z-10"></div>
+        <img
+          src={astroBot.artwork}
+          alt={`${astroBot.name} - Game of the Year 2024`}
           className="w-full h-full object-cover object-center"
         />
       </div>
-      
+
       {/* Content */}
       <div className="relative z-20 mx-auto px-6 py-24 md:py-32">
         <div className="max-w-2xl ml-4 md:ml-8 lg:ml-12">
@@ -38,34 +38,34 @@ const GameOfTheYear = () => {
             <Crown size={14} className="mr-1.5 text-primary fill-primary" />
             Game of the Year 2024
           </div>
-          
+
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
             {astroBot.name}
           </h2>
-          
+
           <div className="flex items-center space-x-4 mb-6">
             <div className="flex items-center">
               <div className="w-7 h-7 rounded bg-green-600 flex items-center justify-center">
                 <span className="text-white font-bold text-xs">{astroBot.metascore}</span>
               </div>
             </div>
-            
+
             <div className="flex items-center text-white/80 border-l border-white/20 pl-4">
               <Calendar size={16} className="mr-2 text-primary" />
               <span>{astroBot.releaseYear}</span>
             </div>
-            
+
             <div className="text-white/80 border-l border-white/20 pl-4">
               {astroBot.genres.join(", ")}
             </div>
           </div>
-          
+
           <p className="text-white/90 mb-8 leading-relaxed line-clamp-2 md:line-clamp-none">
             {astroBot.description}
           </p>
-          
+
           <div className="flex flex-wrap gap-3">
-            <Link 
+            <Link
               to={`/game/${astroBot.slug}`}
               className="px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-md hover:bg-white/20 backdrop-blur-sm transition-colors flex items-center"
             >

@@ -310,11 +310,11 @@ const MyLibraryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
       <LibraryHeader />
 
       {/* Tabs Navigation */}
-      <div className="sticky top-12 z-30 bg-black/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
+      <div className="sticky top-12 z-30 bg-[rgba(9,9,11,0.95)] backdrop-blur-sm border-b border-gray-800 shadow-lg">
         <div className="container mx-auto px-4 py-2">
           <LibraryTabs
             activeTab={activeTab}
@@ -329,7 +329,7 @@ const MyLibraryPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
+      <div className="flex-1 bg-[var(--bg-base)] pb-12">
         <div className="container mx-auto px-4 py-6">
           {totalGames === 0 && activeTab !== "my_lists" ? (
             <EmptyLibrary />

@@ -423,7 +423,7 @@ const SearchPage = () => {
     minRatingFilter > 0;
 
   return (
-    <div className="min-h-screen bg-black pb-12">
+    <div className="min-h-screen bg-[var(--bg-base)] pb-12">
       <div className="container mx-auto px-4 pt-20 pb-4">
         {/* Integrated Header */}
         <div className="mb-6 px-1">

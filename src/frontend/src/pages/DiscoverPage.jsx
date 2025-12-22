@@ -58,7 +58,7 @@ const DiscoverPage = () => {
     const fetchInitialGenres = async () => {
       setLoadingGenres(true);
       const results = {};
-      
+
       // Fetch data for the first 4 genres (ones that will be initially visible)
       for (let i = 0; i < 4; i++) {
         if (i < genres.length) {
@@ -66,19 +66,19 @@ const DiscoverPage = () => {
           results[genres[i].slug] = games;
         }
       }
-      
+
       setGenreGames(results);
       setLoadingGenres(false);
     };
-    
+
     fetchInitialGenres();
   }, [fetchTopGamesForGenre]);
-  
+
   useEffect(() => {
     const fetchInitialThemes = async () => {
       setLoadingThemes(true);
       const results = {};
-      
+
       // Fetch data for the first 4 themes (ones that will be initially visible)
       for (let i = 0; i < 4; i++) {
         if (i < themes.length) {
@@ -86,11 +86,11 @@ const DiscoverPage = () => {
           results[themes[i].slug] = games;
         }
       }
-      
+
       setThemeGames(results);
       setLoadingThemes(false);
     };
-    
+
     fetchInitialThemes();
   }, [fetchTopGamesForTheme]);
 
@@ -100,7 +100,7 @@ const DiscoverPage = () => {
       await fetchGames("highlyRated");
       setLoadingHighlyRated(false);
     };
-    
+
     fetchHighlyRatedGamesData();
   }, [fetchGames]);
 
@@ -108,13 +108,13 @@ const DiscoverPage = () => {
   useEffect(() => {
     if (highlyRatedGames && highlyRatedGames.length > 0 && !featuredGame) {
       const gamesWithArtwork = highlyRatedGames.filter(
-        game => (game.artworks && game.artworks.length > 0) || 
-                (game.screenshots && game.screenshots.length > 0)
+        game => (game.artworks && game.artworks.length > 0) ||
+          (game.screenshots && game.screenshots.length > 0)
       );
-      
+
       // Use games with artwork if available, otherwise use all highly rated games
       const gamePool = gamesWithArtwork.length > 0 ? gamesWithArtwork : highlyRatedGames;
-      
+
       // Select a random game from the pool
       const randomGame = gamePool[Math.floor(Math.random() * gamePool.length)];
       setFeaturedGame(randomGame);
@@ -124,10 +124,10 @@ const DiscoverPage = () => {
   const handleGenreSlideChange = async (currentSlide) => {
     const startIdx = currentSlide * 4;
     const endIdx = Math.min(startIdx + 4, genres.length);
-    
+
     for (let i = startIdx; i < endIdx; i++) {
       const genreSlug = genres[i].slug;
-      
+
       if (!genreGames[genreSlug] || genreGames[genreSlug].length === 0) {
         const games = await fetchTopGamesForGenre(genreSlug, 3);
         setGenreGames(prev => ({
@@ -137,14 +137,14 @@ const DiscoverPage = () => {
       }
     }
   };
-  
+
   const handleThemeSlideChange = async (currentSlide) => {
     const startIdx = currentSlide * 4;
     const endIdx = Math.min(startIdx + 4, themes.length);
-    
+
     for (let i = startIdx; i < endIdx; i++) {
       const themeSlug = themes[i].slug;
-      
+
       if (!themeGames[themeSlug] || themeGames[themeSlug].length === 0) {
         const games = await fetchTopGamesForTheme(themeSlug, 3);
         setThemeGames(prev => ({
@@ -156,23 +156,23 @@ const DiscoverPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
       {/* Hero Section Component */}
-      <HeroSection 
-        featuredGame={featuredGame} 
+      <HeroSection
+        featuredGame={featuredGame}
         genres={genres}
       />
-      
+
       {/* Main content */}
-      <div className="flex-1 bg-gradient-to-b from-black/95 to-black pb-12">
+      <div className="flex-1 bg-[var(--bg-base)] pb-12">
         <div className="container mx-auto px-4">
           {/* Trending Games Carousel */}
           <TrendingGames />
         </div>
-          
+
         {/* Game of the Year 2024 Feature */}
         <GameOfTheYear />
-        
+
         <div className="container mx-auto px-4">
           {/* Genre Carousel */}
           <GenreCarousel
@@ -185,11 +185,11 @@ const DiscoverPage = () => {
             onSlideChange={handleGenreSlideChange}
           />
         </div>
-          
+
         {/* Most Anticipated Game Feature */}
         <MostAnticipatedGame />
-        
-        <div className="container mx-auto px-4">  
+
+        <div className="container mx-auto px-4">
           {/* Theme Carousel */}
           <GenreCarousel
             title="Popular Themes"
@@ -200,7 +200,7 @@ const DiscoverPage = () => {
             loading={loadingThemes}
             onSlideChange={handleThemeSlideChange}
           />
-          
+
           {/* Game Lists Section */}
           <GameListSection />
         </div>

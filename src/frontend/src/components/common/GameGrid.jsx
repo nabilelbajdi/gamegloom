@@ -71,7 +71,7 @@ const GameGrid = ({
 
       {loading ? (
         <div className="animate-pulse space-y-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {[...Array(6)].map((_, index) => (
               <div key={index} className="aspect-[3/4] bg-gray-800 rounded-lg"></div>
             ))}
@@ -80,7 +80,7 @@ const GameGrid = ({
       ) : games.length === 0 ? (
         isSearching ? renderEmptySearchState() : emptyContent
       ) : (
-        <div className={`grid grid-cols-${columnCount.default} sm:grid-cols-${columnCount.sm} md:grid-cols-${columnCount.md} lg:grid-cols-${columnCount.lg} xl:grid-cols-${columnCount.xl} gap-4 ${gridClassName}`}>
+        <div className={`grid grid-cols-${columnCount.default} sm:grid-cols-${columnCount.sm} md:grid-cols-${columnCount.md} lg:grid-cols-${columnCount.lg} xl:grid-cols-${columnCount.xl} gap-3 ${gridClassName}`}>
           {games.map((game) => (
             <GridGameCard key={game.id} game={game} />
           ))}

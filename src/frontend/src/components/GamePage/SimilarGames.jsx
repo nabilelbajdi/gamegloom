@@ -1,8 +1,8 @@
 // src/components/GamePage/SimilarGames.jsx
 import React, { memo } from "react";
 import Slider from "react-slick";
-import GameCard from "../game/GameCard";
-import "slick-carousel/slick/slick.css"; 
+import GridGameCard from "../game/GridGameCard";
+import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { getSliderSettings } from "../../utils/sliderConfig";
 
@@ -20,7 +20,7 @@ const SimilarGames = memo(({ games }) => {
       <Slider {...settings}>
         {displayedGames.map((game) => (
           <div key={game.id} className="px-2">
-            <GameCard game={game} />
+            <GridGameCard game={game} />
           </div>
         ))}
       </Slider>
