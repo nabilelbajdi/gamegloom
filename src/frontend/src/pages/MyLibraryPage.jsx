@@ -44,8 +44,13 @@ const MyLibraryPage = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
+
+    // Handle tab selection
     if (tabParam && ['all', 'want_to_play', 'playing', 'played', 'my_lists'].includes(tabParam)) {
       setActiveTab(tabParam);
+    } else {
+      // Default to 'all' if no tab param or invalid
+      setActiveTab('all');
     }
 
     // Handle list selection from URL parameter using slug
@@ -55,7 +60,12 @@ const MyLibraryPage = () => {
       const foundList = lists.find(list => createSlug(list.name) === listSlugParam);
       if (foundList) {
         setSelectedList(foundList.id);
+      } else {
+        setSelectedList(null);
       }
+    } else {
+      // Clear selected list if not in url
+      setSelectedList(null);
     }
   }, [location.search, lists]);
 
