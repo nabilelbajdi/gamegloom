@@ -13,7 +13,7 @@ const GamesList = ({
           <div key={index} className="flex items-stretch animate-pulse border-b border-gray-700/20 last:border-b-0 py-2">
             {/* Cover Skeleton */}
             <div className="w-16 md:w-20 aspect-[3/4] bg-gray-800/50 rounded"></div>
-            
+
             {/* Content Skeleton */}
             <div className="flex-1 p-3">
               <div className="h-4 bg-gray-800/60 rounded w-1/3 mb-3"></div>
@@ -45,9 +45,9 @@ const GamesList = ({
     <div className="overflow-hidden">
       {games.map((game, index) => (
         <div key={game.id} className="border-b border-gray-700/20 last:border-b-0 py-2">
-          <GameListCard 
-            game={game} 
-            index={index} 
+          <GameListCard
+            game={game}
+            index={index}
           />
         </div>
       ))}

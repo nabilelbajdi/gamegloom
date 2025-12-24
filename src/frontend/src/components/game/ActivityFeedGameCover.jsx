@@ -6,16 +6,16 @@ const ActivityFeedGameCover = ({ game }) => {
   return (
     <div className="relative w-16 md:w-20 shrink-0 overflow-hidden mr-1">
       {/* Game Cover */}
-      <Link 
-        to={`/game/${game.slug || game.igdb_id}`} 
+      <Link
+        to={`/game/${game.slug || game.igdb_id}`}
         className="block relative overflow-hidden group cursor-pointer rounded-lg aspect-[3/4]"
       >
         <img
-          src={game.coverImage || game.cover_image} 
+          src={game.coverImage || game.cover_image}
           alt={game.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
         />
-        
+
         {/* Hover overlay with "View Game" button */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {/* View Game Button */}

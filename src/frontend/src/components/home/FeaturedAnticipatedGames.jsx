@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Clock, Flame, Bell, Monitor, Gamepad2, Smartphone } from "lucide-react";
+import { ChevronRight, Clock, Flame, Bell, Monitor, Gamepad2, Smartphone, Play } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
-import { getUpcomingFeaturedGames, normalizePlatformName, getHighResImageUrl } from "../../utils/gameUtils";
+import { getUpcomingFeaturedGames, normalizePlatformName, getHighResImageUrl, getYouTubeThumbnail } from "../../utils/gameUtils";
 import CountdownText from "../common/CountdownText";
+import VideoModal from "../common/VideoModal";
 import { format } from "date-fns";
 
 // Function to format hype count
@@ -23,6 +24,10 @@ const FeaturedAnticipatedGames = () => {
   const [games, setGames] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+
+  // Video modal state
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(null);
 
   // Local interaction states
   const [hypedGames, setHypedGames] = useState({});
@@ -60,7 +65,7 @@ const FeaturedAnticipatedGames = () => {
 
   // Auto-rotation logic
   useEffect(() => {
-    if (games.length <= 1) return;
+    if (games.length <= 1 || videoModalOpen) return; // Pause rotation when video modal is open
 
     const timer = setInterval(() => {
       setProgress((prev) => {
@@ -74,7 +79,7 @@ const FeaturedAnticipatedGames = () => {
     }, UPDATE_INTERVAL);
 
     return () => clearInterval(timer);
-  }, [games.length, activeIndex]);
+  }, [games.length, activeIndex, videoModalOpen]); // Added videoModalOpen dependency
 
   // Reset progress when active index changes manually
   const handleGameSelect = (index) => {
@@ -149,29 +154,58 @@ const FeaturedAnticipatedGames = () => {
           {/* Main Hero Card (Active Game) */}
           <div className="lg:col-span-8 relative w-full h-[450px] lg:h-full overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-elevated-1)] shadow-2xl group">
 
-            {/* Background Image */}
+            {/* Background Image/Video */}
             <div className="absolute inset-0">
               {games.map((game, idx) => {
                 const detailedGame = gameDetails[game.id];
-                const displayImage = (detailedGame && (detailedGame.artworks?.[0]?.url || detailedGame.screenshots?.[0]?.url))
-                  || game.artworks?.[0]?.url
-                  || game.screenshots?.[0]?.url
+
+                // Priority: Video thumbnail → Artworks → Screenshots → Cover
+                const hasVideo = detailedGame?.videos?.[0] || game.videos?.[0];
+                const videoThumbnail = hasVideo ? getYouTubeThumbnail(hasVideo) : null;
+
+                const displayImage = videoThumbnail
+                  || (detailedGame && (detailedGame.artworks?.[0] || detailedGame.screenshots?.[0]))
+                  || game.artworks?.[0]
+                  || game.screenshots?.[0]
                   || game.coverImage;
 
-                return (
-                  <img
-                    key={game.id}
-                    src={getHighResImageUrl(displayImage)}
-                    alt={game.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${idx === activeIndex ? 'opacity-60 scale-[1.03]' : 'opacity-0 scale-100'
-                      }`}
-                  />
+                const isVideo = !!videoThumbnail;
 
+                return (
+                  <div key={game.id} className="absolute inset-0">
+                    <img
+                      src={getHighResImageUrl(displayImage)}
+                      alt={game.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${idx === activeIndex ? 'opacity-75 scale-[1.03]' : 'opacity-0 scale-100'
+                        }`}
+                    />
+
+                    {/* Play Button Overlay for Videos */}
+                    {isVideo && idx === activeIndex && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('Play button clicked, video URL:', hasVideo);
+                          setCurrentVideoUrl(hasVideo);
+                          setVideoModalOpen(true);
+                        }}
+                        className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-20 group/play cursor-pointer"
+                        aria-label="Play trailer"
+                      >
+                        <div className="flex items-center gap-2 bg-black/70 backdrop-blur-md px-4 py-2.5 rounded-full transition-all duration-300 group-hover/play:bg-primary group-hover/play:scale-105 shadow-xl border border-white/10">
+                          <Play className="w-5 h-5 text-white fill-white group-hover/play:text-black group-hover/play:fill-black" />
+                          <span className="text-white text-sm font-bold uppercase tracking-wide group-hover/play:text-black">
+                            Watch Trailer
+                          </span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
                 );
               })}
               {/* Gradient Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/80 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-base)]/90 via-[var(--bg-base)]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-base)]/70 via-[var(--bg-base)]/30 to-transparent pointer-events-none" />
             </div>
 
             {/* Content Container */}
@@ -224,7 +258,7 @@ const FeaturedAnticipatedGames = () => {
                 <div className="flex flex-wrap gap-3 pt-4">
                   <button
                     onClick={() => handleHype(activeGame.id, activeGame.hypes)}
-                    className={`group flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-md ${isActiveHyped
+                    className={`group flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm md:text-base transition-all duration-300 shadow-md cursor-pointer ${isActiveHyped
                       ? 'bg-primary text-black shadow-primary/20'
                       : 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-black hover:shadow-primary/30'
                       }`}
@@ -235,7 +269,7 @@ const FeaturedAnticipatedGames = () => {
 
                   <button
                     onClick={() => toggleNotify(activeGame.id)}
-                    className={`group flex items-center gap-2 px-5 py-3.5 rounded-xl font-medium text-sm md:text-base transition-all duration-300 border ${isActiveNotified
+                    className={`group flex items-center gap-2 px-5 py-3.5 rounded-xl font-medium text-sm md:text-base transition-all duration-300 border cursor-pointer ${isActiveNotified
                       ? 'bg-white text-black border-white'
                       : 'bg-[var(--bg-elevated-2)] text-light border-[var(--border-subtle)] hover:bg-white hover:text-black hover:border-white'
                       }`}
@@ -265,7 +299,7 @@ const FeaturedAnticipatedGames = () => {
                 <button
                   key={game.id}
                   onClick={() => handleGameSelect(index)}
-                  className={`relative w-full text-left p-3 rounded-xl transition-all duration-300 border group overflow-hidden ${isActive
+                  className={`relative w-full text-left p-3 rounded-xl transition-all duration-300 border group overflow-hidden cursor-pointer ${isActive
                     ? 'bg-[var(--bg-elevated-2)] border-[var(--border-subtle)] ring-1 ring-primary/20'
                     : 'bg-transparent border-transparent hover:bg-[var(--bg-elevated-1)] hover:border-[var(--border-subtle)]'
                     }`}
@@ -307,6 +341,14 @@ const FeaturedAnticipatedGames = () => {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {videoModalOpen && (
+        <VideoModal
+          videoUrl={currentVideoUrl}
+          onClose={() => setVideoModalOpen(false)}
+        />
+      )}
     </section>
   );
 };

@@ -10,10 +10,10 @@ const GameListCard = ({ game, index }) => {
   const { addGame, removeGame, getGameStatus, updateStatus } = useUserGameStore();
   const gameStatus = getGameStatus(game.id);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  
+
   const handleStatusClick = async (e, status = null) => {
     if (e) {
-      e.preventDefault(); 
+      e.preventDefault();
       e.stopPropagation();
     }
 
@@ -21,23 +21,23 @@ const GameListCard = ({ game, index }) => {
       navigate("/login");
       return;
     }
-    
+
     if (status === null) {
       setShowStatusDropdown(!showStatusDropdown);
       return;
     }
-    
+
     try {
       if (status === gameStatus) {
         await removeGame(game.id);
-      } 
+      }
       else if (gameStatus) {
         await updateStatus(game.id, status);
-      } 
+      }
       else {
         await addGame(game.id, status);
       }
-      
+
       setShowStatusDropdown(false);
     } catch (error) {
       console.error("Failed to update game status:", error);
@@ -46,52 +46,52 @@ const GameListCard = ({ game, index }) => {
 
   const getRibbonColor = () => {
     if (!gameStatus) return 'fill-black/70';
-    
-    switch(gameStatus) {
+
+    switch (gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
       case 'played': return 'fill-gray-300';
       default: return 'fill-black/70';
     }
   };
-  
+
   const getHoverColor = () => {
     if (!gameStatus) return 'fill-white/20';
-    
-    switch(gameStatus) {
+
+    switch (gameStatus) {
       case 'want_to_play': return 'fill-primary/30';
       case 'playing': return 'fill-secondary/30';
       case 'played': return 'fill-gray-300/30';
       default: return 'fill-white/20';
     }
   };
-  
+
   const getRibbonIcon = () => {
     if (!gameStatus) return <Plus className="h-3 w-3" />;
-    
-    switch(gameStatus) {
+
+    switch (gameStatus) {
       case 'want_to_play': return <Check className="h-3 w-3 stroke-white" />;
       case 'playing': return <span className="text-xs">▶</span>;
       case 'played': return <span className="text-xs">🏆</span>;
       default: return <Plus className="h-3 w-3" />;
     }
   };
-  
+
   // Get display genres
   const getDisplayGenres = () => {
     if (!game.genres) return [];
-    
-    const genreArray = typeof game.genres === "string" 
-      ? game.genres.split(",").map(g => g.trim()) 
+
+    const genreArray = typeof game.genres === "string"
+      ? game.genres.split(",").map(g => g.trim())
       : Array.isArray(game.genres) ? game.genres.map(g => g.trim()) : [];
-      
+
     return genreArray.slice(0, 3);
   };
 
   const getReleaseYear = () => {
     const releaseDate = game.firstReleaseDate || game.first_release_date || game.release_date;
     if (!releaseDate) return null;
-    
+
     try {
       return new Date(releaseDate).getFullYear();
     } catch {
@@ -100,18 +100,18 @@ const GameListCard = ({ game, index }) => {
   };
 
   const releaseYear = getReleaseYear();
-  
+
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case 'want_to_play': return <Check className="h-3 w-3" />;
       case 'playing': return <Play className="h-3 w-3" />;
       case 'played': return <span className="text-[8px] leading-none">🏆</span>;
       default: return <Plus className="h-3 w-3" />;
     }
   };
-  
+
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'want_to_play': return 'text-primary';
       case 'playing': return 'text-secondary';
       case 'played': return 'text-gray-200';
@@ -128,60 +128,60 @@ const GameListCard = ({ game, index }) => {
   return (
     <div className="flex items-stretch overflow-hidden max-w-3xl">
       {/* Game Cover with Ribbon */}
-      <Link 
-        to={`/game/${game.slug || game.igdb_id}`} 
+      <Link
+        to={`/game/${game.slug || game.igdb_id}`}
         className="w-16 md:w-20 shrink-0 relative overflow-hidden group cursor-pointer rounded-lg"
         onMouseLeave={handleCoverMouseLeave}
       >
         <img
-          src={game.coverImage} 
+          src={game.coverImage}
           alt={game.name}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90 rounded-lg"
         />
-        
+
         {/* Status Ribbon */}
         <div className="absolute top-0 left-0 z-10">
-          <div 
+          <div
             className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
             onClick={(e) => handleStatusClick(e)}
             aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
             role="button"
             tabIndex="0"
           >
-            <svg 
-              width="18px" 
-              height="27px" 
-              viewBox="0 0 30 46" 
-              xmlns="http://www.w3.org/2000/svg" 
+            <svg
+              width="18px"
+              height="27px"
+              viewBox="0 0 30 46"
+              xmlns="http://www.w3.org/2000/svg"
               role="presentation"
               preserveAspectRatio="xMinYMin meet"
             >
               {/* Ribbon Background */}
-              <polygon 
-                className={`${getRibbonColor()} transition-colors duration-300`} 
+              <polygon
+                className={`${getRibbonColor()} transition-colors duration-300`}
                 points="30 0 0 0 0 44 15 37 30 44"
               />
               {/* Hover Effect*/}
-              <polygon 
-                className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
+              <polygon
+                className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`}
                 points="30 0 0 0 0 44 15 37 30 44"
               />
               {/* Shadow */}
-              <polygon 
-                className="fill-black/40" 
+              <polygon
+                className="fill-black/40"
                 points="30 44 30 46 15 39 0 46 0 44 15 37"
               />
             </svg>
-            
+
             {/* Icon */}
             <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: "4px" }}>
               {getRibbonIcon()}
             </div>
           </div>
-          
+
           {/* Status Icons Dropdown - Only show if user is logged in */}
           {showStatusDropdown && user && (
-            <div 
+            <div
               className="absolute top-[26px] left-0 z-20 flex bg-surface-dark rounded shadow-md border border-gray-800/50 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
@@ -206,16 +206,16 @@ const GameListCard = ({ game, index }) => {
             </div>
           )}
         </div>
-        
+
         {/* Hover overlay - matching GameCard.jsx */}
         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </Link>
-      
+
       {/* Game Details - Connected to the cover */}
       <div className="flex-1 p-3 flex flex-col justify-between relative">
         <div>
           <h3 className="font-semibold text-sm">
-            <Link 
+            <Link
               to={`/game/${game.slug || game.igdb_id}`}
               className="text-white hover:text-primary transition-colors duration-200"
             >
@@ -228,12 +228,12 @@ const GameListCard = ({ game, index }) => {
               </>
             )}
           </h3>
-          
+
           {/* Genres */}
           <div className="mt-2 flex flex-wrap gap-1">
             {getDisplayGenres().map((genre, idx) => (
-              <span 
-                key={idx} 
+              <span
+                key={idx}
                 className="inline-flex items-center gap-1.5 px-1.5 py-0.5 bg-primary/5 text-xs text-gray-300 font-semibold rounded-full"
               >
                 <Tags className="w-2.5 h-2.5 text-primary" />

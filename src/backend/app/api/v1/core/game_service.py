@@ -178,7 +178,7 @@ async def fetch_related_game_types(db: Session, game_id: int):
                             game_data = {
                                 "id": g.get('id'),
                                 "name": g.get('name'),
-                                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{g['cover']['image_id']}.jpg" 
+                                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{g['cover']['image_id']}.jpg" 
                                 if g.get('cover', {}).get('image_id') else None,
                                 "slug": g.get('slug')
                             }
@@ -225,7 +225,7 @@ async def fetch_game_editions_and_bundles(db: Session, game_id: int):
                         edition_data = {
                             "id": g.get('id'),
                             "name": g.get('name'),
-                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{g['cover']['image_id']}.jpg" 
+                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{g['cover']['image_id']}.jpg" 
                             if g.get('cover', {}).get('image_id') else None,
                             "slug": g.get('slug'),
                             "edition_title": g.get('version_title', "Edition")
@@ -257,7 +257,7 @@ async def fetch_game_editions_and_bundles(db: Session, game_id: int):
                         bundle_data = {
                             "id": bundle.get('id'),
                             "name": bundle.get('name'),
-                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{bundle['cover']['image_id']}.jpg" 
+                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{bundle['cover']['image_id']}.jpg" 
                             if bundle.get('cover', {}).get('image_id') else None,
                             "slug": bundle.get('slug')
                         }

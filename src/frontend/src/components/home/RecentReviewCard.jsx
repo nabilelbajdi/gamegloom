@@ -10,7 +10,7 @@ const RecentReviewCard = ({ review }) => {
     <div className="bg-surface-dark rounded-xl overflow-hidden transition-all duration-300">
       <div className="flex h-full">
         {/* Game Cover */}
-        <Link 
+        <Link
           to={`/game/${game.igdb_id}`}
           className="group relative w-[140px] flex-shrink-0 overflow-hidden aspect-[3/4]"
         >
@@ -38,7 +38,7 @@ const RecentReviewCard = ({ review }) => {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3>
-                  <Link 
+                  <Link
                     to={`/game/${game.igdb_id}`}
                     className="inline-block text-lg font-semibold text-light hover:text-primary transition-colors max-w-[200px] truncate"
                   >
@@ -51,17 +51,16 @@ const RecentReviewCard = ({ review }) => {
                       <Star
                         key={i}
                         size={14}
-                        className={`${
-                          i < rating ? "fill-primary text-primary" : "fill-gray-600 text-gray-600"
-                        }`}
+                        className={`${i < rating ? "fill-primary text-primary" : "fill-gray-600 text-gray-600"
+                          }`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              
+
               {/* User Info */}
-              <Link 
+              <Link
                 to={`/user/${user.id}`}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
@@ -84,7 +83,7 @@ const RecentReviewCard = ({ review }) => {
               <p className="text-sm text-gray-400 line-clamp-2 mb-2">
                 {content || "No review content provided."}
               </p>
-              <Link 
+              <Link
                 to={`/game/${game.igdb_id}/reviews/${review.id}`}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >

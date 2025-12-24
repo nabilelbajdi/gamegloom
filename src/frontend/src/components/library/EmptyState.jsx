@@ -32,8 +32,8 @@ export const EmptyLibrary = () => {
       <p className="text-light/70 max-w-md mb-6">
         Start building your collection by adding games to your library.
       </p>
-      <Link 
-        to="/discover" 
+      <Link
+        to="/discover"
         className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
       >
         Browse Games
@@ -44,7 +44,7 @@ export const EmptyLibrary = () => {
 
 // Empty card component
 export const EmptyCard = () => (
-  <Link 
+  <Link
     to="/discover"
     className="block aspect-[3/4] bg-surface/40 rounded-lg transition-all duration-300 hover:bg-surface/60 shadow-lg hover:shadow-xl border border-surface-hover/30 group"
   >
@@ -94,7 +94,7 @@ export const EmptyLists = () => {
       <p className="text-light/70 max-w-md mb-6">
         Create your first list to organize your games however you want.
       </p>
-      <button 
+      <button
         className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors flex items-center gap-2"
       >
         <Plus size={18} />
@@ -117,8 +117,8 @@ export const EmptyListGames = ({ listName }) => {
       <p className="text-light/70 max-w-md mb-6">
         Add games to this list from any game page.
       </p>
-      <Link 
-        to="/discover" 
+      <Link
+        to="/discover"
         className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
       >
         Browse Games

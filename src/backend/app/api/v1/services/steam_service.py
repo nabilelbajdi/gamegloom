@@ -397,7 +397,7 @@ def match_game_to_igdb(
                 igdb_id = igdb_game["id"]
                 name = igdb_game["name"]
                 cover_id = igdb_game.get("cover", {}).get("image_id")
-                cover_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{cover_id}.jpg" if cover_id else None
+                cover_url = f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{cover_id}.jpg" if cover_id else None
                 
                 logger.debug(f"[Steam Match] {platform_name} ({app_id}) → {name} (appid)")
                 return (igdb_id, name, cover_url, 0.99, "appid")
@@ -497,7 +497,7 @@ def batch_match_steam_appids(app_ids: list[str]) -> dict[str, tuple]:
                         igdb_id = igdb_game["id"]
                         name = igdb_game["name"]
                         cover_id = igdb_game.get("cover", {}).get("image_id") if igdb_game.get("cover") else None
-                        cover_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{cover_id}.jpg" if cover_id else None
+                        cover_url = f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{cover_id}.jpg" if cover_id else None
                         
                         results[uid] = (igdb_id, name, cover_url, 0.99, "appid_batch")
                         batch_matched += 1

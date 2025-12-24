@@ -6,10 +6,10 @@ import SectionHeader from "../common/SectionHeader";
 
 const GameListItem = ({ game }) => (
   <Link to={`/game/${game.slug || game.id}`} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-surface-dark/50 transition-colors">
-    <img 
-      src={game.coverImage} 
-      alt={game.name} 
-      className="w-12 h-16 object-cover rounded-md shadow-md"
+    <img
+      src={game.coverImage}
+      alt={game.name}
+      className="w-12 aspect-[3/4] object-cover rounded-md shadow-md"
       loading="lazy"
     />
     <div className="flex-1 min-w-0">
@@ -21,7 +21,7 @@ const GameListItem = ({ game }) => (
         <div className="flex items-center">
           <Star size={12} className="text-primary mr-1 fill-primary" />
           <span className="text-white/60 text-xs">
-            {game.rating && game.rating !== "N/A" && !isNaN(parseFloat(game.rating)) 
+            {game.rating && game.rating !== "N/A" && !isNaN(parseFloat(game.rating))
               ? (typeof game.rating === 'number' ? game.rating.toFixed(1) : parseFloat(game.rating).toFixed(1))
               : "N/A"}
           </span>
@@ -35,7 +35,7 @@ const GameListLoading = () => (
   <>
     {[1, 2, 3, 4, 5].map((i) => (
       <div key={i} className="flex items-center space-x-4 p-3 animate-pulse">
-        <div className="w-12 h-16 bg-gray-800 rounded-md"></div>
+        <div className="w-12 aspect-[3/4] bg-gray-800 rounded-md"></div>
         <div className="flex-1">
           <div className="h-4 bg-gray-800 rounded w-3/4 mb-2"></div>
           <div className="h-3 bg-gray-800 rounded w-1/2"></div>
@@ -48,7 +48,7 @@ const GameListLoading = () => (
 const GameListColumn = ({ title, games, loading, viewAllLink }) => (
   <div className="flex-1 min-w-0">
     <div className="mb-4">
-      <SectionHeader 
+      <SectionHeader
         title={title}
         viewAllLink={viewAllLink}
         showGradient={true}
@@ -110,22 +110,22 @@ const GameListSection = () => {
   return (
     <section className="pt-24 pb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <GameListColumn 
-          title="Recent Releases" 
-          games={latestGames} 
-          loading={loading.latest} 
+        <GameListColumn
+          title="Recent Releases"
+          games={latestGames}
+          loading={loading.latest}
           viewAllLink="/discover/latest-releases"
         />
-        <GameListColumn 
-          title="Highly Rated" 
-          games={highlyRatedGames} 
-          loading={loading.highlyRated} 
+        <GameListColumn
+          title="Highly Rated"
+          games={highlyRatedGames}
+          loading={loading.highlyRated}
           viewAllLink="/discover/highly-rated"
         />
-        <GameListColumn 
-          title="Most Anticipated" 
-          games={anticipatedGames} 
-          loading={loading.anticipated} 
+        <GameListColumn
+          title="Most Anticipated"
+          games={anticipatedGames}
+          loading={loading.anticipated}
           viewAllLink="/discover/anticipated-games"
         />
       </div>

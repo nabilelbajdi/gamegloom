@@ -11,7 +11,7 @@ const SearchResultsSkeleton = () => {
         <div key={index} className="flex items-center gap-4 p-3 animate-pulse">
           {/* Game Cover Skeleton */}
           <div className="w-10 h-14 rounded-md overflow-hidden flex-shrink-0 bg-gray-800"></div>
-          
+
           {/* Game Info Skeleton */}
           <div className="flex-grow min-w-0">
             <div className="h-4 bg-gray-800 rounded w-3/4 mb-2"></div>
@@ -22,7 +22,7 @@ const SearchResultsSkeleton = () => {
           </div>
         </div>
       ))}
-      
+
       {/* Skeleton footer */}
       <div className="w-full bg-[#1a1b1e] border-t border-gray-800/50 p-2 flex justify-center">
         <div className="w-full mx-3 py-1.5 bg-gray-800 rounded h-8 animate-pulse"></div>
@@ -34,17 +34,17 @@ const SearchResultsSkeleton = () => {
 const SearchResults = ({ results, onSelect, category = "all", isLoading = false, searchQuery = "" }) => {
   const navigate = useNavigate();
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  
+
   // 
   useEffect(() => {
     setSelectedIndex(-1);
   }, [results]);
-  
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!results || results.length === 0) return;
-      
+
       // Only handle navigation if the dropdown is visible
       switch (e.key) {
         case 'ArrowDown':
@@ -71,7 +71,7 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
             // If View More button is selected
             if (selectedIndex === results.length) {
               handleViewMore();
-            } 
+            }
             // If a game is selected
             else if (selectedIndex < results.length) {
               const selectedGame = previewResults[selectedIndex];
@@ -95,12 +95,12 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
   if (isLoading) {
     return <SearchResultsSkeleton />;
   }
-  
+
   if (!results || results.length === 0) return null;
 
   // Helper function to determine what text to display based on category
   const getCategoryInfo = (game) => {
-    switch(category) {
+    switch (category) {
       case "developers":
         return { label: "Developer", value: game.developers || "Unknown Developer" };
       case "platforms":
@@ -120,54 +120,54 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
           "Nintendo 3DS": "3DS",
           "PC (Microsoft Windows)": "PC"
         };
-        
+
         // Format platforms with abbreviations
         const formattedPlatforms = game.platforms ? game.platforms.split(", ").map(platform => {
           return platformToAbbreviation[platform] || platform;
         }).join(", ") : "Unknown Platform";
-        
+
         return { label: "Platforms", value: formattedPlatforms };
       case "keywords":
         // Handle keywords array, join with commas if it exists
         let keywordsList = "No keywords";
-        
+
         if (game.keywords && Array.isArray(game.keywords)) {
           // Get the lowercase search query for matching
           const lowerSearchQuery = searchQuery.toLowerCase();
-          
+
           // Prioritize the matching keyword by putting it first
           const sortedKeywords = [...game.keywords].sort((a, b) => {
             const aMatch = a.toLowerCase().includes(lowerSearchQuery);
             const bMatch = b.toLowerCase().includes(lowerSearchQuery);
-            
+
             if (aMatch && !bMatch) return -1;
             if (!aMatch && bMatch) return 1;
             return 0;
           });
-          
+
           // Capitalize first letter of each keyword
           keywordsList = sortedKeywords
             .map(keyword => keyword.charAt(0).toUpperCase() + keyword.slice(1))
             .join(", ");
         }
-        
+
         return { label: "Keywords", value: keywordsList };
       default:
         return { label: "Genre", value: game.genres || "Unknown Genre" };
     }
   };
-  
+
   // Helper function to highlight matching text
   const highlightMatch = (text, query) => {
     if (category === "all" || category === "games" || !query || !text) return text;
-    
+
     const index = text.toLowerCase().indexOf(query.toLowerCase());
     if (index === -1) return text;
-    
+
     const before = text.substring(0, index);
     const match = text.substring(index, index + query.length);
     const after = text.substring(index + query.length);
-    
+
     return (
       <>
         {before}
@@ -176,7 +176,7 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
       </>
     );
   };
-  
+
   const previewResults = results.slice(0, 6);
 
   const handleViewMore = () => {
@@ -189,16 +189,15 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
       {previewResults.map((game, index) => {
         const categoryInfo = getCategoryInfo(game);
         const isSelected = index === selectedIndex;
-        
+
         return (
           <Link
             key={game.id}
             to={`/game/${game.slug || game.igdb_id}`}
-            className={`flex items-center gap-4 p-3 transition-colors duration-200 ${
-              isSelected 
+            className={`flex items-center gap-4 p-3 transition-colors duration-200 ${isSelected
                 ? 'bg-gray-800 outline-none'
                 : 'hover:bg-gray-800/50'
-            }`}
+              }`}
             onClick={() => onSelect(game)}
             onMouseEnter={() => setSelectedIndex(index)}
             aria-selected={isSelected}
@@ -218,7 +217,7 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
                 }}
               />
             </div>
-            
+
             {/* Game Info */}
             <div className="flex-grow min-w-0">
               <h4 className="text-sm font-bold text-gray-100 truncate">
@@ -241,17 +240,16 @@ const SearchResults = ({ results, onSelect, category = "all", isLoading = false,
           </Link>
         );
       })}
-      
+
       {/* View More Button */}
       <div className="w-full bg-[#1a1b1e] border-t border-gray-800/50 p-2 flex justify-center">
-        <button 
+        <button
           onClick={handleViewMore}
           onMouseEnter={() => setSelectedIndex(results.length)}
-          className={`w-full mx-3 py-1.5 rounded text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center justify-center ${
-            selectedIndex === results.length
+          className={`w-full mx-3 py-1.5 rounded text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center justify-center ${selectedIndex === results.length
               ? 'bg-gray-800 text-white outline-none'
               : 'bg-surface-dark hover:bg-surface/60 text-primary hover:text-primary/90'
-          }`}
+            }`}
           aria-selected={selectedIndex === results.length}
         >
           {results.length > 6 ? `View all ${results.length} results` : "View more results"}

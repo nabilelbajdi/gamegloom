@@ -1,6 +1,6 @@
 // src/components/home/HeroSection.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks, Search, X } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
 import Button from "../UI/Button";
@@ -49,20 +49,23 @@ const HeroSection = () => {
     sessionStorage.setItem('devBannerDismissed', 'true');
   };
 
-  // Famous game quotes
+  // Famous game quotes - most iconic and widely recognized
   const gameQuotes = [
+    { quote: "It's-a me, Mario!", source: "Super Mario 64" },
     { quote: "War. War never changes.", source: "Fallout" },
-    { quote: "It's dangerous to go alone! Take this.", source: "The Legend of Zelda" },
     { quote: "The cake is a lie.", source: "Portal" },
-    { quote: "Nothing is true, everything is permitted.", source: "Assassin's Creed" },
-    { quote: "A man chooses, a slave obeys.", source: "BioShock" },
-    { quote: "Stay awhile and listen.", source: "Diablo" },
-    { quote: "Wake up, Mr. Freeman. Wake up and smell the ashes.", source: "Half-Life 2" },
+    { quote: "It's dangerous to go alone! Take this.", source: "The Legend of Zelda" },
+    { quote: "Finish him!", source: "Mortal Kombat" },
     { quote: "Would you kindly?", source: "BioShock" },
-    { quote: "You have died of dysentery.", source: "The Oregon Trail" },
+    { quote: "Hey! Listen!", source: "The Legend of Zelda: Ocarina of Time" },
+    { quote: "Get over here!", source: "Mortal Kombat" },
+    { quote: "The right man in the wrong place can make all the difference.", source: "Half-Life 2" },
+    { quote: "I used to be an adventurer like you, then I took an arrow to the knee.", source: "Skyrim" },
     { quote: "Do a barrel roll!", source: "Star Fox 64" },
-    { quote: "I used to be an adventurer like you. Then I took an arrow in the knee.", source: "The Elder Scrolls V: Skyrim" },
-    { quote: "It's super effective!", source: "Pokémon" }
+    { quote: "Snake? Snake?! SNAAAAKE!", source: "Metal Gear Solid" },
+    { quote: "You Died.", source: "Dark Souls" },
+    { quote: "Did I ever tell you the definition of insanity?", source: "Far Cry 3" },
+    { quote: "A man chooses, a slave obeys.", source: "BioShock" }
   ];
 
   // Cycle through quotes
@@ -301,139 +304,126 @@ const HeroSection = () => {
 
       <div className="relative container mx-auto px-3 w-full">
         <div className="grid md:grid-cols-2 gap-6 items-center">
-          {/* Left Side Content */}
-          <div className="space-y-6 py-4">
-            <motion.h1
-              className="text-3xl md:text-5xl font-bold text-light leading-tight mt-2"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+          {/* Left Side Content - Clean Search Hero */}
+          <div className="space-y-8 py-8">
+            <motion.div
+              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
             >
-              {user ? `Welcome Back, ${user.username}` : 'Your Gaming Journey\nStarts Here'}
-            </motion.h1>
+              {/* Personalized Greeting (logged in) or Marketing Copy (logged out) */}
+              {user ? (
+                <motion.p
+                  className="text-primary text-sm font-medium tracking-wide uppercase"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  Welcome back, {user.username}
+                </motion.p>
+              ) : (
+                <motion.p
+                  className="text-light/60 text-sm font-light tracking-wide"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  Track • Discover • Connect
+                </motion.p>
+              )}
 
-            {user ? (
-              <div className="h-36 relative overflow-hidden">
+              {/* Main Headline */}
+              <h1 className="text-4xl md:text-6xl font-bold text-light leading-tight">
+                {user ? (
+                  <>
+                    Find Your
+                    <br />
+                    Next Adventure
+                  </>
+                ) : (
+                  <>
+                    Your Ultimate
+                    <br />
+                    Gaming Companion
+                  </>
+                )}
+              </h1>
+
+              {/* Search Bar */}
+              <div className="relative group">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search 200,000+ games..."
+                    className="w-full bg-transparent border-none outline-none text-2xl md:text-3xl text-light placeholder-light/40 py-4 pr-12 font-light tracking-wide transition-all duration-300"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        navigate(`/search?query=${encodeURIComponent(e.target.value)}&category=all`);
+                      }
+                    }}
+                  />
+                  <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 text-light/40 group-hover:text-primary transition-colors" />
+                </div>
+
+                {/* Animated Gradient Underline */}
+                <div className="relative h-0.5 mt-2 bg-gradient-to-r from-light/20 to-light/5 rounded-full overflow-hidden">
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-secondary origin-left"
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Content: Quote (logged in) or Sign Up CTA (logged out) */}
+              {user ? (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentQuoteIndex}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                    className="overflow-hidden"
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.6 }}
+                    className="border-l-2 border-primary/40 pl-4"
                   >
-                    <div className="border-l-4 border-primary pl-4 py-2">
-                      <p className="text-xl md:text-2xl text-light/95 font-semibold italic leading-tight">
-                        "{gameQuotes[currentQuoteIndex].quote}"
-                      </p>
-                      <p className="text-sm text-primary mt-2 font-medium">
-                        — {gameQuotes[currentQuoteIndex].source}
-                      </p>
-                    </div>
+                    <p className="text-light/90 text-base md:text-lg italic font-light leading-relaxed">
+                      "{gameQuotes[currentQuoteIndex].quote}"
+                    </p>
+                    <p className="text-primary/80 text-xs mt-2 font-medium">
+                      — {gameQuotes[currentQuoteIndex].source}
+                    </p>
                   </motion.div>
                 </AnimatePresence>
-              </div>
-            ) : (
-              <motion.p
-                className="text-base text-light/80 max-w-lg mt-1 leading-relaxed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.7, delay: 0.6 }}
-              >
-                Track your games, share reviews, and connect with fellow gamers in one place
-              </motion.p>
-            )}
-
-            {/* CTA Buttons */}
-            <motion.div
-              className="flex gap-5 pt-2 mt-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.9 }}
-            >
-              {!user ? (
-                <>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Button
-                      to="/signup"
-                      label="Join Now"
-                      variant="primary"
-                      icon={<UserPlus className="mr-1 h-4 w-4" />}
-                    />
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Button
-                      to="/about"
-                      label="Learn More"
-                      variant="secondary"
-                    />
-                  </motion.div>
-                </>
               ) : (
-                <>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full sm:w-auto"
-                  >
-                    <Button
-                      to="/discover"
-                      label="Find Your Next Adventure"
-                      variant="primary"
-                      icon={<Search className="mr-1 h-4 w-4" />}
-                      className="w-full"
-                    />
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full sm:w-auto"
-                  >
-                    <Button
-                      to="/discover/recommendations"
-                      label="Your Recommendations"
-                      variant="secondary"
-                      className="w-full"
-                    />
-                  </motion.div>
-                </>
-              )}
-            </motion.div>
-
-            {/* Feature Highlights */}
-            <motion.div
-              className="grid grid-cols-3 gap-4 pt-4 mt-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 1.2 }}
-            >
-              {features.map((feature, index) => (
                 <motion.div
-                  key={feature.title}
-                  className="p-3 rounded-lg bg-surface-dark backdrop-blur-sm hover:bg-surface-dark/60 transition-all duration-300 cursor-pointer border border-dark/60"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 1.2 + (index * 0.15) }}
-                  whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                  className="flex items-center gap-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.7, delay: 0.9 }}
                 >
-                  <div className="text-primary mb-2">
-                    {feature.icon}
-                  </div>
-                  <h3 className="font-semibold text-light text-sm mb-1.5">
-                    {feature.title}
-                  </h3>
-                  <p className="text-xs text-light/70">
-                    {feature.description}
+                  <Link
+                    to="/signup"
+                    className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-primary/20"
+                  >
+                    Sign Up Free
+                  </Link>
+                  <p className="text-light/60 text-sm">
+                    Join 10,000+ gamers tracking their library
                   </p>
                 </motion.div>
-              ))}
+              )}
+
+              {/* Subtle Stats */}
+              <motion.p
+                className="text-sm text-light/50 font-light tracking-wide"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, delay: 1.1 }}
+              >
+                200,000+ games • Updated daily • Powered by IGDB
+              </motion.p>
             </motion.div>
           </div>
 
