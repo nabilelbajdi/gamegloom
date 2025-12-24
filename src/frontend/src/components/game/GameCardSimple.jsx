@@ -8,40 +8,40 @@ import useStatusDropdown from "../../hooks/useStatusDropdown";
 
 const GameCardSimple = ({ game }) => {
   const { user } = useAuth();
-  const { 
+  const {
     showStatusDropdown,
-    coverImageRef, 
-    handleCoverMouseLeave, 
-    handleStatusChange 
+    coverImageRef,
+    handleCoverMouseLeave,
+    handleStatusChange
   } = useStatusDropdown();
 
   return (
-    <Link 
+    <Link
       to={`/game/${game.slug || game.igdb_id}`}
       className="block group relative overflow-hidden rounded-lg transition-all duration-300"
     >
       {/* Game Cover */}
-      <div 
+      <div
         className="aspect-[3/4] overflow-hidden rounded-lg relative"
         ref={coverImageRef}
         onMouseLeave={handleCoverMouseLeave}
       >
         <img
-          src={game.coverImage || game.cover_image} 
+          src={game.coverImage || game.cover_image}
           alt={game.name}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90"
         />
-        
+
         {/* Status Ribbon */}
         <div className="absolute top-0 left-0 z-10 transition-opacity duration-300">
-          <GameCardStatus 
-            game={game} 
+          <GameCardStatus
+            game={game}
             onStatusChange={handleStatusChange}
             showDropdown={showStatusDropdown}
             size="large"
           />
         </div>
-        
+
         {/* Hover overlay with "View Game" and game info */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {/* View Game Button */}
@@ -51,7 +51,7 @@ const GameCardSimple = ({ game }) => {
               <ExternalLink className="h-3 w-3 text-white stroke-3" />
             </div>
           </div>
-          
+
           {/* Game Info */}
           <div className="absolute bottom-0 left-0 right-0 p-2.5 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
             <h3 className="text-sm font-semibold text-light truncate">
@@ -62,12 +62,12 @@ const GameCardSimple = ({ game }) => {
             </p>
           </div>
         </div>
-        
+
         {/* Rating Badge */}
         <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md">
           <Star className="h-5 w-5 text-primary fill-primary" />
           <span className="text-base font-medium text-light">
-            {game.rating === "N/A" 
+            {game.rating === "N/A"
               ? "N/A"
               : typeof game.rating === 'number' || !isNaN(parseFloat(game.rating))
                 ? parseFloat(game.rating).toFixed(1)

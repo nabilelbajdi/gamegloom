@@ -22,7 +22,7 @@ const HomePage = () => {
                                 <div className="h-8 bg-gray-700 rounded w-1/4"></div>
                                 <div className="grid grid-cols-6 gap-4">
                                     {[1, 2, 3, 4, 5, 6].map((j) => (
-                                        <div key={j} className="aspect-[3/4] bg-gray-700 rounded"></div>
+                                        <div key={j} className="aspect-[264/374] bg-gray-700 rounded"></div>
                                     ))}
                                 </div>
                             </div>

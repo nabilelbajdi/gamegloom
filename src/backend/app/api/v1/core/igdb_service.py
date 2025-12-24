@@ -170,7 +170,7 @@ def process_similar_games(similar_games_data: list) -> list:
                 "id": similar_data["id"],
                 "name": similar_data["name"],
                 "slug": similar_data.get("slug"),
-                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{similar_data['cover']['image_id']}.jpg"
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{similar_data['cover']['image_id']}.jpg"
                 if similar_data.get("cover") else None,
                 "rating": similar_data.get("total_rating", similar_data.get("rating")),
                 "genres": ", ".join(g['name'] for g in similar_data.get('genres', []))
@@ -186,7 +186,7 @@ def _process_related_items(items: list, item_type: str = "generic") -> list:
             item_data = {
                 "id": item.get('id'),
                 "name": item.get('name'),
-                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{item['cover']['image_id']}.jpg" 
+                "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{item['cover']['image_id']}.jpg" 
                 if item.get('cover', {}).get('image_id') else None
             }
             if item_type == "edition":
@@ -203,15 +203,15 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
     
     cover_image = None
     if igdb_data.get('cover', {}).get('image_id'):
-        cover_image = f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['cover']['image_id']}.jpg"
+        cover_image = f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{igdb_data['cover']['image_id']}.jpg"
     
     screenshots = [
-        f"https://images.igdb.com/igdb/image/upload/t_screenshot_big/{s['image_id']}.jpg"
+        f"https://images.igdb.com/igdb/image/upload/t_screenshot_huge_2x/{s['image_id']}.jpg"
         for s in igdb_data.get('screenshots', [])
     ]
     
     artworks = [
-        f"https://images.igdb.com/igdb/image/upload/t_1080p/{a['image_id']}.jpg"
+        f"https://images.igdb.com/igdb/image/upload/t_1080p_2x/{a['image_id']}.jpg"
         for a in igdb_data.get('artworks', [])
     ]
 
@@ -232,7 +232,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         parent_game = {
             "id": igdb_data['parent_game'].get('id'),
             "name": igdb_data['parent_game'].get('name'),
-            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['parent_game']['cover']['image_id']}.jpg" 
+            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{igdb_data['parent_game']['cover']['image_id']}.jpg" 
             if igdb_data['parent_game'].get('cover', {}).get('image_id') else None
         }
     
@@ -242,7 +242,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         version_parent = {
             "id": igdb_data['version_parent'].get('id'),
             "name": igdb_data['version_parent'].get('name'),
-            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_1080p/{igdb_data['version_parent']['cover']['image_id']}.jpg" 
+            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{igdb_data['version_parent']['cover']['image_id']}.jpg" 
             if igdb_data['version_parent'].get('cover', {}).get('image_id') else None
         }
     

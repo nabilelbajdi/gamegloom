@@ -212,15 +212,60 @@ export const normalizePlatformName = (platformName) => {
 };
 
 /**
- * Transforms an IGDB image URL to a high-resolution version (1080p).
- * Replaces size tokens like 't_thumb', 't_cover_big', etc. with 't_1080p'.
+ * Transforms an IGDB image URL to the highest quality version available.
+ * Upgrades images to retina (_2x) versions for screenshots, artworks, and covers.
  * 
  * @param {string} url - The original image URL
  * @returns {string} - The high-resolution image URL
  */
 export const getHighResImageUrl = (url) => {
   if (!url) return "";
-  // IGDB uses patterns like /t_thumb/, /t_cover_big/, /t_cover_small/
-  // We want to replace any t_xxxx with t_1080p for max quality
-  return url.replace(/\/t_[a-zA-Z0-9_]+\//, '/t_1080p/');
+
+  // If it's already a _2x retina version, keep it as-is
+  if (url.includes('_2x/')) {
+    return url;
+  }
+
+  // Upgrade specific image types to their _2x equivalents for retina displays
+  // Screenshots: upgrade to screenshot_huge_2x (2560x1440)
+  if (url.includes('/t_screenshot_')) {
+    return url.replace(/\/t_screenshot_[a-z]+\//, '/t_screenshot_huge_2x/');
+  }
+
+  // Artworks and large images: upgrade to 1080p_2x (3840x2160)
+  if (url.includes('/t_1080p/') || url.includes('/t_720p/')) {
+    return url.replace(/\/t_(1080p|720p)\//, '/t_1080p_2x/');
+  }
+
+  // Covers: upgrade to cover_big_2x (528x748)
+  if (url.includes('/t_cover_')) {
+    return url.replace(/\/t_cover_[a-z]+\//, '/t_cover_big_2x/');
+  }
+
+  // For any other size token, upgrade to 1080p_2x as default max quality
+  return url.replace(/\/t_[a-zA-Z0-9_]+\//, '/t_1080p_2x/');
+};
+
+/**
+ * Extracts YouTube video ID from an embed URL.
+ * 
+ * @param {string} url - YouTube embed URL (e.g., "https://www.youtube.com/embed/VIDEO_ID")
+ * @returns {string|null} - The video ID or null if invalid
+ */
+export const getYouTubeVideoId = (url) => {
+  if (!url) return null;
+  const match = url.match(/youtube\.com\/embed\/([^?]+)/);
+  return match ? match[1] : null;
+};
+
+/**
+ * Gets the high-quality YouTube thumbnail URL for a video.
+ * 
+ * @param {string} videoUrl - YouTube embed URL
+ * @returns {string|null} - Thumbnail URL (maxresdefault - 1280x720) or null
+ */
+export const getYouTubeThumbnail = (videoUrl) => {
+  const videoId = getYouTubeVideoId(videoUrl);
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 }; 

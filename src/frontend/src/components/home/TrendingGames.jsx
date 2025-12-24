@@ -20,7 +20,7 @@ const GameCardSkeleton = () => (
 // Loading Carousel
 const LoadingCarousel = ({ slidesToShow }) => {
   const skeletonArray = Array(slidesToShow).fill(null);
-  
+
   return (
     <section className="mt-4">
       <div className="flex justify-between items-center mb-6">
@@ -47,7 +47,7 @@ const TrendingGames = () => {
   const [currentBatch, setCurrentBatch] = useState(0);
   const slidesToShow = 5;
   const maxGames = 24;
-  
+
   // Initial load
   useEffect(() => {
     const loadInitialGames = async () => {
@@ -55,23 +55,23 @@ const TrendingGames = () => {
       await fetchGames("trending");
       setLoading(false);
     };
-    
+
     loadInitialGames();
   }, [fetchGames]);
-  
+
   // Handle slide change to load more games if needed
   const handleSlideChange = useCallback((currentSlide) => {
     setCurrentBatch(currentSlide);
-    
+
     if ((currentSlide + 1) * slidesToShow >= trendingGames.length && trendingGames.length < maxGames) {
       console.log("Would fetch more trending games here");
     }
   }, [trendingGames.length, slidesToShow]);
-  
+
   if (loading) {
     return <LoadingCarousel slidesToShow={slidesToShow} />;
   }
-  
+
   return (
     <GameCarousel
       title="Trending Now"

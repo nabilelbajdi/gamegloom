@@ -26,7 +26,7 @@ const GamePageSkeleton = () => {
         <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
           {/* GameSticky Skeleton */}
           <div className="w-full max-w-[280px]">
-            <div className="aspect-[3/4] rounded-xl bg-gray-800 animate-pulse mb-4"></div>
+            <div className="aspect-[264/374] rounded-xl bg-gray-800 animate-pulse mb-4"></div>
             <div className="h-10 bg-gray-800 animate-pulse rounded-lg mb-3"></div>
             <div className="h-10 bg-gray-800/50 animate-pulse rounded-lg mb-5"></div>
             <div className="space-y-2">
@@ -110,7 +110,7 @@ const GamePageSkeleton = () => {
             <div className="h-6 bg-gray-800 animate-pulse rounded w-1/4 mb-4"></div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {[...Array(4)].map((_, index) => (
-                <div key={index} className="aspect-[3/4] bg-gray-800/30 animate-pulse rounded"></div>
+                <div key={index} className="aspect-[264/374] bg-gray-800/30 animate-pulse rounded"></div>
               ))}
             </div>
           </div>
@@ -120,7 +120,7 @@ const GamePageSkeleton = () => {
             <div className="h-6 bg-gray-800 animate-pulse rounded w-1/4 mb-4"></div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[...Array(3)].map((_, index) => (
-                <div key={index} className="aspect-[3/4] bg-gray-800/30 animate-pulse rounded"></div>
+                <div key={index} className="aspect-[264/374] bg-gray-800/30 animate-pulse rounded"></div>
               ))}
             </div>
           </div>
