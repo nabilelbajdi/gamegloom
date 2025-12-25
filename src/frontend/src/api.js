@@ -136,7 +136,7 @@ export const removeGameFromCollection = async (gameId) => {
 };
 
 // Review API Functions
-export const createReview = async (gameId, rating, content) => {
+export const createReview = async (gameId, rating, content, advancedFields = {}) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
@@ -149,7 +149,17 @@ export const createReview = async (gameId, rating, content) => {
     body: JSON.stringify({
       game_id: gameId,
       rating,
-      content
+      content,
+      // Advanced review fields
+      platform: advancedFields.platform || null,
+      playtime_hours: advancedFields.playtime_hours || null,
+      completion_status: advancedFields.completion_status || null,
+      story_rating: advancedFields.story_rating || null,
+      gameplay_rating: advancedFields.gameplay_rating || null,
+      visuals_rating: advancedFields.visuals_rating || null,
+      audio_rating: advancedFields.audio_rating || null,
+      performance_rating: advancedFields.performance_rating || null,
+      recommended: advancedFields.recommended
     })
   });
 
@@ -162,7 +172,7 @@ export const createReview = async (gameId, rating, content) => {
   return data;
 };
 
-export const updateReview = async (reviewId, rating, content) => {
+export const updateReview = async (reviewId, rating, content, advancedFields = {}) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
@@ -172,7 +182,19 @@ export const updateReview = async (reviewId, rating, content) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ rating, content })
+    body: JSON.stringify({
+      rating,
+      content,
+      platform: advancedFields.platform || null,
+      playtime_hours: advancedFields.playtime_hours || null,
+      completion_status: advancedFields.completion_status || null,
+      story_rating: advancedFields.story_rating || null,
+      gameplay_rating: advancedFields.gameplay_rating || null,
+      visuals_rating: advancedFields.visuals_rating || null,
+      audio_rating: advancedFields.audio_rating || null,
+      performance_rating: advancedFields.performance_rating || null,
+      recommended: advancedFields.recommended
+    })
   });
 
   const data = await response.json();
@@ -343,6 +365,25 @@ export const getRecentReviews = async () => {
     console.error("Error fetching recent reviews:", error);
     return [];
   }
+};
+
+export const getReview = async (reviewId) => {
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
+    headers
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch review");
+  }
+
+  return await response.json();
+};
+
+export const getGame = async (gameId) => {
+  return fetchGames(`games/${gameId}`);
 };
 
 // Fetch Recommendations

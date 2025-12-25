@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { 
-  createReview, 
-  getGameReviews, 
-  toggleReviewLike, 
-  addReviewComment, 
+import {
+  createReview,
+  getGameReviews,
+  toggleReviewLike,
+  addReviewComment,
   getReviewComments,
   updateReview as updateReviewApi,
   deleteReview as deleteReviewApi,
@@ -13,8 +13,8 @@ import {
 } from "../api";
 
 const useReviewStore = create((set, get) => ({
-  reviews: {}, 
-  userReviews: {}, 
+  reviews: {},
+  userReviews: {},
   isLoading: false,
   error: null,
 
@@ -37,14 +37,14 @@ const useReviewStore = create((set, get) => ({
   fetchUserReviewForGame: async (gameId) => {
     try {
       const review = await getUserReviewForGame(gameId);
-      
+
       set((state) => ({
         userReviews: {
           ...state.userReviews,
           [gameId]: review
         }
       }));
-      
+
       return review;
     } catch (error) {
       console.error("Error fetching user review:", error);
@@ -52,14 +52,14 @@ const useReviewStore = create((set, get) => ({
     }
   },
 
-  addReview: async (gameId, rating, content) => {
+  addReview: async (gameId, rating, content, advancedFields = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const newReview = await createReview(gameId, rating, content);
+      const newReview = await createReview(gameId, rating, content, advancedFields);
       set((state) => ({
         reviews: {
           ...state.reviews,
-          [gameId]: state.reviews[gameId] 
+          [gameId]: state.reviews[gameId]
             ? [newReview, ...state.reviews[gameId]]
             : [newReview]
         },
@@ -76,18 +76,18 @@ const useReviewStore = create((set, get) => ({
     }
   },
 
-  updateReview: async (reviewId, gameId, rating, content) => {
+  updateReview: async (reviewId, gameId, rating, content, advancedFields = {}) => {
     try {
-      const updatedReview = await updateReviewApi(reviewId, rating, content);
+      const updatedReview = await updateReviewApi(reviewId, rating, content, advancedFields);
       set((state) => ({
         reviews: {
           ...state.reviews,
           [gameId]: state.reviews[gameId].map(review =>
             review.id === reviewId
-              ? { 
-                  ...review,
-                  ...updatedReview
-                }
+              ? {
+                ...review,
+                ...updatedReview
+              }
               : review
           )
         },
@@ -106,10 +106,10 @@ const useReviewStore = create((set, get) => ({
   deleteReview: async (reviewId, gameId) => {
     try {
       await deleteReviewApi(reviewId);
-      
+
       const userReviews = get().userReviews;
       let targetGameId = gameId;
-      
+
       if (!targetGameId) {
         Object.entries(userReviews).forEach(([id, review]) => {
           if (review && review.id === reviewId) {
@@ -117,7 +117,7 @@ const useReviewStore = create((set, get) => ({
           }
         });
       }
-      
+
       set((state) => ({
         reviews: {
           ...state.reviews,
@@ -140,11 +140,11 @@ const useReviewStore = create((set, get) => ({
       set((state) => {
         const reviewIndex = state.reviews[gameId]?.findIndex(r => r.id === reviewId);
         if (reviewIndex === -1 || !state.reviews[gameId]) return state;
-        
+
         const review = state.reviews[gameId][reviewIndex];
         const updatedLikesCount = review.likes_count + (review.user_liked ? -1 : 1);
         const updatedUserLiked = !review.user_liked;
-        
+
         return {
           reviews: {
             ...state.reviews,
@@ -180,15 +180,15 @@ const useReviewStore = create((set, get) => ({
               : review
           ) || []
         };
-        
+
         const updatedUserReviews = { ...state.userReviews };
         if (updatedUserReviews[gameId]?.id === reviewId) {
-          updatedUserReviews[gameId] = { 
-            ...updatedUserReviews[gameId], 
-            comments: comments 
+          updatedUserReviews[gameId] = {
+            ...updatedUserReviews[gameId],
+            comments: comments
           };
         }
-        
+
         return {
           reviews: updatedReviews,
           userReviews: updatedUserReviews
@@ -209,26 +209,26 @@ const useReviewStore = create((set, get) => ({
           ...state.reviews,
           [gameId]: state.reviews[gameId]?.map(review =>
             review.id === reviewId
-              ? { 
-                  ...review, 
-                  comments: review.comments ? [...review.comments, newComment] : [newComment],
-                  comments_count: review.comments_count + 1 
-                }
+              ? {
+                ...review,
+                comments: review.comments ? [...review.comments, newComment] : [newComment],
+                comments_count: review.comments_count + 1
+              }
               : review
           ) || []
         };
-        
+
         const updatedUserReviews = { ...state.userReviews };
         if (updatedUserReviews[gameId]?.id === reviewId) {
-          updatedUserReviews[gameId] = { 
+          updatedUserReviews[gameId] = {
             ...updatedUserReviews[gameId],
-            comments: updatedUserReviews[gameId].comments 
-              ? [...updatedUserReviews[gameId].comments, newComment] 
+            comments: updatedUserReviews[gameId].comments
+              ? [...updatedUserReviews[gameId].comments, newComment]
               : [newComment],
             comments_count: updatedUserReviews[gameId].comments_count + 1
           };
         }
-        
+
         return {
           reviews: updatedReviews,
           userReviews: updatedUserReviews
@@ -249,24 +249,24 @@ const useReviewStore = create((set, get) => ({
           ...state.reviews,
           [gameId]: state.reviews[gameId]?.map(review =>
             review.id === reviewId
-              ? { 
-                  ...review, 
-                  comments: review.comments?.filter(comment => comment.id !== commentId) || [],
-                  comments_count: review.comments_count - 1 
-                }
+              ? {
+                ...review,
+                comments: review.comments?.filter(comment => comment.id !== commentId) || [],
+                comments_count: review.comments_count - 1
+              }
               : review
           ) || []
         };
-        
+
         const updatedUserReviews = { ...state.userReviews };
         if (updatedUserReviews[gameId]?.id === reviewId) {
-          updatedUserReviews[gameId] = { 
+          updatedUserReviews[gameId] = {
             ...updatedUserReviews[gameId],
             comments: updatedUserReviews[gameId].comments?.filter(comment => comment.id !== commentId) || [],
             comments_count: updatedUserReviews[gameId].comments_count - 1
           };
         }
-        
+
         return {
           reviews: updatedReviews,
           userReviews: updatedUserReviews
@@ -286,38 +286,38 @@ const useReviewStore = create((set, get) => ({
           ...state.reviews,
           [gameId]: state.reviews[gameId]?.map(review =>
             review.id === reviewId
-              ? { 
-                  ...review, 
-                  comments: review.comments?.map(comment =>
-                    comment.id === commentId
-                      ? {
-                          ...comment,
-                          content,
-                          updated_at: new Date().toISOString()
-                        }
-                      : comment
-                  ) || []
-                }
+              ? {
+                ...review,
+                comments: review.comments?.map(comment =>
+                  comment.id === commentId
+                    ? {
+                      ...comment,
+                      content,
+                      updated_at: new Date().toISOString()
+                    }
+                    : comment
+                ) || []
+              }
               : review
           ) || []
         };
-        
+
         const updatedUserReviews = { ...state.userReviews };
         if (updatedUserReviews[gameId]?.id === reviewId) {
-          updatedUserReviews[gameId] = { 
+          updatedUserReviews[gameId] = {
             ...updatedUserReviews[gameId],
             comments: updatedUserReviews[gameId].comments?.map(comment =>
               comment.id === commentId
                 ? {
-                    ...comment,
-                    content,
-                    updated_at: new Date().toISOString()
-                  }
+                  ...comment,
+                  content,
+                  updated_at: new Date().toISOString()
+                }
                 : comment
             ) || []
           };
         }
-        
+
         return {
           reviews: updatedReviews,
           userReviews: updatedUserReviews
