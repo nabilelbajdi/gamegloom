@@ -1,5 +1,6 @@
 // src/components/GamePage/GameSticky.jsx
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Edit, Trash2, List } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
@@ -8,6 +9,7 @@ import useReviewStore from "../../store/useReviewStore";
 import useUserListStore from "../../store/useUserListStore";
 import GameCover from "../game/GameCover";
 import ListSelectionModal from "../game/ListSelectionModal";
+import ReviewFormModal from "../reviews/ReviewFormModal";
 import useClickOutside from "../../hooks/useClickOutside";
 
 const GameSticky = ({ game }) => {
@@ -22,14 +24,14 @@ const GameSticky = ({ game }) => {
   const [showListsModal, setShowListsModal] = useState(false);
   const reviewModalRef = useClickOutside(() => setShowReviewModal(false));
   const deleteModalRef = useClickOutside(() => setShowDeleteConfirm(false));
-  
+
   const { user } = useAuth();
   const { getGameStatus } = useUserGameStore();
   const { addReview, fetchUserReviewForGame, userReviews, updateReview, deleteReview } = useReviewStore();
   const { lists, fetchLists } = useUserListStore();
-  
+
   const gameStatus = getGameStatus(game.id);
-  
+
   useEffect(() => {
     if (user) {
       fetchLists();
@@ -40,7 +42,7 @@ const GameSticky = ({ game }) => {
           setHasUserReview(true);
         }
       };
-      
+
       fetchUserReview();
     }
   }, [user, game.igdb_id, fetchLists]);
@@ -56,49 +58,61 @@ const GameSticky = ({ game }) => {
     }
   }, [userReviews, game.igdb_id]);
 
+  // Lock body scroll when modals are open
+  useEffect(() => {
+    if (showReviewModal || showDeleteConfirm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showReviewModal, showDeleteConfirm]);
+
   const handleStarClick = async (rating) => {
     if (!user) {
       return;
     }
-    
+
     if (hasUserReview) {
       const userReview = userReviews[game.igdb_id];
-      
+
       if (userReview && rating === userRating) {
         setShowDeleteConfirm(true);
         return;
       }
-      
+
       try {
         setError(null);
         setIsSubmitting(true);
-        
+
         await updateReview(userReview.id, game.igdb_id, rating, userReview.content || "");
         setUserRating(rating);
-        
+
       } catch (error) {
         setError(error.message);
         console.error("Error updating rating:", error);
       } finally {
         setIsSubmitting(false);
       }
-      
+
       return;
     }
-    
+
     if (rating === userRating) {
       setUserRating(0);
       return;
     }
-    
+
     try {
       setError(null);
       setIsSubmitting(true);
-      
+
       await addReview(game.igdb_id, rating, "");
       setUserRating(rating);
       setHasUserReview(true);
-      
+
     } catch (error) {
       setError(error.message);
       console.error("Error submitting rating:", error);
@@ -119,14 +133,14 @@ const GameSticky = ({ game }) => {
     try {
       setError(null);
       setIsSubmitting(true);
-      
+
       const userReview = userReviews[game.igdb_id];
       if (userReview) {
         await deleteReview(userReview.id);
         setUserRating(0);
         setHasUserReview(false);
       }
-      
+
       setShowDeleteConfirm(false);
     } catch (error) {
       setError(error.message);
@@ -143,16 +157,16 @@ const GameSticky = ({ game }) => {
     try {
       setError(null);
       setIsSubmitting(true);
-      
+
       const userReview = userReviews[game.igdb_id];
-      
+
       if (hasUserReview && userReview) {
         await updateReview(userReview.id, game.igdb_id, userRating, content);
       } else {
         await addReview(game.igdb_id, userRating, content);
         setHasUserReview(true);
       }
-      
+
       setShowReviewModal(false);
     } catch (error) {
       setError(error.message);
@@ -161,8 +175,8 @@ const GameSticky = ({ game }) => {
       setIsSubmitting(false);
     }
   };
-  
-  const isInAnyList = lists.some(list => 
+
+  const isInAnyList = lists.some(list =>
     list.games?.some(g => g.id === game.id)
   );
 
@@ -202,7 +216,7 @@ const GameSticky = ({ game }) => {
               SIGN IN TO RATE
             </span>
           )}
-          
+
           {/* Write/Edit Review Button */}
           {user && hasUserReview && userRating > 0 && (
             <button
@@ -218,7 +232,7 @@ const GameSticky = ({ game }) => {
             </button>
           )}
         </div>
-        
+
         {/* Rating Stars */}
         <div className="flex items-center justify-between bg-surface-dark p-2 rounded-lg shadow-sm">
           <div className="flex gap-1">
@@ -232,8 +246,8 @@ const GameSticky = ({ game }) => {
                   text-2xl transition-all duration-200 cursor-pointer
                   ${!user && "cursor-not-allowed opacity-50"}
                   ${isSubmitting && "cursor-wait opacity-70"}
-                  ${star <= (hoverRating || userRating) 
-                    ? "text-primary hover:text-primary/90 scale-110 drop-shadow-glow" 
+                  ${star <= (hoverRating || userRating)
+                    ? "text-primary hover:text-primary/90 scale-110 drop-shadow-glow"
                     : "text-gray-600 hover:text-gray-400"
                   }
                 `}
@@ -244,7 +258,7 @@ const GameSticky = ({ game }) => {
               </button>
             ))}
           </div>
-          
+
           <div className="text-xs font-bold mr-2">
             {(userRating > 0 || hoverRating > 0) ? (
               <span className="text-white">{ratingLabels[hoverRating || userRating]}</span>
@@ -274,120 +288,28 @@ const GameSticky = ({ game }) => {
         lists={lists}
       />
 
-      {/* Review Modal */}
-      {showReviewModal && (
-        <motion.div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <motion.div 
-            ref={reviewModalRef} 
-            className="bg-surface-dark p-4 rounded-lg max-w-lg w-full border border-gray-800/50 shadow-xl"
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Edit className="w-5 h-5 text-primary" />
-                Your Review
-              </h3>
-              <button 
-                onClick={() => setShowReviewModal(false)}
-                className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <div className="flex items-center mb-2">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => handleStarClick(star)}
-                        onMouseEnter={() => handleStarMouseEnter(star)}
-                        onMouseLeave={handleStarMouseLeave}
-                        className={`
-                          text-2xl transition-all duration-200 cursor-pointer
-                          ${isSubmitting && "cursor-wait opacity-70"}
-                          ${star <= (hoverRating || userRating) 
-                            ? "text-primary hover:text-primary/90" 
-                            : "text-gray-600 hover:text-gray-400"
-                          }
-                        `}
-                        disabled={isSubmitting}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {(userRating > 0 || hoverRating > 0) && (
-                    <div className="ml-2 text-sm font-medium text-primary">
-                      {ratingLabels[hoverRating || userRating]}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Share what you think about this game..."
-                    className="flex-1 bg-transparent border-none text-sm text-white placeholder-gray-500 focus:outline-none resize-none"
-                    rows="4"
-                  />
-                </div>
-              </div>
-              
-              {error && (
-                <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 rounded-md flex items-start gap-2">
-                  <div className="flex-shrink-0 mt-0.5">
-                    <Trash2 className="h-4 w-4 text-red-400" />
-                  </div>
-                  <p className="text-sm text-red-400">{error}</p>
-                </div>
-              )}
-              
-              <div className="flex justify-end gap-5">
-                <button
-                  type="button"
-                  onClick={() => setShowReviewModal(false)}
-                  className="text-xs font-medium text-gray-400 hover:text-gray-300 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!userRating || isSubmitting}
-                  className={`text-xs font-semibold ${!userRating || isSubmitting ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:text-primary/90 cursor-pointer'}`}
-                >
-                  {isSubmitting ? "Saving..." : "Save Review"}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </motion.div>
-      )}
+      {/* Review Form Modal */}
+      <ReviewFormModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        game={game}
+        existingReview={userReviews[game.igdb_id]}
+        onSuccess={() => {
+          fetchUserReviewForGame(game.igdb_id);
+        }}
+      />
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <motion.div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+      {/* Delete Confirmation Modal - Portal to body for proper z-index */}
+      {showDeleteConfirm && createPortal(
+        <motion.div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <motion.div 
-            ref={deleteModalRef} 
+          <motion.div
+            ref={deleteModalRef}
             className="bg-surface-dark p-4 rounded-lg max-w-sm w-full border border-gray-800/50 shadow-xl"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -398,18 +320,18 @@ const GameSticky = ({ game }) => {
                 <Trash2 className="w-5 h-5 text-[var(--color-want)]" />
                 Delete Rating
               </h3>
-              <button 
+              <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
               >
                 &times;
               </button>
             </div>
-            
+
             <p className="text-sm text-gray-300 mb-4">
               Are you sure you want to delete your rating for this game?
             </p>
-            
+
             <div className="flex justify-end gap-5">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -425,7 +347,8 @@ const GameSticky = ({ game }) => {
               </button>
             </div>
           </motion.div>
-        </motion.div>
+        </motion.div>,
+        document.body
       )}
     </div>
   );
