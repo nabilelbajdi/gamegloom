@@ -437,11 +437,7 @@ const HeroSection = () => {
             <div className="w-full max-w-sm mx-auto px-4 pt-8">
               {featuredGames.length > 0 ? (
                 <div className="relative">
-                  <div className="absolute -top-8 left-0 right-0 text-center">
-                    <h2 className="text-sm font-semibold text-primary">
-                      {user ? 'Recommended For You' : 'Featured Games'}
-                    </h2>
-                  </div>
+
                   <Slider ref={sliderRef} {...sliderSettings}>
                     {featuredGames.map((game) => (
                       <div key={game.id} className="px-2">

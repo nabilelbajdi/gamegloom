@@ -51,16 +51,16 @@ const GamePageSkeleton = () => {
                 <div className="h-10 w-16 bg-gray-800/40 animate-pulse rounded"></div>
               </div>
             </div>
-            
+
             {/* Separator */}
             <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
-            
+
             {/* Media Preview */}
             <div className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-2">
                 {/* Main Trailer */}
                 <div className="aspect-video bg-gray-800/40 animate-pulse rounded-lg"></div>
-                
+
                 {/* Screenshots column */}
                 <div className="hidden md:flex flex-col gap-2">
                   <div className="aspect-video bg-gray-800/30 animate-pulse rounded-lg"></div>
@@ -68,7 +68,7 @@ const GamePageSkeleton = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Description */}
             <div className="mt-4">
               <div className="h-5 bg-gray-800/40 animate-pulse rounded w-1/4 mb-2"></div>
@@ -77,14 +77,14 @@ const GamePageSkeleton = () => {
                 <div className="h-3 bg-gray-800/30 animate-pulse rounded w-full"></div>
               </div>
             </div>
-            
+
             {/* Genres */}
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
               {[...Array(4)].map((_, index) => (
                 <div key={index} className="h-5 bg-gray-800/30 animate-pulse rounded-full w-16"></div>
               ))}
             </div>
-            
+
             {/* Game Information */}
             <div className="mt-4 bg-surface-dark p-3 rounded-md border-[0.5px] border-gray-800/30">
               <div className="h-4 bg-gray-800/40 animate-pulse rounded w-1/5 mb-2"></div>
@@ -95,7 +95,7 @@ const GamePageSkeleton = () => {
               </div>
             </div>
           </div>
-          
+
           {/* ReviewList Skeleton */}
           <div className="mt-8 space-y-4">
             <div className="flex items-center justify-between">
@@ -104,7 +104,7 @@ const GamePageSkeleton = () => {
             <div className="h-32 bg-surface-dark animate-pulse rounded-lg"></div>
             <div className="h-32 bg-surface-dark animate-pulse rounded-lg"></div>
           </div>
-          
+
           {/* SimilarGames Skeleton */}
           <div className="mt-8">
             <div className="h-6 bg-gray-800 animate-pulse rounded w-1/4 mb-4"></div>
@@ -114,7 +114,7 @@ const GamePageSkeleton = () => {
               ))}
             </div>
           </div>
-          
+
           {/* RelatedContent Skeleton */}
           <div className="mt-8">
             <div className="h-6 bg-gray-800 animate-pulse rounded w-1/4 mb-4"></div>
@@ -124,7 +124,7 @@ const GamePageSkeleton = () => {
               ))}
             </div>
           </div>
-          
+
           {/* GameMedia Skeleton */}
           <div className="mt-8">
             <div className="h-6 bg-gray-800 animate-pulse rounded w-1/4 mb-4"></div>
@@ -145,7 +145,7 @@ const GamePage = () => {
   const { gameDetails, fetchGameDetails } = useGameStore();
   const { fetchCollection, collection } = useUserGameStore();
   const isLoggedIn = localStorage.getItem("token") !== null;
-  
+
   const isNumericId = !isNaN(gameId);
   const game = isNumericId
     ? Object.values(gameDetails).find(g => g.igdb_id === parseInt(gameId))
@@ -154,7 +154,7 @@ const GamePage = () => {
   useEffect(() => {
     // Always fetch game details
     fetchGameDetails(gameId);
-    
+
     // Only fetch collection if the user is logged in
     if (isLoggedIn) {
       fetchCollection();
@@ -166,7 +166,7 @@ const GamePage = () => {
     if (game) {
       try {
         const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewedGames') || '[]');
-        
+
         // Prepare simplified game object with essential info
         const gameToSave = {
           id: game.id || game.igdb_id,
@@ -175,13 +175,13 @@ const GamePage = () => {
           name: game.name,
           coverImage: game.coverImage
         };
-        
+
         // Remove this game if it exists already (to move it to the front)
         const filteredGames = recentlyViewed.filter(g => g.id !== gameToSave.id && g.igdb_id !== gameToSave.igdb_id);
-        
+
         // Add current game to the beginning - store up to 15 games
         const updatedGames = [gameToSave, ...filteredGames].slice(0, 15);
-        
+
         // Save to localStorage
         localStorage.setItem('recentlyViewedGames', JSON.stringify(updatedGames));
       } catch (error) {
@@ -189,7 +189,7 @@ const GamePage = () => {
       }
     }
   }, [game]);
-    
+
   if (!game) return <GamePageSkeleton />;
 
   // Function to convert screenshot URLs to high resolution (1080p)
@@ -202,14 +202,14 @@ const GamePage = () => {
   const backgroundImage = game.artworks?.length > 0
     ? getHighResImage(game.artworks[0])
     : (game.screenshots?.length > 0
-        ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
-        : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
+      ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
+      : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
 
   return (
     <div className="relative w-full">
       {/* Background */}
       <div className="fixed inset-0 -z-10">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center blur-md brightness-[0.8]"
           style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none" }}
         ></div>
@@ -226,9 +226,9 @@ const GamePage = () => {
         {/* Game Details Section */}
         <div className="w-full max-w-3xl">
           <GameDetails game={game} trailer={game.videos?.[0]} />
-          <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} />
+          <ReviewList gameId={game.igdb_id} releaseDate={game.firstReleaseDate} game={game} />
           <SimilarGames games={game.similarGames} />
-          <RelatedContent 
+          <RelatedContent
             dlcs={game.dlcs}
             expansions={game.expansions}
             remakes={game.remakes}

@@ -1,18 +1,19 @@
 import React from "react";
-import { Star, ThumbsUp, MessageCircle, Clock, ExternalLink } from "lucide-react";
+import { Star, ThumbsUp, Clock, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 
-const RecentReviewCard = ({ review }) => {
-  const { game, user, rating, content, created_at, likes_count, comments_count } = review;
+const RecentReviewCard = ({ review, onViewReview }) => {
+  const { game, user, rating, content, created_at, likes_count } = review;
 
   return (
     <div className="bg-surface-dark rounded-xl overflow-hidden transition-all duration-300">
-      <div className="flex h-full">
+      <div className="flex">
         {/* Game Cover */}
         <Link
           to={`/game/${game.igdb_id}`}
-          className="group relative w-[140px] flex-shrink-0 overflow-hidden aspect-[3/4]"
+          className="group relative flex-shrink-0 overflow-hidden rounded-l-xl"
+          style={{ width: '165px', height: '220px' }}
         >
           <img
             src={game.cover_image}
@@ -32,7 +33,7 @@ const RecentReviewCard = ({ review }) => {
         </Link>
 
         {/* Content */}
-        <div className="flex-1 p-4 flex flex-col justify-between min-h-[180px]">
+        <div className="flex-1 p-4 flex flex-col justify-between" style={{ height: '220px' }}>
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-4">
@@ -40,7 +41,7 @@ const RecentReviewCard = ({ review }) => {
                 <h3>
                   <Link
                     to={`/game/${game.igdb_id}`}
-                    className="inline-block text-lg font-semibold text-light hover:text-primary transition-colors max-w-[200px] truncate"
+                    className="inline-block text-lg font-semibold text-light hover:text-primary transition-colors max-w-[280px] truncate"
                   >
                     {game.name}
                   </Link>
@@ -60,10 +61,7 @@ const RecentReviewCard = ({ review }) => {
               </div>
 
               {/* User Info */}
-              <Link
-                to={`/user/${user.id}`}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
                   <img
                     src={user.avatar}
@@ -75,7 +73,7 @@ const RecentReviewCard = ({ review }) => {
                   />
                 </div>
                 <span className="text-sm text-gray-300 font-medium">{user.username}</span>
-              </Link>
+              </div>
             </div>
 
             {/* Review Content */}
@@ -83,12 +81,12 @@ const RecentReviewCard = ({ review }) => {
               <p className="text-sm text-gray-400 line-clamp-2 mb-2">
                 {content || "No review content provided."}
               </p>
-              <Link
-                to={`/game/${game.igdb_id}/reviews/${review.id}`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+              <button
+                onClick={() => onViewReview && onViewReview(review)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
               >
-                View full review <ExternalLink size={12} />
-              </Link>
+                Show full review <ExternalLink size={12} />
+              </button>
             </div>
           </div>
 
@@ -98,15 +96,9 @@ const RecentReviewCard = ({ review }) => {
               <Clock size={14} />
               <span>{formatDistanceToNow(new Date(created_at), { addSuffix: true })}</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                <ThumbsUp size={14} />
-                <span>{likes_count}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                <MessageCircle size={14} />
-                <span>{comments_count}</span>
-              </div>
+            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+              <ThumbsUp size={14} />
+              <span>{likes_count}</span>
             </div>
           </div>
         </div>
