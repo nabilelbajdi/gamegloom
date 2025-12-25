@@ -15,10 +15,10 @@ const UserLists = ({ onSelectList }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const handleCreateList = async () => {
     if (!name.trim()) return;
-    
+
     const newList = await createList(name, description);
     if (newList) {
       setShowCreateModal(false);
@@ -26,10 +26,10 @@ const UserLists = ({ onSelectList }) => {
       setDescription('');
     }
   };
-  
+
   const handleUpdateList = async () => {
     if (!name.trim()) return;
-    
+
     const updatedList = await updateList(activeListId, name, description);
     if (updatedList) {
       setShowEditModal(false);
@@ -38,7 +38,7 @@ const UserLists = ({ onSelectList }) => {
       setActiveListId(null);
     }
   };
-  
+
   const handleDeleteList = async () => {
     const success = await deleteList(activeListId);
     if (success) {
@@ -46,14 +46,14 @@ const UserLists = ({ onSelectList }) => {
       setActiveListId(null);
     }
   };
-  
+
   const openEditModal = (list) => {
     setActiveListId(list.id);
     setName(list.name);
     setDescription(list.description || '');
     setShowEditModal(true);
   };
-  
+
   const openDeleteModal = (listId) => {
     setActiveListId(listId);
     setShowDeleteModal(true);
@@ -77,16 +77,16 @@ const UserLists = ({ onSelectList }) => {
       transition: { type: "spring", stiffness: 100 }
     }
   };
-  
-  const filteredLists = lists.filter(list => 
+
+  const filteredLists = lists.filter(list =>
     list.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   return (
     <div className="w-full">
       {/* Lists Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-gray-800/30">
-        <motion.h3 
+        <motion.h3
           className="text-2xl font-bold text-white mb-3 sm:mb-0"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -94,7 +94,7 @@ const UserLists = ({ onSelectList }) => {
         >
           My Lists
         </motion.h3>
-        <motion.button 
+        <motion.button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-1 px-4 py-2 rounded-md bg-white/10 text-white text-sm font-semibold hover:bg-white/15 transition-colors shadow-lg hover:shadow-white/5 cursor-pointer"
           whileHover={{ scale: 1.05 }}
@@ -104,7 +104,7 @@ const UserLists = ({ onSelectList }) => {
           Create New List
         </motion.button>
       </div>
-      
+
       {/* Search Bar */}
       {lists.length > 0 && (
         <div className="mb-6">
@@ -130,10 +130,10 @@ const UserLists = ({ onSelectList }) => {
           </div>
         </div>
       )}
-      
+
       {/* Lists Display */}
       {lists.length === 0 ? (
-        <motion.div 
+        <motion.div
           className="text-center py-16 px-6 text-gray-400 bg-surface-dark/30 rounded-xl border border-gray-800/20"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -142,7 +142,7 @@ const UserLists = ({ onSelectList }) => {
           <ListPlus className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <h4 className="mb-3 font-bold text-xl text-gray-300">No lists yet</h4>
           <p className="text-sm mb-6 max-w-md mx-auto">Create your first game collection to organize your favorite titles in personalized lists</p>
-          <motion.button 
+          <motion.button
             onClick={() => setShowCreateModal(true)}
             className="px-6 py-3 bg-white/10 text-white rounded-md text-sm font-semibold hover:bg-white/15 transition-colors shadow-md hover:shadow-white/5 cursor-pointer"
             whileHover={{ scale: 1.05 }}
@@ -152,7 +152,7 @@ const UserLists = ({ onSelectList }) => {
           </motion.button>
         </motion.div>
       ) : filteredLists.length === 0 ? (
-        <motion.div 
+        <motion.div
           className="text-center py-10 px-6 text-gray-400 bg-surface-dark/30 rounded-xl border border-gray-800/20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -165,7 +165,7 @@ const UserLists = ({ onSelectList }) => {
           </p>
         </motion.div>
       ) : (
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={containerVariants}
           initial="hidden"
@@ -173,7 +173,7 @@ const UserLists = ({ onSelectList }) => {
         >
           {filteredLists.map(list => (
             <motion.div key={list.id} variants={itemVariants}>
-              <ListCard 
+              <ListCard
                 list={list}
                 onSelectList={onSelectList}
                 onEditList={openEditModal}
@@ -184,7 +184,7 @@ const UserLists = ({ onSelectList }) => {
           ))}
         </motion.div>
       )}
-      
+
       {/* Create Modal */}
       {showCreateModal && (
         <ListModal
@@ -202,7 +202,7 @@ const UserLists = ({ onSelectList }) => {
           submitText="Create List"
         />
       )}
-      
+
       {/* Edit Modal */}
       {showEditModal && (
         <ListModal
@@ -221,7 +221,7 @@ const UserLists = ({ onSelectList }) => {
           submitText="Save Changes"
         />
       )}
-      
+
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <DeleteConfirmModal
@@ -239,16 +239,16 @@ const UserLists = ({ onSelectList }) => {
 // Modal for creating and editing lists
 const ListModal = ({ title, name, setName, description, setDescription, onSubmit, onCancel, submitText }) => {
   const modalRef = useClickOutside(onCancel);
-  
+
   return (
-    <motion.div 
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+    <motion.div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <motion.div 
+      <motion.div
         ref={modalRef}
         className="bg-surface-dark p-4 rounded-lg max-w-md w-full border border-gray-800/50 shadow-xl"
         initial={{ scale: 0.9, y: 20 }}
@@ -260,14 +260,14 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
             <List className="w-5 h-5 text-primary" />
             {title}
           </h3>
-          <button 
+          <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
           >
             &times;
           </button>
         </div>
-        
+
         <div className="mb-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
@@ -282,7 +282,7 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
             </div>
           </div>
         </div>
-        
+
         <div className="mb-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
@@ -296,7 +296,7 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
             </div>
           </div>
         </div>
-        
+
         <div className="flex justify-end gap-5">
           <button
             onClick={onCancel}
@@ -320,16 +320,16 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
 // Delete confirmation modal
 const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
   const modalRef = useClickOutside(onCancel);
-  
+
   return (
-    <motion.div 
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+    <motion.div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <motion.div 
+      <motion.div
         ref={modalRef}
         className="bg-surface-dark p-4 rounded-lg max-w-sm w-full border border-gray-800/50 shadow-xl"
         initial={{ scale: 0.9, y: 20 }}
@@ -341,18 +341,18 @@ const DeleteConfirmModal = ({ onConfirm, onCancel }) => {
             <Trash2 className="w-5 h-5 text-[var(--color-want)]" />
             Delete List
           </h3>
-          <button 
+          <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
           >
             &times;
           </button>
         </div>
-        
+
         <p className="text-sm text-gray-300 mb-4">
           Are you sure you want to delete this list? This action cannot be undone.
         </p>
-        
+
         <div className="flex justify-end gap-5">
           <button
             onClick={onCancel}

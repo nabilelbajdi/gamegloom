@@ -6,31 +6,31 @@ import useUserListStore from '../../store/useUserListStore';
 import { createSlug } from '../../utils/stringUtils';
 import useClickOutside from '../../hooks/useClickOutside';
 
-const ListSelectionModal = ({ 
-  isOpen, 
-  onClose, 
-  game, 
+const ListSelectionModal = ({
+  isOpen,
+  onClose,
+  game,
   lists = []
 }) => {
   const [newListName, setNewListName] = useState('');
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [listActionLoading, setListActionLoading] = useState(false);
-  
+
   const modalRef = useClickOutside(onClose);
-  
+
   const { addGame, removeGame, createList } = useUserListStore();
-  
+
   const handleToggleGameInList = async (listId) => {
     if (listActionLoading) return;
-    
+
     setListActionLoading(true);
-    
+
     try {
       const list = lists.find(l => l.id === listId);
       if (!list) return;
-      
+
       const gameInList = list.games?.some(g => g.id === game.id);
-      
+
       if (gameInList) {
         await removeGame(listId, game.id);
       } else {
@@ -42,12 +42,12 @@ const ListSelectionModal = ({
       setListActionLoading(false);
     }
   };
-  
+
   const handleCreateList = async () => {
     if (!newListName.trim() || listActionLoading) return;
-    
+
     setListActionLoading(true);
-    
+
     try {
       const newList = await createList(newListName, '');
       if (newList) {
@@ -61,18 +61,18 @@ const ListSelectionModal = ({
       setListActionLoading(false);
     }
   };
-  
+
   if (!isOpen) return null;
-  
+
   return (
-    <motion.div 
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+    <motion.div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <motion.div 
+      <motion.div
         ref={modalRef}
         className="bg-surface-dark rounded-lg max-w-md w-full p-4 shadow-xl border border-gray-800/50"
         initial={{ scale: 0.9, y: 20 }}
@@ -84,20 +84,20 @@ const ListSelectionModal = ({
             <List className="w-5 h-5 text-primary" />
             Add to Lists
           </h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-300 cursor-pointer text-xl"
           >
             &times;
           </button>
         </div>
-        
+
         {/* Create New List Section */}
         {isCreatingList ? (
           <div className="mb-3">
             <div className="flex items-center gap-3">
               <div className="flex-1 flex items-center gap-3 py-2.5 px-2 bg-black/10 rounded transition-colors">
-                <input 
+                <input
                   type="text"
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
@@ -132,7 +132,7 @@ const ListSelectionModal = ({
             Add to New List
           </button>
         )}
-        
+
         {/* Lists Section */}
         <div className="max-h-[45vh] overflow-y-auto scrollbar-hide pr-2">
           {lists.length === 0 ? (
@@ -146,7 +146,7 @@ const ListSelectionModal = ({
                 const isInList = list.games?.some(g => g.id === game.id);
                 const listSlug = createSlug(list.name);
                 return (
-                  <div 
+                  <div
                     key={list.id}
                     className="flex items-center py-1"
                   >
@@ -164,7 +164,7 @@ const ListSelectionModal = ({
                       </div>
                       <span className="text-sm font-semibold text-gray-200 truncate max-w-[220px]" title={list.name}>{list.name}</span>
                     </button>
-                    <Link 
+                    <Link
                       to={`/library?tab=my_lists&list=${listSlug}`}
                       className="ml-2 p-2 text-gray-400 hover:text-gray-300 rounded-full hover:bg-black/10"
                       title="Go to list"
@@ -178,7 +178,7 @@ const ListSelectionModal = ({
             </div>
           )}
         </div>
-        
+
         <div className="pt-3 border-t border-gray-800/30 flex justify-end">
           <button
             onClick={onClose}
