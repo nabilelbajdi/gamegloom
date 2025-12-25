@@ -57,12 +57,22 @@ async def create_review(
                 detail="You have already reviewed this game"
             )
         
-        # Create new review
+        # Create new review with all fields
         db_review = Review(
             user_id=current_user.id,
             game_id=game.id,
             rating=review_data.rating,
-            content=review_data.content
+            content=review_data.content,
+            # Advanced review fields
+            platform=review_data.platform,
+            playtime_hours=review_data.playtime_hours,
+            completion_status=review_data.completion_status,
+            story_rating=review_data.story_rating,
+            gameplay_rating=review_data.gameplay_rating,
+            visuals_rating=review_data.visuals_rating,
+            audio_rating=review_data.audio_rating,
+            performance_rating=review_data.performance_rating,
+            recommended=review_data.recommended
         )
         
         db.add(db_review)

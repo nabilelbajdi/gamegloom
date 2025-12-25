@@ -195,15 +195,40 @@ class UserGameResponse(BaseModel):
 class ReviewBase(BaseModel):
     """Base schema for reviews."""
     rating: float = Field(..., ge=1, le=5)
-    content: Optional[str] = Field(None, max_length=2000)
+    content: Optional[str] = Field(None, max_length=5000)
+    
+    # Advanced review fields
+    platform: Optional[str] = Field(None, max_length=50)
+    playtime_hours: Optional[int] = Field(None, ge=0)
+    completion_status: Optional[str] = Field(None, max_length=50)
+    
+    # Category ratings (1-5)
+    story_rating: Optional[int] = Field(None, ge=1, le=5)
+    gameplay_rating: Optional[int] = Field(None, ge=1, le=5)
+    visuals_rating: Optional[int] = Field(None, ge=1, le=5)
+    audio_rating: Optional[int] = Field(None, ge=1, le=5)
+    performance_rating: Optional[int] = Field(None, ge=1, le=5)
+    
+    # Recommendation
+    recommended: Optional[bool] = None
 
 class ReviewCreate(ReviewBase):
     """Schema for creating a new review."""
     game_id: int
 
-class ReviewUpdate(ReviewBase):
+class ReviewUpdate(BaseModel):
     """Schema for updating a review."""
-    pass
+    rating: Optional[float] = Field(None, ge=1, le=5)
+    content: Optional[str] = Field(None, max_length=5000)
+    platform: Optional[str] = Field(None, max_length=50)
+    playtime_hours: Optional[int] = Field(None, ge=0)
+    completion_status: Optional[str] = Field(None, max_length=50)
+    story_rating: Optional[int] = Field(None, ge=1, le=5)
+    gameplay_rating: Optional[int] = Field(None, ge=1, le=5)
+    visuals_rating: Optional[int] = Field(None, ge=1, le=5)
+    audio_rating: Optional[int] = Field(None, ge=1, le=5)
+    performance_rating: Optional[int] = Field(None, ge=1, le=5)
+    recommended: Optional[bool] = None
 
 class Review(ReviewBase):
     """Schema for reading review data."""
@@ -216,7 +241,7 @@ class Review(ReviewBase):
     updated_at: datetime
     user_liked: bool = False
     user: Optional[UserResponse] = None
-    game: Optional[Game] = None  # Add game relationship
+    game: Optional[Game] = None
 
     model_config = ConfigDict(from_attributes=True)
 

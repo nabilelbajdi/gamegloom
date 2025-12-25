@@ -1,6 +1,6 @@
 # models/review.py
 from datetime import datetime, UTC
-from sqlalchemy import Integer, String, Float, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy import Integer, String, Float, ForeignKey, DateTime, UniqueConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ...db_setup import Base
 
@@ -18,7 +18,22 @@ class Review(Base):
     
     # Review content
     rating: Mapped[float] = mapped_column(Float, nullable=False)
-    content: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    content: Mapped[str | None] = mapped_column(String(5000), nullable=True)  # Increased limit
+    
+    # Advanced review fields
+    platform: Mapped[str | None] = mapped_column(String(50), nullable=True)  # PC, PS5, Xbox, etc.
+    playtime_hours: Mapped[int | None] = mapped_column(Integer, nullable=True)  # Hours spent
+    completion_status: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Main Story, 100%, Dropped, etc.
+    
+    # Category ratings (1-5 scale, optional)
+    story_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    gameplay_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    visuals_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    audio_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    performance_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    
+    # Recommendation
+    recommended: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # Would recommend?
     
     # Counters
     likes_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -28,7 +43,7 @@ class Review(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
-    # Status
+    # Status (computed, not stored)
     user_liked: bool = False
 
     # Relationships
