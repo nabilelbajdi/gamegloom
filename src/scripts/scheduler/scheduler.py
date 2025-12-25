@@ -46,12 +46,12 @@ async def update_featured_games():
             trending_new, trending_updated = await services.sync_games_from_igdb(db, trending_query)
             logger.info(f"[Scheduler] Trending: {trending_new} new, {trending_updated} updated")
             
-            # Update anticipated games
+            # Update anticipated games (10+ hypes to match quality requirements)
             anticipated_query = f"""
                 {services.IGDB_GAME_FIELDS}
                 where first_release_date > {current_time} 
                     & first_release_date < {one_year_future} 
-                    & hypes > 0 & cover != null;
+                    & hypes >= 10 & cover != null;
                 sort hypes desc;
                 limit 50;
             """

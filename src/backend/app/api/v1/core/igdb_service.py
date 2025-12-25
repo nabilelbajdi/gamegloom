@@ -139,19 +139,32 @@ def meets_quality_requirements(game_data: schemas.GameCreate, log_warnings: bool
     
     Requirements:
     1. Must have a cover image
-    2. Must have a summary or storyline
+    2. Must have a summary or storyline (UNLESS unreleased with 10+ hypes)
     3. Must not be a Mod, Pack, or Update
     """
+    # Check excluded game types
     if game_data.game_type_id in EXCLUDED_GAME_TYPES:
         if log_warnings:
             logger.info(f"[Quality] Skipping '{game_data.name}': is a {EXCLUDED_GAME_TYPES[game_data.game_type_id]}")
         return False
     
+    # Cover is always required
     if not game_data.cover_image:
         if log_warnings:
             logger.info(f"[Quality] Skipping '{game_data.name}': no cover image")
         return False
     
+    # Check if game is unreleased and has significant hype
+    is_unreleased = not game_data.first_release_date or game_data.first_release_date > datetime.now()
+    has_hype = (game_data.hypes or 0) >= 10
+    
+    # Anticipated unreleased games with 10+ hypes can skip description requirement
+    if is_unreleased and has_hype:
+        if log_warnings:
+            logger.info(f"[Quality] Allowing anticipated game '{game_data.name}' with {game_data.hypes} hypes (no description required)")
+        return True
+    
+    # Released games or low-hype unreleased games need a description
     has_description = bool(game_data.summary) or bool(game_data.storyline)
     if not has_description:
         if log_warnings:
