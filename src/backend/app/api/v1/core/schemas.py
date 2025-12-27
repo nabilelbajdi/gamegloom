@@ -347,20 +347,48 @@ class UserListBase(BaseModel):
 
 class UserListCreate(UserListBase):
     """Schema for creating a user list."""
-    pass
+    is_public: bool = False
 
 class UserListUpdate(BaseModel):
     """Schema for updating a user list."""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
+    is_public: Optional[bool] = None
+
+class UserListCreator(BaseModel):
+    """Simplified user info for list creators."""
+    id: int
+    username: str
+    avatar: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 class UserList(UserListBase):
     """Schema for returning a user list."""
     id: int
     user_id: int
+    is_public: bool = False
+    is_featured: bool = False
+    likes_count: int = 0
     created_at: datetime
     updated_at: datetime
     games: List[GameBasicInfo] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+class UserListPublic(UserListBase):
+    """Schema for public list with creator info."""
+    id: int
+    user_id: int
+    is_public: bool = True
+    is_featured: bool = False
+    likes_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+    games: List[GameBasicInfo] = []
+    creator: Optional[UserListCreator] = None
+    user_liked: bool = False  # Whether current user liked this list
+    game_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -370,6 +398,24 @@ class UserListsResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class PublicListsResponse(BaseModel):
+    """Schema for paginated public lists."""
+    lists: List[UserListPublic] = []
+    total: int = 0
+    page: int = 1
+    per_page: int = 20
+    has_more: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
 class AddGameToListRequest(BaseModel):
     """Schema for adding a game to a user list."""
     game_id: int
+
+class ListLikeResponse(BaseModel):
+    """Schema for like/unlike response."""
+    liked: bool
+    likes_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+

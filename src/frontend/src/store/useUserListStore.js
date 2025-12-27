@@ -6,15 +6,15 @@ const useUserListStore = create((set, get) => ({
   selectedList: null,
   isLoading: false,
   error: null,
-  
+
   fetchLists: async () => {
     set({ isLoading: true, error: null });
     try {
       const response = await getUserLists();
-      
+
       // Fetch each list individually to get the games
       const listsWithGames = [];
-      
+
       for (const list of response.lists || []) {
         try {
           const detailedList = await getUserList(list.id);
@@ -25,13 +25,13 @@ const useUserListStore = create((set, get) => ({
           listsWithGames.push(list);
         }
       }
-      
+
       set({ lists: listsWithGames || [], isLoading: false });
     } catch (error) {
       set({ error: error.message, isLoading: false });
     }
   },
-  
+
   getList: async (listId) => {
     set({ isLoading: true, error: null });
     try {
@@ -44,12 +44,12 @@ const useUserListStore = create((set, get) => ({
       set({ isLoading: false });
     }
   },
-  
-  createList: async (name, description) => {
+
+  createList: async (name, description, isPublic = false) => {
     set({ isLoading: true, error: null });
     try {
-      const newList = await createUserList(name, description);
-      set((state) => ({ 
+      const newList = await createUserList(name, description, isPublic);
+      set((state) => ({
         lists: [...state.lists, newList],
         isLoading: false
       }));
@@ -59,13 +59,13 @@ const useUserListStore = create((set, get) => ({
       return null;
     }
   },
-  
-  updateList: async (listId, name, description) => {
+
+  updateList: async (listId, name, description, isPublic = null) => {
     set({ isLoading: true, error: null });
     try {
-      const updatedList = await updateUserList(listId, name, description);
+      const updatedList = await updateUserList(listId, name, description, isPublic);
       set((state) => ({
-        lists: state.lists.map(list => 
+        lists: state.lists.map(list =>
           list.id === listId ? updatedList : list
         ),
         isLoading: false
@@ -76,7 +76,7 @@ const useUserListStore = create((set, get) => ({
       return null;
     }
   },
-  
+
   deleteList: async (listId) => {
     set({ isLoading: true, error: null });
     try {
@@ -91,13 +91,13 @@ const useUserListStore = create((set, get) => ({
       return false;
     }
   },
-  
+
   addGame: async (listId, gameId) => {
     set({ isLoading: true, error: null });
     try {
       const updatedList = await addGameToList(listId, gameId);
       set((state) => ({
-        lists: state.lists.map(list => 
+        lists: state.lists.map(list =>
           list.id === listId ? updatedList : list
         ),
         isLoading: false
@@ -108,13 +108,13 @@ const useUserListStore = create((set, get) => ({
       return null;
     }
   },
-  
+
   removeGame: async (listId, gameId) => {
     set({ isLoading: true, error: null });
     try {
       const updatedList = await removeGameFromList(listId, gameId);
       set((state) => ({
-        lists: state.lists.map(list => 
+        lists: state.lists.map(list =>
           list.id === listId ? updatedList : list
         ),
         isLoading: false
@@ -125,7 +125,7 @@ const useUserListStore = create((set, get) => ({
       return null;
     }
   },
-  
+
   setSelectedList: (listId) => {
     set({ selectedList: listId });
   }

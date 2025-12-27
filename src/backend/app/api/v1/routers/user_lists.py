@@ -77,7 +77,8 @@ async def create_user_list(
     db_list = UserList(
         name=list_data.name,
         description=list_data.description,
-        user_id=current_user.id
+        user_id=current_user.id,
+        is_public=list_data.is_public
     )
     
     db.add(db_list)
@@ -89,6 +90,9 @@ async def create_user_list(
         name=db_list.name,
         description=db_list.description,
         user_id=db_list.user_id,
+        is_public=db_list.is_public,
+        is_featured=db_list.is_featured,
+        likes_count=db_list.likes_count,
         created_at=db_list.created_at,
         updated_at=db_list.updated_at,
         games=[]
@@ -110,6 +114,9 @@ async def get_user_lists(
                 name=user_list.name,
                 description=user_list.description,
                 user_id=user_list.user_id,
+                is_public=user_list.is_public,
+                is_featured=user_list.is_featured,
+                likes_count=user_list.likes_count,
                 created_at=user_list.created_at,
                 updated_at=user_list.updated_at,
                 games=[]
@@ -145,6 +152,9 @@ async def get_user_list(
         name=user_list.name,
         description=user_list.description,
         user_id=user_list.user_id,
+        is_public=user_list.is_public,
+        is_featured=user_list.is_featured,
+        likes_count=user_list.likes_count,
         created_at=user_list.created_at,
         updated_at=user_list.updated_at,
         games=games_info
@@ -175,6 +185,8 @@ async def update_user_list(
         user_list.name = list_data.name
     if list_data.description is not None:
         user_list.description = list_data.description
+    if list_data.is_public is not None:
+        user_list.is_public = list_data.is_public
     
     db.commit()
     db.refresh(user_list)
@@ -186,6 +198,9 @@ async def update_user_list(
         name=user_list.name,
         description=user_list.description,
         user_id=user_list.user_id,
+        is_public=user_list.is_public,
+        is_featured=user_list.is_featured,
+        likes_count=user_list.likes_count,
         created_at=user_list.created_at,
         updated_at=user_list.updated_at,
         games=games_info

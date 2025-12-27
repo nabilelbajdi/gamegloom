@@ -14,27 +14,30 @@ const UserLists = ({ onSelectList }) => {
   const [activeListId, setActiveListId] = useState(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleCreateList = async () => {
     if (!name.trim()) return;
 
-    const newList = await createList(name, description);
+    const newList = await createList(name, description, isPublic);
     if (newList) {
       setShowCreateModal(false);
       setName('');
       setDescription('');
+      setIsPublic(false);
     }
   };
 
   const handleUpdateList = async () => {
     if (!name.trim()) return;
 
-    const updatedList = await updateList(activeListId, name, description);
+    const updatedList = await updateList(activeListId, name, description, isPublic);
     if (updatedList) {
       setShowEditModal(false);
       setName('');
       setDescription('');
+      setIsPublic(false);
       setActiveListId(null);
     }
   };
@@ -51,6 +54,7 @@ const UserLists = ({ onSelectList }) => {
     setActiveListId(list.id);
     setName(list.name);
     setDescription(list.description || '');
+    setIsPublic(list.is_public || false);
     setShowEditModal(true);
   };
 
@@ -193,11 +197,14 @@ const UserLists = ({ onSelectList }) => {
           setName={setName}
           description={description}
           setDescription={setDescription}
+          isPublic={isPublic}
+          setIsPublic={setIsPublic}
           onSubmit={handleCreateList}
           onCancel={() => {
             setShowCreateModal(false);
             setName('');
             setDescription('');
+            setIsPublic(false);
           }}
           submitText="Create List"
         />
@@ -211,11 +218,14 @@ const UserLists = ({ onSelectList }) => {
           setName={setName}
           description={description}
           setDescription={setDescription}
+          isPublic={isPublic}
+          setIsPublic={setIsPublic}
           onSubmit={handleUpdateList}
           onCancel={() => {
             setShowEditModal(false);
             setName('');
             setDescription('');
+            setIsPublic(false);
             setActiveListId(null);
           }}
           submitText="Save Changes"
@@ -237,7 +247,7 @@ const UserLists = ({ onSelectList }) => {
 };
 
 // Modal for creating and editing lists
-const ListModal = ({ title, name, setName, description, setDescription, onSubmit, onCancel, submitText }) => {
+const ListModal = ({ title, name, setName, description, setDescription, isPublic, setIsPublic, onSubmit, onCancel, submitText }) => {
   const modalRef = useClickOutside(onCancel);
 
   return (
@@ -295,6 +305,26 @@ const ListModal = ({ title, name, setName, description, setDescription, onSubmit
               />
             </div>
           </div>
+        </div>
+
+        {/* Make Public Toggle */}
+        <div className="mb-4">
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-gray-700 rounded-full peer peer-checked:bg-primary/60 transition-colors"></div>
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-gray-300 rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-white"></div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-white group-hover:text-primary transition-colors">Make Public</span>
+              <span className="text-xs text-gray-500">Others can discover and like this list</span>
+            </div>
+          </label>
         </div>
 
         <div className="flex justify-end gap-5">
