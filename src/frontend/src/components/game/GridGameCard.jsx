@@ -5,7 +5,7 @@ import { formatGenres } from "../../utils/gameCardUtils";
 import GameCardStatus from "./GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
 
-const GridGameCard = ({ game, starRating, smallStatus = false, compact = false }) => {
+const GridGameCard = ({ game, starRating, smallStatus = false, compact = false, hideRibbon = false }) => {
   const { user } = useAuth();
   const {
     showStatusDropdown,
@@ -30,8 +30,8 @@ const GridGameCard = ({ game, starRating, smallStatus = false, compact = false }
         {/* Hover gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-        {/* Status Ribbon */}
-        <div className={`absolute top-0 left-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+        {/* Status Ribbon - Always visible in exploration, hover-only in library */}
+        <div className={`absolute top-0 left-0 z-10 ${hideRibbon ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-300' : ''}`}>
           <GameCardStatus
             game={game}
             onStatusChange={handleStatusChange}

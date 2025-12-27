@@ -3,25 +3,25 @@ import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 
 const LIBRARY_SORT_OPTIONS = [
   { value: "last_played", label: "Recently Played" },
-  { value: "playtime_high", label: "Playtime (Most)" },
-  { value: "added_new", label: "Date Added (Newest)" },
-  { value: "name_asc", label: "Name (A-Z)" },
-  { value: "rating_high", label: "Rating (High to Low)" },
-  { value: "release_new", label: "Release Date (Newest)" }
+  { value: "playtime_high", label: "Most Playtime" },
+  { value: "added_new", label: "Recently Added" },
+  { value: "name_asc", label: "Name" },
+  { value: "rating_high", label: "Top Rated" },
+  { value: "release_new", label: "Latest Release" }
 ];
 
 const SEARCH_SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
   { value: "exact_match", label: "Exact Matches" },
-  { value: "rating_high", label: "Rating (High to Low)" },
-  { value: "name_asc", label: "Name (A-Z)" },
-  { value: "release_new", label: "Release Date (Newest)" }
+  { value: "rating_high", label: "Top Rated" },
+  { value: "name_asc", label: "Name" },
+  { value: "release_new", label: "Latest Release" }
 ];
 
 const SYNC_SORT_OPTIONS = [
   { value: "last_played", label: "Recently Played" },
-  { value: "playtime_high", label: "Playtime (Most)" },
-  { value: "name_asc", label: "Name (A-Z)" }
+  { value: "playtime_high", label: "Most Playtime" },
+  { value: "name_asc", label: "Name" }
 ];
 
 const SortDropdown = ({

@@ -19,7 +19,8 @@ const GameGrid = ({
   onClearSearch = null,
   resultCountClassName = "text-gray-400",
   containerClassName = "container mx-auto px-4 py-8",
-  gridClassName = ""
+  gridClassName = "",
+  hideRibbon = false
 }) => {
 
   // Empty Search State
@@ -82,7 +83,7 @@ const GameGrid = ({
       ) : (
         <div className={`grid grid-cols-${columnCount.default} sm:grid-cols-${columnCount.sm} md:grid-cols-${columnCount.md} lg:grid-cols-${columnCount.lg} xl:grid-cols-${columnCount.xl} gap-3 ${gridClassName}`}>
           {games.map((game) => (
-            <GridGameCard key={game.id} game={game} />
+            <GridGameCard key={game.id} game={game} hideRibbon={hideRibbon} />
           ))}
           {emptyContent}
         </div>

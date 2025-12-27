@@ -127,6 +127,13 @@ const GameListCard = ({ game, index }) => {
 
   return (
     <div className="flex items-stretch overflow-hidden max-w-3xl">
+      {/* Rank Number */}
+      {index !== undefined && (
+        <div className="w-10 shrink-0 flex items-center justify-center mr-2">
+          <span className="text-lg font-bold text-gray-500">{index + 1}</span>
+        </div>
+      )}
+
       {/* Game Cover with Ribbon */}
       <Link
         to={`/game/${game.slug || game.igdb_id}`}
