@@ -28,9 +28,18 @@ const MyLibraryPage = () => {
   // Component state
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("last_played");
-  const [viewMode, setViewMode] = useState("grid");
+  const [sortOption, setSortOption] = useState(() => localStorage.getItem("librarySortOption") || "last_played");
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("libraryViewMode") || "grid");
   const [selectedList, setSelectedList] = useState(null);
+
+  // Persist preferences
+  useEffect(() => {
+    localStorage.setItem("librarySortOption", sortOption);
+  }, [sortOption]);
+
+  useEffect(() => {
+    localStorage.setItem("libraryViewMode", viewMode);
+  }, [viewMode]);
 
   // Filter states
   const [genreFilters, setGenreFilters] = useState([]);

@@ -40,8 +40,12 @@ const GameCategoryPage = ({
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState("grid");
-  const [sortOption, setSortOption] = useState(categoryType === "genre" || categoryType === "theme" ? "rating_high" : "added_new");
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("categoryViewMode") || "grid");
+  const [sortOption, setSortOption] = useState(() => {
+    const saved = localStorage.getItem("categorySortOption");
+    if (saved) return saved;
+    return categoryType === "genre" || categoryType === "theme" ? "rating_high" : "added_new";
+  });
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
   const [platformFilters, setPlatformFilters] = useState([]);
@@ -49,6 +53,15 @@ const GameCategoryPage = ({
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
   const [contentTypeFilters, setContentTypeFilters] = useState([]);
+
+  // Persist preferences
+  useEffect(() => {
+    localStorage.setItem("categoryViewMode", viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem("categorySortOption", sortOption);
+  }, [sortOption]);
 
   const getGamesForCategory = () => {
     switch (categoryType) {

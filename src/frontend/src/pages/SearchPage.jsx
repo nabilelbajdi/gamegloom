@@ -26,8 +26,8 @@ const SearchPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
-  const [viewMode, setViewMode] = useState("grid");
-  const [sortOption, setSortOption] = useState("relevance");
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("searchViewMode") || "grid");
+  const [sortOption, setSortOption] = useState("relevance"); // Don't persist - should always start with relevance for search
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
   const [platformFilters, setPlatformFilters] = useState([]);
@@ -35,6 +35,11 @@ const SearchPage = () => {
   const [perspectiveFilters, setPerspectiveFilters] = useState([]);
   const [minRatingFilter, setMinRatingFilter] = useState(0);
   const [contentTypeFilters, setContentTypeFilters] = useState([]);
+
+  // Persist view mode preference
+  useEffect(() => {
+    localStorage.setItem("searchViewMode", viewMode);
+  }, [viewMode]);
 
   // For new search
   const [searchQuery, setSearchQuery] = useState("");
