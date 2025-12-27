@@ -84,6 +84,66 @@ def get_recent_games(db: Session, limit: int = None):
     return query.all()
 
 
+def get_all_games(db: Session, limit: int = 50, offset: int = 0, sort: str = "rating"):
+    """Get all games with pagination and sorting"""
+    from ..models.game import Game
+    from sqlalchemy import func, case
+    
+    query = db.query(Game)
+    
+    # Apply sorting
+    if sort == "rating":
+        # Weighted rating formula (Bayesian average / IMDB-style formula):
+        # WR = (v / (v + m)) * R + (m / (v + m)) * C
+        # Where:
+        # - R = average rating for the game
+        # - v = number of ratings for the game  
+        # - m = minimum ratings required (we use 50)
+        # - C = mean rating across all games (we use 7.0 as baseline)
+        
+        m = 50  # Minimum ratings threshold
+        C = 7.0  # Average rating baseline
+        
+        # Calculate weighted score: higher rating count = more weight to actual rating
+        weighted_rating = (
+            (Game.total_rating_count / (Game.total_rating_count + m)) * Game.rating +
+            (m / (Game.total_rating_count + m)) * C
+        )
+        
+        query = query.filter(
+            Game.rating.isnot(None),
+            Game.total_rating_count.isnot(None),
+            Game.total_rating_count > 0
+        ).order_by(weighted_rating.desc())
+    elif sort == "name":
+        query = query.order_by(Game.name.asc())
+    elif sort == "release_new":
+        query = query.order_by(Game.first_release_date.desc().nullslast())
+    elif sort == "release_old":
+        query = query.order_by(Game.first_release_date.asc().nullslast())
+    else:
+        # Default to weighted rating
+        m = 50
+        C = 7.0
+        weighted_rating = (
+            (Game.total_rating_count / (Game.total_rating_count + m)) * Game.rating +
+            (m / (Game.total_rating_count + m)) * C
+        )
+        query = query.filter(
+            Game.rating.isnot(None),
+            Game.total_rating_count.isnot(None),
+            Game.total_rating_count > 0
+        ).order_by(weighted_rating.desc())
+    
+    return query.offset(offset).limit(limit).all()
+
+
+def get_all_games_count(db: Session):
+    """Get total count of all games in database"""
+    from ..models.game import Game
+    return db.query(Game).count()
+
+
 async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
     """Sync games from IGDB to database"""
     try:

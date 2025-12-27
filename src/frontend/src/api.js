@@ -45,6 +45,32 @@ export const fetchGameCount = async (categoryType, filter) => {
   }
 };
 
+// Fetch all games with pagination and sorting
+export const fetchAllGames = async (limit = 50, offset = 0, sort = "rating") => {
+  try {
+    const response = await fetch(`${BASE_URL}/all-games?limit=${limit}&offset=${offset}&sort=${sort}`);
+    if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
+    const data = await response.json();
+    return normalizeGamesData(data);
+  } catch (error) {
+    console.error("Error fetching all games:", error);
+    return [];
+  }
+};
+
+// Fetch total count of all games
+export const fetchAllGamesCount = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/all-games/count`);
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.total || 0;
+  } catch (error) {
+    console.error("Error fetching all games count:", error);
+    return 0;
+  }
+};
+
 // Fetch Multiple Game Details
 export const fetchMultipleGameDetails = async (gameIds) => {
   if (!gameIds || gameIds.length === 0) return [];
@@ -497,7 +523,7 @@ export const fetchUserActivities = async (limit = 10) => {
 };
 
 // User List API Functions
-export const createUserList = async (name, description = null) => {
+export const createUserList = async (name, description = null, isPublic = false) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
@@ -509,7 +535,8 @@ export const createUserList = async (name, description = null) => {
     },
     body: JSON.stringify({
       name,
-      description
+      description,
+      is_public: isPublic
     })
   });
 
@@ -554,9 +581,14 @@ export const getUserList = async (listId) => {
   return await response.json();
 };
 
-export const updateUserList = async (listId, name = null, description = null) => {
+export const updateUserList = async (listId, name = null, description = null, isPublic = null) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
+
+  const body = { name, description };
+  if (isPublic !== null) {
+    body.is_public = isPublic;
+  }
 
   const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
     method: "PATCH",
@@ -564,10 +596,7 @@ export const updateUserList = async (listId, name = null, description = null) =>
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({
-      name,
-      description
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -1213,4 +1242,125 @@ export const linkSteamManual = async (identifier) => {
   }
 
   return await response.json();
+};
+
+// ============================================
+// Public/Community Lists API Functions
+// ============================================
+
+/**
+ * Get paginated public lists
+ * GET /lists?page=1&per_page=20&sort=popular
+ */
+export const getPublicLists = async (page = 1, perPage = 20, sort = "popular") => {
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const response = await fetch(
+    `${BASE_URL}/lists?page=${page}&per_page=${perPage}&sort=${sort}`,
+    { headers }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch public lists");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get featured/popular lists
+ * GET /lists/featured?limit=10
+ */
+export const getFeaturedLists = async (limit = 10) => {
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const response = await fetch(
+    `${BASE_URL}/lists/featured?limit=${limit}`,
+    { headers }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch featured lists");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Get a single public list by ID
+ * GET /lists/{listId}
+ */
+export const getPublicList = async (listId) => {
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const response = await fetch(`${BASE_URL}/lists/${listId}`, { headers });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("List not found or not public");
+    }
+    throw new Error("Failed to fetch list");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Like a public list
+ * POST /lists/{listId}/like
+ */
+export const likeList = async (listId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Must be logged in to like");
+
+  const response = await fetch(`${BASE_URL}/lists/${listId}/like`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to like list");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Unlike a public list
+ * DELETE /lists/{listId}/like
+ */
+export const unlikeList = async (listId) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Must be logged in to unlike");
+
+  const response = await fetch(`${BASE_URL}/lists/${listId}/like`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to unlike list");
+  }
+
+  return await response.json();
+};
+
+/**
+ * Toggle like on a public list (convenience function)
+ */
+export const toggleListLike = async (listId, currentlyLiked) => {
+  if (currentlyLiked) {
+    return await unlikeList(listId);
+  } else {
+    return await likeList(listId);
+  }
 };

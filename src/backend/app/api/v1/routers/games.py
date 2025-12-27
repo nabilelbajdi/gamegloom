@@ -28,6 +28,29 @@ async def get_games_count(
     return {"total": 0}
 
 
+@router.get("/all-games/count")
+async def get_all_games_count(db: Session = Depends(get_db)):
+    """Get total count of all games in the database."""
+    return {"total": services.get_all_games_count(db)}
+
+
+@router.get("/all-games", response_model=List[schemas.Game])
+async def get_all_games(
+    db: Session = Depends(get_db),
+    limit: int = 50,
+    offset: int = 0,
+    sort: str = "rating"
+):
+    """Get all games with pagination and sorting.
+    
+    Parameters:
+    - limit: Maximum number of games to return (default: 50)
+    - offset: Number of games to skip for pagination (default: 0)
+    - sort: Sort order - "rating", "name", "release_new", "release_old" (default: rating)
+    """
+    return services.get_all_games(db, limit, offset, sort)
+
+
 @router.get("/search/count")
 async def get_search_count(
     query: str,
