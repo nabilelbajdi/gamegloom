@@ -21,6 +21,9 @@ import LatestReleasesPage from "./pages/discover/LatestReleasesPage";
 import GenrePage from "./pages/discover/GenrePage";
 import ThemePage from "./pages/discover/ThemePage";
 import RecommendationsPage from "./pages/discover/RecommendationsPage";
+import CommunityListsPage from "./pages/discover/CommunityListsPage";
+import GamesPage from "./pages/discover/GamesPage";
+import ListDetailPage from "./pages/ListDetailPage";
 import SettingsPage from "./pages/SettingsPage";
 import SyncReviewPage from "./pages/SyncReviewPage";
 import ImportPage from "./pages/ImportPage";
@@ -57,6 +60,9 @@ function AppContent() {
         <Route path="/discover/highly-rated" element={<HighlyRatedGamesPage />} />
         <Route path="/discover/latest-releases" element={<LatestReleasesPage />} />
         <Route path="/discover/recommendations" element={<RecommendationsPage />} />
+        <Route path="/discover/community-lists" element={<CommunityListsPage />} />
+        <Route path="/games" element={<GamesPage />} />
+        <Route path="/lists/:listId" element={<ListDetailPage />} />
         <Route path="/genre/:genreSlug" element={<GenrePage />} />
         <Route path="/theme/:themeSlug" element={<ThemePage />} />
         <Route path="/search" element={<SearchPage />} />

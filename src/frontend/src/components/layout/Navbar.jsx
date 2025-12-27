@@ -24,12 +24,12 @@ const NAV_ITEMS = [
     ]
   },
   { name: "For you", path: "/discover/recommendations" },
-  { name: "Coming Soon", path: "/discover/anticipated" }
+  { name: "Games", path: "/games" }
 ];
 
 const LoadingSkeleton = () => (
-  <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
-    <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
+  <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/30 to-transparent">
+    <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
       <Link to="/" className="text-lg font-bold cursor-pointer px-2">
         Game<span className="text-primary">Gloom</span>
       </Link>
@@ -266,8 +266,8 @@ export default function Navbar() {
   if (loading) return <LoadingSkeleton />;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 navbar-blur border-b border-navbar-border">
-      <div className="max-w-7xl mx-auto px-2 flex items-center justify-between h-14">
+    <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/30 to-transparent">
+      <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
         <Link to="/" className="text-lg font-bold cursor-pointer px-2" onClick={handleLogoClick}>
           Game<span className="text-primary">Gloom</span>
         </Link>
