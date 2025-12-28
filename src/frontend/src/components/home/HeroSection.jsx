@@ -283,7 +283,7 @@ const HeroSection = () => {
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/40" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/70 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/90 to-transparent" />
       </div>
 
       <div className="relative container mx-auto px-3 w-full">

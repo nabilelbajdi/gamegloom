@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search, Sparkles, TrendingUp, Clock, Heart, Loader2 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { getPublicLists, getFeaturedLists, likeList, unlikeList } from "../api";
 import ListCard, { ListCardSkeleton } from "../components/lists/ListCard";
 import { useAuth } from "../context/AuthContext";
@@ -13,21 +13,40 @@ const TABS = [
     { id: "featured", label: "Featured", icon: Sparkles }
 ];
 
+// Simple cache for public lists (5 minutes TTL)
+const CACHE_DURATION = 5 * 60 * 1000;
+const listsCache = {
+    data: {},
+    timestamps: {},
+    featured: null,
+    featuredTimestamp: 0
+};
+
 const BrowseListsPage = () => {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const initialLoad = useRef(true);
 
-    // State
-    const [lists, setLists] = useState([]);
-    const [featuredList, setFeaturedList] = useState(null);
-    const [loading, setLoading] = useState(true);
+    // Get initial tab for cache lookup
+    const initialTab = searchParams.get("tab") || "popular";
+    const initialSearch = searchParams.get("q") || "";
+    const initialCacheKey = `${initialTab}:${initialSearch || ''}:1`;
+    const hasCachedData = listsCache.data[initialCacheKey] &&
+        listsCache.timestamps[initialCacheKey] &&
+        (Date.now() - listsCache.timestamps[initialCacheKey]) < CACHE_DURATION;
+
+    // State - initialize from cache if available
+    const [lists, setLists] = useState(hasCachedData ? listsCache.data[initialCacheKey].lists : []);
+    const [featuredList, setFeaturedList] = useState(listsCache.featured || null);
+    const [loading, setLoading] = useState(!hasCachedData);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "popular");
-    const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
-    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [searchQuery, setSearchQuery] = useState(initialSearch);
+    const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
     const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(false);
-    const [total, setTotal] = useState(0);
+    const [hasMore, setHasMore] = useState(hasCachedData ? listsCache.data[initialCacheKey].has_more : false);
+    const [total, setTotal] = useState(hasCachedData ? listsCache.data[initialCacheKey].total : 0);
 
     // Debounced search
     const debouncedSetSearch = useCallback(
@@ -44,8 +63,26 @@ const BrowseListsPage = () => {
         debouncedSetSearch(value);
     };
 
-    // Fetch lists
+    // Cache key for current query
+    const getCacheKey = (tab, search, pageNum) => `${tab}:${search || ''}:${pageNum}`;
+
+    // Fetch lists with caching
     const fetchLists = async (pageNum = 1, append = false) => {
+        const cacheKey = getCacheKey(activeTab, debouncedSearch, pageNum);
+        const cachedData = listsCache.data[cacheKey];
+        const cacheTime = listsCache.timestamps[cacheKey];
+
+        // Use cache if available and fresh
+        if (!append && pageNum === 1 && cachedData &&
+            cacheTime && (Date.now() - cacheTime) < CACHE_DURATION) {
+            setLists(cachedData.lists);
+            setHasMore(cachedData.has_more);
+            setTotal(cachedData.total);
+            setPage(pageNum);
+            setLoading(false);
+            return;
+        }
+
         if (pageNum === 1) setLoading(true);
         else setLoadingMore(true);
 
@@ -56,6 +93,11 @@ const BrowseListsPage = () => {
                 setLists(prev => [...prev, ...data.lists]);
             } else {
                 setLists(data.lists);
+                // Cache first page results
+                if (pageNum === 1) {
+                    listsCache.data[cacheKey] = data;
+                    listsCache.timestamps[cacheKey] = Date.now();
+                }
             }
 
             setHasMore(data.has_more);
@@ -69,12 +111,20 @@ const BrowseListsPage = () => {
         }
     };
 
-    // Fetch featured list for hero
+    // Fetch featured list for hero with caching
     const fetchFeaturedList = async () => {
+        // Use cache if fresh
+        if (listsCache.featured && (Date.now() - listsCache.featuredTimestamp) < CACHE_DURATION) {
+            setFeaturedList(listsCache.featured);
+            return;
+        }
+
         try {
             const featured = await getFeaturedLists(1);
             if (featured.length > 0) {
                 setFeaturedList(featured[0]);
+                listsCache.featured = featured[0];
+                listsCache.featuredTimestamp = Date.now();
             }
         } catch (error) {
             console.error("Error fetching featured list:", error);
@@ -169,13 +219,15 @@ const BrowseListsPage = () => {
                         className="mb-8 rounded-2xl overflow-hidden relative h-48 md:h-64 group cursor-pointer"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        onClick={() => window.location.href = `/lists/${featuredList.id}`}
+                        onClick={() => navigate(`/lists/${featuredList.id}`)}
                     >
-                        {/* Background */}
+                        {/* Background - upscale cover image for better quality */}
                         <div
                             className="absolute inset-0 bg-cover bg-center"
                             style={{
-                                backgroundImage: `url(${featuredList.games?.[0]?.coverImage || "/images/placeholder-cover.jpg"})`,
+                                backgroundImage: `url(${featuredList.games?.[0]?.coverImage?.replace('t_cover_big', 't_1080p').replace('t_thumb', 't_1080p') ||
+                                    "/images/placeholder-cover.jpg"
+                                    })`,
                             }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent" />

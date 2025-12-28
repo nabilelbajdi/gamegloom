@@ -25,6 +25,13 @@ const SORT_OPTIONS = [
     { value: "rating", label: "Top Rated" }
 ];
 
+// Simple cache for list details (5 minutes TTL)
+const CACHE_DURATION = 5 * 60 * 1000;
+const listCache = {
+    data: {},
+    timestamps: {}
+};
+
 const ListDetailPage = () => {
     const { listId } = useParams();
     const navigate = useNavigate();
@@ -49,11 +56,24 @@ const ListDetailPage = () => {
 
     useEffect(() => {
         const fetchList = async () => {
+            // Check cache first
+            const cachedData = listCache.data[listId];
+            const cacheTime = listCache.timestamps[listId];
+
+            if (cachedData && cacheTime && (Date.now() - cacheTime) < CACHE_DURATION) {
+                setList(cachedData);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             setError(null);
             try {
                 const data = await getPublicList(listId);
                 setList(data);
+                // Cache the result
+                listCache.data[listId] = data;
+                listCache.timestamps[listId] = Date.now();
             } catch (err) {
                 setError(err.message);
             } finally {

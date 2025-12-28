@@ -33,17 +33,29 @@ def build_games_info(db: Session, user_list: UserList, list_id: int, newly_added
     current_time = datetime.now(timezone.utc)
     games_info = []
     
+    if not user_list.games:
+        return games_info
+    
+    # Batch fetch all added_at timestamps in one query
+    game_ids = [game.id for game in user_list.games]
+    added_at_records = db.query(
+        user_list_games.c.game_id,
+        user_list_games.c.added_at
+    ).filter(
+        and_(
+            user_list_games.c.user_list_id == list_id,
+            user_list_games.c.game_id.in_(game_ids)
+        )
+    ).all()
+    
+    # Create lookup dict
+    added_at_map = {record.game_id: record.added_at for record in added_at_records}
+    
     for game in user_list.games:
         if newly_added_game_id and game.igdb_id == newly_added_game_id:
             game_added_at = current_time
         else:
-            game_in_list = db.query(user_list_games).filter(
-                and_(
-                    user_list_games.c.user_list_id == list_id,
-                    user_list_games.c.game_id == game.id
-                )
-            ).first()
-            game_added_at = game_in_list.added_at if game_in_list else current_time
+            game_added_at = added_at_map.get(game.id, current_time)
         
         games_info.append(
             schemas.GameBasicInfo(

@@ -122,11 +122,7 @@ const FeaturedAnticipatedGames = () => {
   const formattedDate = format(releaseDate, 'MMMM do, yyyy');
 
   return (
-    <section className="relative py-16 md:py-24 overflow-hidden bg-[var(--bg-base)]" aria-labelledby="coming-soon-title">
-      {/* Background texture/glow for Section */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-3/4 bg-primary/5 rounded-full blur-[120px] opacity-50"></div>
-      </div>
+    <section className="relative pt-8 pb-16 md:pb-24 -mt-20 overflow-hidden" aria-labelledby="coming-soon-title">
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
 

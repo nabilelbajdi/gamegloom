@@ -26,15 +26,26 @@ def build_public_games_info(db: Session, user_list: UserList, limit: int = None)
     games_info = []
     games_to_process = user_list.games[:limit] if limit else user_list.games
     
+    if not games_to_process:
+        return games_info
+    
+    # Batch fetch all added_at timestamps in one query
+    game_ids = [game.id for game in games_to_process]
+    added_at_records = db.query(
+        user_list_games.c.game_id,
+        user_list_games.c.added_at
+    ).filter(
+        and_(
+            user_list_games.c.user_list_id == user_list.id,
+            user_list_games.c.game_id.in_(game_ids)
+        )
+    ).all()
+    
+    # Create lookup dict
+    added_at_map = {record.game_id: record.added_at for record in added_at_records}
+    
     for game in games_to_process:
-        # Get added_at from association table
-        game_in_list = db.query(user_list_games).filter(
-            and_(
-                user_list_games.c.user_list_id == user_list.id,
-                user_list_games.c.game_id == game.id
-            )
-        ).first()
-        game_added_at = game_in_list.added_at if game_in_list else datetime.now(timezone.utc)
+        game_added_at = added_at_map.get(game.id, datetime.now(timezone.utc))
         
         games_info.append(
             schemas.GameBasicInfo(
