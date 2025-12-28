@@ -17,7 +17,7 @@ const GridGameCard = ({ game, starRating, smallStatus = false, compact = false, 
   return (
     <Link
       to={`/game/${game.slug || game.igdb_id}`}
-      className="block group relative aspect-[3/4] rounded-lg overflow-hidden bg-[var(--bg-elevated-2)] border border-[var(--border-subtle)] transition-all duration-300 hover:shadow-xl hover:border-[var(--border-default)]"
+      className="block group relative aspect-[3/4] rounded-lg overflow-hidden bg-[var(--bg-elevated-2)] transition-all duration-300 hover:shadow-xl"
     >
       {/* Game Cover */}
       <div className="h-full" ref={coverImageRef} onMouseLeave={handleCoverMouseLeave}>

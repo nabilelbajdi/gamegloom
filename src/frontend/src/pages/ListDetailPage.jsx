@@ -115,7 +115,7 @@ const ListDetailPage = () => {
                     <div className="animate-pulse">
                         <div className="h-8 bg-gray-800 rounded w-1/3 mb-4"></div>
                         <div className="h-4 bg-gray-800 rounded w-1/2 mb-8"></div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
                             {[...Array(10)].map((_, i) => (
                                 <div key={i} className="aspect-[3/4] bg-gray-800 rounded-lg"></div>
                             ))}
@@ -284,7 +284,7 @@ const ListDetailPage = () => {
                     <motion.div
                         className={
                             viewMode === "grid"
-                                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+                                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5"
                                 : "flex flex-col gap-3 max-w-3xl"
                         }
                         initial={{ opacity: 0 }}
