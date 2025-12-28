@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ChevronDown, UserPlus, TrendingUp, MessageSquare, Gamepad, ChevronLeft, ChevronRight, BookMarked, Library, ListChecks, Search, X } from "lucide-react";
 import useGameStore from "../../store/useGameStore";
+import useToastStore from "../../store/useToastStore";
 import Button from "../UI/Button";
 import GameCardSimple from "../game/GameCardSimple";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +28,7 @@ const quoteAnimationStyle = {
 const HeroSection = () => {
   const navigate = useNavigate();
   const { highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, fetchGames } = useGameStore();
+  const { info } = useToastStore();
   const { user } = useAuth();
   const { fetchCollection } = useUserGameStore();
   const [featuredGames, setFeaturedGames] = useState([]);
@@ -34,20 +36,20 @@ const HeroSection = () => {
   const [backgroundImage, setBackgroundImage] = useState("");
   const [animationKey, setAnimationKey] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
-  const [showDevBanner, setShowDevBanner] = useState(false);
   const sliderRef = useRef(null);
+  const toastShownRef = useRef(false);
 
-  // Check localStorage for banner preference when component mounts
+  // Show development notice toast once per session
   useEffect(() => {
-    const bannerDismissed = sessionStorage.getItem('devBannerDismissed');
-    setShowDevBanner(bannerDismissed !== 'true');
+    const bannerShown = sessionStorage.getItem('devToastShown');
+    if (!bannerShown && !toastShownRef.current) {
+      toastShownRef.current = true;
+      sessionStorage.setItem('devToastShown', 'true');
+      setTimeout(() => {
+        info("GameGloom is under development. Some features may be limited.", { duration: 6000 });
+      }, 2000);
+    }
   }, []);
-
-  // Handle banner dismissal
-  const handleDismissBanner = () => {
-    setShowDevBanner(false);
-    sessionStorage.setItem('devBannerDismissed', 'true');
-  };
 
   // Famous game quotes - most iconic and widely recognized
   const gameQuotes = [
@@ -265,24 +267,6 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen w-full flex items-center overflow-hidden">
-      {/* Development Notice Banner */}
-      {showDevBanner && (
-        <div className="absolute top-14 left-0 right-0 z-40 bg-primary/90 backdrop-blur-sm py-1.5 px-3 text-center shadow-md">
-          <div className="container mx-auto flex items-center justify-center">
-            <p className="text-sm font-medium text-dark">
-              GameGloom is currently under development. Some features may be limited or unavailable.
-            </p>
-            <button
-              onClick={handleDismissBanner}
-              className="ml-3 p-1 text-dark hover:text-black transition-colors cursor-pointer"
-              aria-label="Dismiss notice"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Background Image */}
       <div className="absolute inset-0">
         {backgroundImage ? (
@@ -297,8 +281,8 @@ const HeroSection = () => {
         ) : (
           <div className="w-full h-full bg-gray-900"></div>
         )}
-        <div className="absolute inset-0 bg-[rgba(9,9,11,0.4)]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(9,9,11,0.85)] via-[rgba(9,9,11,0.6)] to-[rgba(9,9,11,0.4)]" />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/40" />
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/70 to-transparent" />
       </div>
 

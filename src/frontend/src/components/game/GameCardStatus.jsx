@@ -1,8 +1,9 @@
-import React from "react";
-import { Plus, Check, Trash2, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Check, Trash2, Loader2, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useUserGameStore from "../../store/useUserGameStore";
 import { useAuth } from "../../context/AuthContext";
+import ListSelectionModal from "./ListSelectionModal";
 
 const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }) => {
   const { addGame, removeGame, getGameStatus, updateStatus, isGameLoading } = useUserGameStore();
@@ -10,6 +11,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
   const navigate = useNavigate();
   const gameStatus = getGameStatus(game.id);
   const isLoading = isGameLoading(game.id);
+  const [showListModal, setShowListModal] = useState(false);
 
   const getRibbonDimensions = () => {
     if (size === "large") {
@@ -25,7 +27,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
         paddingBottom: "8px"
       };
     }
-    
+
     if (size === "small") {
       return {
         width: "18px",
@@ -39,7 +41,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
         paddingBottom: "4px"
       };
     }
-    
+
     return {
       width: "30px",
       height: "46px",
@@ -57,7 +59,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
 
   const handleStatusClick = async (e, status = null) => {
     if (e) {
-      e.preventDefault(); 
+      e.preventDefault();
       e.stopPropagation();
     }
 
@@ -71,7 +73,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
       onStatusChange(!showDropdown);
       return;
     }
-    
+
     try {
       if (status === gameStatus) {
         await removeGame(game.id);
@@ -80,39 +82,46 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
       } else {
         await addGame(game.id, status);
       }
-      
+
       onStatusChange(false);
     } catch (error) {
       console.error("Failed to update game status:", error);
     }
   };
 
+  const handleAddToListClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onStatusChange(false); // Close dropdown
+    setShowListModal(true);
+  };
+
   const getRibbonColor = () => {
     if (!gameStatus) return 'fill-black/70';
-    
-    switch(gameStatus) {
+
+    switch (gameStatus) {
       case 'want_to_play': return 'fill-primary';
       case 'playing': return 'fill-secondary';
       case 'played': return 'fill-gray-300';
       default: return 'fill-black/70';
     }
   };
-  
+
   const getHoverColor = () => {
     if (!gameStatus) return 'fill-white/20';
-    
-    switch(gameStatus) {
+
+    switch (gameStatus) {
       case 'want_to_play': return 'fill-primary/30';
       case 'playing': return 'fill-secondary/30';
       case 'played': return 'fill-gray-300/30';
       default: return 'fill-white/20';
     }
   };
-  
+
   const getStatusIcon = (status) => {
     const isSmall = size === "small";
-    
-    switch(status) {
+
+    switch (status) {
       case 'want_to_play': return <Check className={isSmall ? "h-3 w-3" : "h-4 w-4"} />;
       case 'playing': return <span className={isSmall ? "text-xs" : "text-base"}>▶</span>;
       case 'played': return <span className={isSmall ? "text-xs" : "text-base"}>🏆</span>;
@@ -122,7 +131,7 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
 
   return (
     <>
-      <div 
+      <div
         className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
         onClick={(e) => handleStatusClick(e)}
         aria-label={gameStatus ? `Status: ${gameStatus.replace('_', ' ')}` : "Add to collection"}
@@ -131,30 +140,30 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
       >
         <svg width={dimensions.width} height={dimensions.height} viewBox={dimensions.viewBox} xmlns="http://www.w3.org/2000/svg" role="presentation">
           {/* Ribbon Background */}
-          <polygon 
-            className={`${getRibbonColor()} transition-colors duration-300`} 
+          <polygon
+            className={`${getRibbonColor()} transition-colors duration-300`}
             points={dimensions.points}
           />
           {/* Hover Effect */}
-          <polygon 
-            className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`} 
+          <polygon
+            className={`${!gameStatus ? `${getHoverColor()} opacity-0 group-hover:opacity-100 backdrop-blur-sm` : getHoverColor()} transition-all duration-300`}
             points={dimensions.points}
           />
           {/* Shadow */}
-          <polygon 
-            className="fill-black/40" 
+          <polygon
+            className="fill-black/40"
             points={dimensions.shadowPoints}
           />
         </svg>
-        
+
         {/* Icon */}
         <div className="absolute inset-0 flex items-center justify-center text-white" style={{ paddingBottom: dimensions.paddingBottom }}>
           {isLoading ? (
             <Loader2 className={dimensions.iconSize + " animate-spin"} />
           ) : (() => {
             if (!gameStatus) return <Plus className={dimensions.iconSize} />;
-            
-            switch(gameStatus) {
+
+            switch (gameStatus) {
               case 'want_to_play': return <Check className={dimensions.iconSize + " stroke-white"} />;
               case 'playing': return <span className={dimensions.textSize}>▶</span>;
               case 'played': return <span className={dimensions.textSize}>🏆</span>;
@@ -163,10 +172,10 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
           })()}
         </div>
       </div>
-      
+
       {/* Status Dropdown - Only show if user is logged in */}
       {showDropdown && !isLoading && user && (
-        <div 
+        <div
           className={`absolute ${dimensions.dropdownTop} left-0 z-20 ${size === "small" ? "w-28" : "w-32"} bg-surface-dark rounded-b-lg shadow-lg border border-gray-800/50 overflow-hidden`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -177,20 +186,32 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
               className={`
                 w-full flex items-center gap-2 ${size === "small" ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-xs"} text-left
                 transition-colors duration-200 cursor-pointer
-                ${gameStatus === status 
-                  ? "bg-gray-800/50 font-semibold" 
+                ${gameStatus === status
+                  ? "bg-gray-800/50 font-semibold"
                   : "hover:bg-gray-800/50"
                 }
-                ${status === 'want_to_play' ? 'text-primary' : 
-                  status === 'playing' ? 'text-secondary' : 
-                  status === 'played' ? 'text-white' : 'text-white'}
+                ${status === 'want_to_play' ? 'text-primary' :
+                  status === 'playing' ? 'text-secondary' :
+                    status === 'played' ? 'text-white' : 'text-white'}
               `}
             >
               {getStatusIcon(status)}
               <span className="capitalize">{status.replace(/_/g, " ")}</span>
             </button>
           ))}
-          
+
+          {/* Divider */}
+          <div className="border-t border-gray-700/50 my-0.5" />
+
+          {/* Add to List option */}
+          <button
+            onClick={handleAddToListClick}
+            className={`w-full flex items-center gap-2 ${size === "small" ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-xs"} text-left text-blue-400 hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer`}
+          >
+            <List className={size === "small" ? "h-3 w-3" : "h-4 w-4"} />
+            <span>Add to List</span>
+          </button>
+
           {gameStatus && (
             <button
               onClick={(e) => handleStatusClick(e, gameStatus)}
@@ -202,6 +223,13 @@ const GameCardStatus = ({ game, onStatusChange, showDropdown, size = "default" }
           )}
         </div>
       )}
+
+      {/* Add to List Modal */}
+      <ListSelectionModal
+        game={game}
+        isOpen={showListModal}
+        onClose={() => setShowListModal(false)}
+      />
     </>
   );
 };

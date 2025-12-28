@@ -1,34 +1,48 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 
+// Library pages - user's personal game collection
 const LIBRARY_SORT_OPTIONS = [
   { value: "last_played", label: "Recently Played" },
   { value: "playtime_high", label: "Most Playtime" },
   { value: "added_new", label: "Recently Added" },
-  { value: "name_asc", label: "Name" },
   { value: "rating_high", label: "Top Rated" },
-  { value: "release_new", label: "Latest Release" }
+  { value: "release_new", label: "Latest Release" },
+  { value: "name_asc", label: "Alphabetical Order" }
 ];
 
+// Search results pages
 const SEARCH_SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
   { value: "exact_match", label: "Exact Matches" },
   { value: "rating_high", label: "Top Rated" },
-  { value: "name_asc", label: "Name" },
-  { value: "release_new", label: "Latest Release" }
+  { value: "release_new", label: "Latest Release" },
+  { value: "name_asc", label: "Alphabetical Order" }
 ];
 
+// Steam sync/import pages
 const SYNC_SORT_OPTIONS = [
   { value: "last_played", label: "Recently Played" },
   { value: "playtime_high", label: "Most Playtime" },
-  { value: "name_asc", label: "Name" }
+  { value: "added_new", label: "Recently Added" },
+  { value: "rating_high", label: "Top Rated" },
+  { value: "release_new", label: "Latest Release" },
+  { value: "name_asc", label: "Alphabetical Order" }
+];
+
+// Discovery pages (/games, category pages) - no personal playtime data
+const DISCOVERY_SORT_OPTIONS = [
+  { value: "rating_high", label: "Top Rated" },
+  { value: "release_new", label: "Latest Release" },
+  { value: "name_asc", label: "Alphabetical Order" }
 ];
 
 const SortDropdown = ({
   sortOption = "last_played",
   onSortChange,
   isSearchPage = false,
-  isSyncPage = false
+  isSyncPage = false,
+  isDiscoveryPage = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -38,7 +52,9 @@ const SortDropdown = ({
     ? SYNC_SORT_OPTIONS
     : isSearchPage
       ? SEARCH_SORT_OPTIONS
-      : LIBRARY_SORT_OPTIONS;
+      : isDiscoveryPage
+        ? DISCOVERY_SORT_OPTIONS
+        : LIBRARY_SORT_OPTIONS;
 
   useEffect(() => {
     const handleClickOutside = (event) => {

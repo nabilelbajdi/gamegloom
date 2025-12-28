@@ -43,8 +43,10 @@ const GameCategoryPage = ({
   const [viewMode, setViewMode] = useState(() => localStorage.getItem("categoryViewMode") || "grid");
   const [sortOption, setSortOption] = useState(() => {
     const saved = localStorage.getItem("categorySortOption");
-    if (saved) return saved;
-    return categoryType === "genre" || categoryType === "theme" ? "rating_high" : "added_new";
+    // Validate saved option is in discovery options
+    const validOptions = ["rating_high", "release_new", "name_asc"];
+    if (saved && validOptions.includes(saved)) return saved;
+    return "rating_high";
   });
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
@@ -375,6 +377,7 @@ const GameCategoryPage = ({
                       <SortDropdown
                         sortOption={sortOption}
                         onSortChange={setSortOption}
+                        isDiscoveryPage={true}
                       />
 
                       {/* View Toggle */}

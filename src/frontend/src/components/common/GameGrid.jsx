@@ -46,6 +46,14 @@ const GameGrid = ({
           Clear search
         </button>
       )}
+      {!searchQuery && (
+        <Link
+          to="/games"
+          className="mt-4 px-5 py-2.5 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
+        >
+          Browse Games
+        </Link>
+      )}
     </div>
   );
 

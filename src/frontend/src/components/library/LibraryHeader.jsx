@@ -9,7 +9,7 @@ const LibraryHeader = () => {
           alt="Library Background"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(9,9,11,0.7)] to-[rgba(9,9,11,0.9)]"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/90"></div>
       </div>
       <div className="container mx-auto px-4 py-12 pt-20 relative z-10">
         <div className="text-center mx-auto mt-6">

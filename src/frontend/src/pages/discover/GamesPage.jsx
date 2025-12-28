@@ -284,6 +284,7 @@ const GamesPage = () => {
                                             <SortDropdown
                                                 sortOption={sortOption}
                                                 onSortChange={setSortOption}
+                                                isDiscoveryPage={true}
                                             />
 
                                             {/* View Toggle */}

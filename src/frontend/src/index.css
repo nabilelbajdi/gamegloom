@@ -10,19 +10,19 @@
   --font-body: "Inter", "Amazon Ember", system-ui, sans-serif;
   --font-heading: "Inter", "Amazon Ember", system-ui, sans-serif;
 
-  /* ═══ Surfaces (Zinc Scale) ═══ */
-  --bg-base: #09090b;
-  --bg-elevated-1: #18181b;
-  --bg-elevated-2: #27272a;
-  --bg-elevated-3: #3f3f46;
-  --bg-input: #27272a;
+  /* ═══ Surfaces (Lighter Gray Scale) ═══ */
+  --bg-base: #1a1a1f;
+  --bg-elevated-1: #222228;
+  --bg-elevated-2: #2a2a32;
+  --bg-elevated-3: #3a3a44;
+  --bg-input: #2a2a32;
 
   /* ═══ Tailwind Color Mappings ═══ 
      These create utility classes like bg-dark, bg-surface, etc. */
-  --color-dark: #09090b;
-  --color-surface: #18181b;
-  --color-surface-dark: #18181b;
-  --color-surface-hover: #27272a;
+  --color-dark: #1a1a1f;
+  --color-surface: #222228;
+  --color-surface-dark: #222228;
+  --color-surface-hover: #2a2a32;
 
   /* ═══ Borders & Overlays ═══ */
   --border-subtle: rgba(255, 255, 255, 0.06);

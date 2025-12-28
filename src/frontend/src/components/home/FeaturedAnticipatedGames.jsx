@@ -176,7 +176,7 @@ const FeaturedAnticipatedGames = () => {
                     <img
                       src={getHighResImageUrl(displayImage)}
                       alt={game.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${idx === activeIndex ? 'opacity-75 scale-[1.03]' : 'opacity-0 scale-100'
+                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${idx === activeIndex ? 'opacity-75' : 'opacity-0'
                         }`}
                     />
 
@@ -203,9 +203,9 @@ const FeaturedAnticipatedGames = () => {
                   </div>
                 );
               })}
-              {/* Gradient Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-base)]/70 via-[var(--bg-base)]/30 to-transparent pointer-events-none" />
+              {/* Gradient Overlays - Strong at bottom for text, light at top for image */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent pointer-events-none" />
             </div>
 
             {/* Content Container */}

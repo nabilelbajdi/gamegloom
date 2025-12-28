@@ -33,7 +33,7 @@ export const EmptyLibrary = () => {
         Start building your collection by adding games to your library.
       </p>
       <Link
-        to="/discover"
+        to="/games"
         className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
       >
         Browse Games
@@ -45,7 +45,7 @@ export const EmptyLibrary = () => {
 // Empty card component
 export const EmptyCard = () => (
   <Link
-    to="/discover"
+    to="/games"
     className="block aspect-[3/4] bg-surface/40 rounded-lg transition-all duration-300 hover:bg-surface/60 shadow-lg hover:shadow-xl border border-surface-hover/30 group"
   >
     <div className="h-full flex flex-col items-center justify-center text-center gap-4 p-6">
@@ -118,7 +118,7 @@ export const EmptyListGames = ({ listName }) => {
         Add games to this list from any game page.
       </p>
       <Link
-        to="/discover"
+        to="/games"
         className="px-6 py-3 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
       >
         Browse Games

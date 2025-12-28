@@ -36,6 +36,12 @@ const GamesList = ({
         <p className="text-light/70 max-w-md mb-6">
           We couldn't find any games matching your criteria.
         </p>
+        <a
+          href="/games"
+          className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-black font-semibold rounded-lg transition-colors"
+        >
+          Browse Games
+        </a>
       </div>
     );
   }

@@ -62,7 +62,7 @@ const HeroSection = ({
             className="w-full h-full object-cover opacity-45"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[rgba(9,9,11,0.85)] to-[rgba(9,9,11,0.4)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-black/85 to-black/40" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4 pt-16">
