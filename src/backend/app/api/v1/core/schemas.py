@@ -174,9 +174,9 @@ class GameBasicInfo(BaseModel):
     player_perspectives: str | None = None
     rating: str | None = None
     first_release_date: datetime | None = None
-    added_at: datetime
-    updated_at: datetime
-    status: GameStatus
+    added_at: datetime | None = None
+    updated_at: datetime | None = None
+    status: GameStatus | None = None
     game_type_name: str | None = None
     playtime_minutes: int | None = None
     last_played_at: datetime | None = None
@@ -373,6 +373,7 @@ class UserList(UserListBase):
     created_at: datetime
     updated_at: datetime
     games: List[GameBasicInfo] = []
+    game_count: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

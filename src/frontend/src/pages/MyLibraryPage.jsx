@@ -21,7 +21,7 @@ import { createSlug } from "../utils/stringUtils";
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
   const { collection, fetchCollection, isLoading } = useUserGameStore();
-  const { lists, fetchLists, listsLoading } = useUserListStore();
+  const { lists, fetchLists, fetchListDetails, listsLoading } = useUserListStore();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -69,6 +69,10 @@ const MyLibraryPage = () => {
       const foundList = lists.find(list => createSlug(list.name) === listSlugParam);
       if (foundList) {
         setSelectedList(foundList.id);
+        // Lazy load list games if not already loaded
+        if (!foundList.games || foundList.games.length === 0) {
+          fetchListDetails(foundList.id);
+        }
       } else {
         setSelectedList(null);
       }
@@ -76,7 +80,7 @@ const MyLibraryPage = () => {
       // Clear selected list if not in url
       setSelectedList(null);
     }
-  }, [location.search, lists]);
+  }, [location.search, lists, fetchListDetails]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -89,14 +93,19 @@ const MyLibraryPage = () => {
   };
 
   // Function to handle list selection with URL update
-  const handleListSelect = (listId) => {
+  const handleListSelect = async (listId) => {
     setSelectedList(listId);
 
     // Find the list name and create a slug
-    const selectedList = lists.find(list => list.id === listId);
-    if (selectedList) {
-      const listSlug = createSlug(selectedList.name);
+    const list = lists.find(list => list.id === listId);
+    if (list) {
+      const listSlug = createSlug(list.name);
       navigate(`/library?tab=my_lists&list=${listSlug}`, { replace: true });
+
+      // Lazy load the list details (games) if not already loaded
+      if (!list.games || list.games.length === 0) {
+        await fetchListDetails(listId);
+      }
     }
   };
 
@@ -244,8 +253,8 @@ const MyLibraryPage = () => {
     return <Navigate to="/login" />;
   }
 
-  // Loading state
-  if (loading || isLoading || listsLoading) {
+  // Loading state - only block on collection loading
+  if (loading || isLoading) {
     return <LoadingState />;
   }
 
@@ -332,8 +341,8 @@ const MyLibraryPage = () => {
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
       <LibraryHeader />
 
-      {/* Tabs Navigation */}
-      <div className="sticky top-12 z-30 bg-[rgba(9,9,11,0.95)] backdrop-blur-sm border-b border-gray-800 shadow-lg">
+      {/* Tabs Navigation - Sticky at top since navbar scrolls away */}
+      <div className="sticky top-0 z-30 bg-[var(--bg-base)]/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
         <div className="container mx-auto px-4 py-2">
           <LibraryTabs
             activeTab={activeTab}

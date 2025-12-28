@@ -103,11 +103,25 @@ async def get_user_lists(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all lists for the current user."""
+    """Get all lists for the current user with preview covers for list cards."""
     user_lists = db.query(UserList).filter(UserList.user_id == current_user.id).all()
     
     lists_response = []
     for user_list in user_lists:
+        # Get first 3 games for preview covers (just cover images, minimal data)
+        preview_games = []
+        for game in user_list.games[:3]:
+            preview_games.append(
+                schemas.GameBasicInfo(
+                    id=game.igdb_id,
+                    igdb_id=game.igdb_id,
+                    name=game.name,
+                    slug=game.slug,
+                    coverImage=game.cover_image,
+                    rating="N/A"
+                )
+            )
+        
         lists_response.append(
             schemas.UserList(
                 id=user_list.id,
@@ -119,7 +133,8 @@ async def get_user_lists(
                 likes_count=user_list.likes_count,
                 created_at=user_list.created_at,
                 updated_at=user_list.updated_at,
-                games=[]
+                games=preview_games,
+                game_count=len(user_list.games)
             )
         )
     

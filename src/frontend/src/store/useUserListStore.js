@@ -3,132 +3,179 @@ import { getUserLists, getUserList, createUserList, updateUserList, deleteUserLi
 
 const useUserListStore = create((set, get) => ({
   lists: [],
-  selectedList: null,
-  isLoading: false,
+  listDetails: {}, // Cache for individual list details (lazy loaded)
+  listsLoading: false,
+  listDetailLoading: false,
   error: null,
+  lastFetched: null, // Cache timestamp
 
-  fetchLists: async () => {
-    set({ isLoading: true, error: null });
+  // Fetch lists - just the list metadata, not games (fast)
+  fetchLists: async (forceRefresh = false) => {
+    const { lastFetched, listsLoading } = get();
+
+    // Skip if already loading
+    if (listsLoading) return;
+
+    // Skip if cached within 5 minutes (unless forced)
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    if (!forceRefresh && lastFetched && (Date.now() - lastFetched) < CACHE_DURATION) {
+      return;
+    }
+
+    set({ listsLoading: true, error: null });
     try {
       const response = await getUserLists();
-
-      // Fetch each list individually to get the games
-      const listsWithGames = [];
-
-      for (const list of response.lists || []) {
-        try {
-          const detailedList = await getUserList(list.id);
-          listsWithGames.push(detailedList);
-        } catch (error) {
-          console.error(`Error fetching details for list ${list.id}:`, error);
-          // Still add the list without games rather than skipping it
-          listsWithGames.push(list);
-        }
-      }
-
-      set({ lists: listsWithGames || [], isLoading: false });
+      // Store lists directly without fetching each one's games
+      set({
+        lists: response.lists || [],
+        listsLoading: false,
+        lastFetched: Date.now()
+      });
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
     }
+  },
+
+  // Lazy load specific list details (with games) when user opens it
+  fetchListDetails: async (listId, forceRefresh = false) => {
+    const { listDetails, listDetailLoading } = get();
+
+    // Return cached if available and not forcing refresh
+    if (!forceRefresh && listDetails[listId]) {
+      return listDetails[listId];
+    }
+
+    if (listDetailLoading) return null;
+
+    set({ listDetailLoading: true, error: null });
+    try {
+      const list = await getUserList(listId);
+      set(state => ({
+        listDetails: { ...state.listDetails, [listId]: list },
+        // Also update the list in the lists array with game count
+        lists: state.lists.map(l => l.id === listId ? { ...l, games: list.games, game_count: list.games?.length || 0 } : l),
+        listDetailLoading: false
+      }));
+      return list;
+    } catch (error) {
+      set({ error: error.message, listDetailLoading: false });
+      return null;
+    }
+  },
+
+  // Get cached list details (sync, for rendering)
+  getCachedListDetails: (listId) => {
+    return get().listDetails[listId] || null;
   },
 
   getList: async (listId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const list = await getUserList(listId);
-      return list;
-    } catch (error) {
-      set({ error: error.message, isLoading: false });
-      return null;
-    } finally {
-      set({ isLoading: false });
-    }
+    return get().fetchListDetails(listId);
   },
 
   createList: async (name, description, isPublic = false) => {
-    set({ isLoading: true, error: null });
+    set({ listsLoading: true, error: null });
     try {
       const newList = await createUserList(name, description, isPublic);
       set((state) => ({
         lists: [...state.lists, newList],
-        isLoading: false
+        listsLoading: false,
+        lastFetched: Date.now()
       }));
       return newList;
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
       return null;
     }
   },
 
   updateList: async (listId, name, description, isPublic = null) => {
-    set({ isLoading: true, error: null });
+    set({ listsLoading: true, error: null });
     try {
       const updatedList = await updateUserList(listId, name, description, isPublic);
       set((state) => ({
         lists: state.lists.map(list =>
-          list.id === listId ? updatedList : list
+          list.id === listId ? { ...list, ...updatedList } : list
         ),
-        isLoading: false
+        listDetails: { ...state.listDetails, [listId]: updatedList },
+        listsLoading: false
       }));
       return updatedList;
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
       return null;
     }
   },
 
   deleteList: async (listId) => {
-    set({ isLoading: true, error: null });
+    set({ listsLoading: true, error: null });
     try {
       await deleteUserList(listId);
-      set((state) => ({
-        lists: state.lists.filter(list => list.id !== listId),
-        isLoading: false
-      }));
+      set((state) => {
+        const { [listId]: removed, ...remainingDetails } = state.listDetails;
+        return {
+          lists: state.lists.filter(list => list.id !== listId),
+          listDetails: remainingDetails,
+          listsLoading: false
+        };
+      });
       return true;
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
       return false;
     }
   },
 
   addGame: async (listId, gameId) => {
-    set({ isLoading: true, error: null });
+    set({ listsLoading: true, error: null });
     try {
       const updatedList = await addGameToList(listId, gameId);
       set((state) => ({
         lists: state.lists.map(list =>
-          list.id === listId ? updatedList : list
+          list.id === listId ? { ...list, games: updatedList.games, game_count: updatedList.games?.length || 0 } : list
         ),
-        isLoading: false
+        listDetails: { ...state.listDetails, [listId]: updatedList },
+        listsLoading: false
       }));
       return updatedList;
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
       return null;
     }
   },
 
   removeGame: async (listId, gameId) => {
-    set({ isLoading: true, error: null });
+    set({ listsLoading: true, error: null });
     try {
       const updatedList = await removeGameFromList(listId, gameId);
       set((state) => ({
         lists: state.lists.map(list =>
-          list.id === listId ? updatedList : list
+          list.id === listId ? { ...list, games: updatedList.games, game_count: updatedList.games?.length || 0 } : list
         ),
-        isLoading: false
+        listDetails: { ...state.listDetails, [listId]: updatedList },
+        listsLoading: false
       }));
       return updatedList;
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, listsLoading: false });
       return null;
     }
   },
 
   setSelectedList: (listId) => {
     set({ selectedList: listId });
+  },
+
+  // Clear all on logout
+  clearLists: () => {
+    set({
+      lists: [],
+      listDetails: {},
+      listsLoading: false,
+      listDetailLoading: false,
+      error: null,
+      lastFetched: null
+    });
   }
 }));
 
-export default useUserListStore; 
+export default useUserListStore;

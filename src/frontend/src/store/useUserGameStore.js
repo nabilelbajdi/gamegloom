@@ -10,13 +10,25 @@ const useUserGameStore = create((set, get) => ({
   isLoading: false,
   loadingGameIds: [],
   error: null,
+  lastFetched: null, // Cache timestamp
 
-  // Fetch user's collection
-  fetchCollection: async () => {
+  // Fetch user's collection with caching
+  fetchCollection: async (forceRefresh = false) => {
+    const { lastFetched, isLoading } = get();
+
+    // Skip if already loading
+    if (isLoading) return;
+
+    // Skip if cached within 5 minutes (unless forced)
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    if (!forceRefresh && lastFetched && (Date.now() - lastFetched) < CACHE_DURATION) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const data = await fetchUserCollection();
-      set({ collection: data, isLoading: false });
+      set({ collection: data, isLoading: false, lastFetched: Date.now() });
     } catch (error) {
       set({ error: error.message, isLoading: false });
     }
@@ -61,7 +73,8 @@ const useUserGameStore = create((set, get) => ({
 
       set(state => ({
         collection: updatedCollection,
-        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId)
+        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId),
+        lastFetched: Date.now() // Update cache timestamp
       }));
     } catch (error) {
       set(state => ({
@@ -108,10 +121,11 @@ const useUserGameStore = create((set, get) => ({
 
       set(state => ({
         collection: updatedCollection,
-        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId)
+        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId),
+        lastFetched: Date.now()
       }));
     } catch (error) {
-      await get().fetchCollection();
+      await get().fetchCollection(true);
 
       set(state => ({
         error: error.message,
@@ -139,10 +153,11 @@ const useUserGameStore = create((set, get) => ({
 
       set(state => ({
         collection: updatedCollection,
-        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId)
+        loadingGameIds: state.loadingGameIds.filter(id => id !== gameId),
+        lastFetched: Date.now()
       }));
     } catch (error) {
-      await get().fetchCollection();
+      await get().fetchCollection(true);
 
       set(state => ({
         error: error.message,
@@ -175,9 +190,10 @@ const useUserGameStore = create((set, get) => ({
         played: []
       },
       loadingGameIds: [],
-      error: null
+      error: null,
+      lastFetched: null
     });
   }
 }));
 
-export default useUserGameStore; 
+export default useUserGameStore;
