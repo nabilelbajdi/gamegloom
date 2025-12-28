@@ -16,18 +16,18 @@ const GameOfTheYear = () => {
   };
 
   return (
-    <section className="relative my-16 overflow-hidden shadow-2xl">
+    <section className="relative my-16 overflow-hidden">
       {/* Background image with overlay*/}
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-10"></div>
         {/* Top fade gradient */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent z-10"></div>
         {/* Bottom fade gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/60 to-transparent z-10"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/80 to-transparent z-10"></div>
         <img
           src={astroBot.artwork}
           alt={`${astroBot.name} - Game of the Year 2024`}
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-top"
         />
       </div>
 

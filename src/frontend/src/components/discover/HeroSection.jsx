@@ -53,8 +53,9 @@ const HeroSection = ({
   const backgroundImage = getHighResImage(featuredGame);
 
   return (
-    <section className="relative h-[500px] pt-14 overflow-hidden">
-      <div className="absolute inset-0 z-0 top-14">
+    <section className="relative h-[500px] overflow-hidden">
+      {/* Background Image - extends behind navbar */}
+      <div className="absolute inset-0 z-0">
         {backgroundImage && (
           <img
             src={backgroundImage}
@@ -62,10 +63,10 @@ const HeroSection = ({
             className="w-full h-full object-cover opacity-45"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-black/85 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-black/85 to-black/60" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 pt-16">
+      <div className="container relative z-10 mx-auto px-4 pt-28">
         <h1 className="mb-2 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-md">
           Discover <span className="text-primary drop-shadow-lg">Games</span>
         </h1>
