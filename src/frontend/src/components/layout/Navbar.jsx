@@ -18,13 +18,11 @@ const NAV_ITEMS = [
       { name: "Anticipated Games", path: "/discover/anticipated" },
       { name: "Highly Rated Games", path: "/discover/highly-rated" },
       { name: "Latest Releases", path: "/discover/latest-releases" },
-      { name: "Browse by Genre", path: "/discover/genres" },
-      { name: "Community Lists", path: "/discover/community-lists" },
-      { name: "Recommendations", path: "/discover/recommendations" },
     ]
   },
   { name: "For you", path: "/discover/recommendations" },
-  { name: "Games", path: "/games" }
+  { name: "Games", path: "/games" },
+  { name: "Lists", path: "/lists" }
 ];
 
 const LoadingSkeleton = () => (

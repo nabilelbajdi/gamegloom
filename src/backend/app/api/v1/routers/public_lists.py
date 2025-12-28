@@ -111,6 +111,7 @@ async def get_public_lists(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=50),
     sort: str = Query("popular", regex="^(popular|recent|featured)$"),
+    search: Optional[str] = Query(None, min_length=1, max_length=100),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
@@ -121,9 +122,20 @@ async def get_public_lists(
     - popular: By likes count (descending)
     - recent: By updated date (descending)
     - featured: Featured lists first, then by likes
+    
+    Search:
+    - Searches list name and description (case-insensitive)
     """
     # Base query for public lists
     query = db.query(UserList).filter(UserList.is_public == True)
+    
+    # Apply search filter
+    if search:
+        search_term = f"%{search.lower()}%"
+        query = query.filter(
+            func.lower(UserList.name).like(search_term) |
+            func.lower(UserList.description).like(search_term)
+        )
     
     # Apply sorting
     if sort == "popular":

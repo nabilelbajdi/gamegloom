@@ -1250,16 +1250,18 @@ export const linkSteamManual = async (identifier) => {
 
 /**
  * Get paginated public lists
- * GET /lists?page=1&per_page=20&sort=popular
+ * GET /lists?page=1&per_page=20&sort=popular&search=query
  */
-export const getPublicLists = async (page = 1, perPage = 20, sort = "popular") => {
+export const getPublicLists = async (page = 1, perPage = 20, sort = "popular", search = null) => {
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const response = await fetch(
-    `${BASE_URL}/lists?page=${page}&per_page=${perPage}&sort=${sort}`,
-    { headers }
-  );
+  let url = `${BASE_URL}/lists?page=${page}&per_page=${perPage}&sort=${sort}`;
+  if (search) {
+    url += `&search=${encodeURIComponent(search)}`;
+  }
+
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     throw new Error("Failed to fetch public lists");
