@@ -212,7 +212,7 @@ export const useSyncReview = (platform) => {
                     next.delete(gameId);
                     return next;
                 });
-                fetchCollection();
+                fetchCollection(true);
                 toastSuccess(`Imported: ${game.igdb_name || game.platform_name}`);
             }, 300);
         } catch (err) {
@@ -339,7 +339,7 @@ export const useSyncReview = (platform) => {
                 setFadingIds(new Set());
                 setIsProcessing(false);
                 setProcessProgress({ current: 0, total: 0 });
-                fetchCollection();
+                fetchCollection(true);
                 toastSuccess(`Imported ${selectedGames.length} games`);
             }, 300);
         } catch (err) {
@@ -410,7 +410,7 @@ export const useSyncReview = (platform) => {
                 setIsProcessing(false);
                 setProcessProgress({ current: 0, total: 0 });
                 setSelectedIds(new Set());
-                fetchCollection();
+                fetchCollection(true);
                 toastSuccess(`🎉 Imported ${readyGames.length} games!`);
             }, 500);
         } catch (err) {
@@ -535,7 +535,7 @@ export const useSyncReview = (platform) => {
                     : g
             ));
             setImportedIds(prev => new Set([...prev, updatedGame.id]));
-            fetchCollection();
+            fetchCollection(true);
             toastSuccess(`Imported: ${updatedGame.igdb_name}`);
         } catch (err) {
             toastError(`Failed to import: ${err.message}`);

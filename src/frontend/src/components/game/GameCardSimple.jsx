@@ -29,6 +29,7 @@ const GameCardSimple = ({ game }) => {
         <img
           src={game.coverImage || game.cover_image}
           alt={game.name}
+          loading="lazy"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90"
         />
 

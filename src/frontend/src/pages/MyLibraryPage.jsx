@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useUserGameStore from "../store/useUserGameStore";
@@ -125,7 +125,8 @@ const MyLibraryPage = () => {
   ) : 0;
 
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
-  const extractFilterOptions = () => {
+  // Memoized to prevent recalculation on every render
+  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes } = useMemo(() => {
     if (!collection) return { allGenres: [], allThemes: [], allPlatforms: [], allGameModes: [], allPlayerPerspectives: [], allContentTypes: [] };
 
     const allGames = [
@@ -195,9 +196,7 @@ const MyLibraryPage = () => {
     )].sort();
 
     return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes };
-  };
-
-  const { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes } = extractFilterOptions();
+  }, [collection]);
 
   // Filter handlers
   const handleFilterChange = (filters) => {

@@ -139,14 +139,19 @@ async def get_game_reviews(
         
         reviews = db.query(Review).join(User).filter(Review.game_id == game.id).all()
         
-        if current_user:
-            for review in reviews:
-                review.user_liked = db.query(ReviewLike).filter(
+        # Fix N+1: Use single batch query instead of per-review queries
+        if current_user and reviews:
+            review_ids = [review.id for review in reviews]
+            liked_review_ids = set(
+                r_id for (r_id,) in db.query(ReviewLike.review_id).filter(
                     and_(
                         ReviewLike.user_id == current_user.id,
-                        ReviewLike.review_id == review.id
+                        ReviewLike.review_id.in_(review_ids)
                     )
-                ).first() is not None
+                ).all()
+            )
+            for review in reviews:
+                review.user_liked = review.id in liked_review_ids
         else:
             for review in reviews:
                 review.user_liked = False

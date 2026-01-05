@@ -143,6 +143,7 @@ const GameListCard = ({ game, index }) => {
         <img
           src={game.coverImage}
           alt={game.name}
+          loading="lazy"
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.01] group-hover:opacity-90 rounded-lg"
         />
 

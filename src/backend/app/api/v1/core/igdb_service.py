@@ -4,6 +4,7 @@
 from datetime import datetime
 import requests
 import logging
+import time
 
 from . import schemas
 from ...settings import settings
@@ -81,8 +82,11 @@ GAME_TYPE_MAPPING = {
 }
 
 
-def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "games") -> dict | list:
-    """Fetch data from IGDB API"""
+def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "games", max_retries: int = 3) -> dict | list:
+    """Fetch data from IGDB API with retry logic.
+    
+    Retries with exponential backoff on transient failures (5xx, timeouts, rate limits).
+    """
     headers = {
         "Client-ID": settings.IGDB_CLIENT_ID,
         "Authorization": f"Bearer {settings.IGDB_ACCESS_TOKEN}",
@@ -95,11 +99,50 @@ def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "gam
         body = query
 
     url = f"https://api.igdb.com/v4/{endpoint}"
-    response = requests.post(url, headers=headers, data=body)
-    response.raise_for_status()
-    data = response.json()
-
-    return data[0] if game_id else data
+    
+    last_exception = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, data=body, timeout=10)
+            
+            # Rate limit hit - wait and retry
+            if response.status_code == 429:
+                wait_time = min(2 ** attempt, 8)  # 1s, 2s, 4s, max 8s
+                logger.warning(f"[IGDB] Rate limited, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                time.sleep(wait_time)
+                continue
+                
+            response.raise_for_status()
+            data = response.json()
+            return data[0] if game_id else data
+            
+        except requests.exceptions.Timeout as e:
+            last_exception = e
+            wait_time = min(2 ** attempt, 8)
+            logger.warning(f"[IGDB] Timeout, retrying in {wait_time}s ({attempt + 1}/{max_retries})")
+            time.sleep(wait_time)
+            
+        except requests.exceptions.HTTPError as e:
+            # Only retry on 5xx server errors
+            if e.response is not None and 500 <= e.response.status_code < 600:
+                last_exception = e
+                wait_time = min(2 ** attempt, 8)
+                logger.warning(f"[IGDB] Server error {e.response.status_code}, retrying in {wait_time}s ({attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                raise  # 4xx errors are not retryable
+                
+        except requests.exceptions.RequestException as e:
+            last_exception = e
+            wait_time = min(2 ** attempt, 8)
+            logger.warning(f"[IGDB] Request failed, retrying in {wait_time}s ({attempt + 1}/{max_retries}): {str(e)}")
+            time.sleep(wait_time)
+    
+    # All retries exhausted
+    logger.error(f"[IGDB] All {max_retries} retries failed")
+    if last_exception:
+        raise last_exception
+    raise requests.exceptions.RequestException("IGDB request failed after retries")
 
 
 def fetch_time_to_beat(game_id: int) -> dict | None:
