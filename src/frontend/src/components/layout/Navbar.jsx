@@ -28,8 +28,8 @@ const NAV_ITEMS = [
 const LoadingSkeleton = () => (
   <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/30 to-transparent">
     <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
-      <Link to="/" className="text-lg font-bold cursor-pointer px-2">
-        Game<span className="text-primary">Gloom</span>
+      <Link to="/" className="cursor-pointer px-2">
+        <img src="/images/logo.svg" alt="GameGloom" className="h-7" />
       </Link>
 
       <div className="hidden md:flex pl-4 space-x-2">
@@ -266,8 +266,8 @@ export default function Navbar() {
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/30 to-transparent">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
-        <Link to="/" className="text-lg font-bold cursor-pointer px-2" onClick={handleLogoClick}>
-          Game<span className="text-primary">Gloom</span>
+        <Link to="/" className="cursor-pointer px-2" onClick={handleLogoClick}>
+          <img src="/images/logo.svg" alt="GameGloom" className="h-7" />
         </Link>
 
         <div className="hidden md:flex pl-4 space-x-2">

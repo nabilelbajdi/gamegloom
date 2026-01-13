@@ -289,8 +289,8 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-y-6 md:gap-x-4">
             {/* Left Column - Brand */}
             <div className="md:col-span-3 flex flex-col">
-              <Link to="/" className="text-2xl font-bold text-white tracking-tight">
-                Game<span className="text-primary">Gloom</span>
+              <Link to="/">
+                <img src="/images/logo.svg" alt="GameGloom" className="h-7" />
               </Link>
               <p className="text-gray-400 text-sm leading-relaxed mt-2 mb-3 max-w-xs">
                 Your premier destination for discovering, tracking, and sharing your gaming journey.
