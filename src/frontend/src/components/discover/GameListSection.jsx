@@ -18,14 +18,14 @@ const GameListItem = ({ game }) => (
         {game.releaseDate && (
           <span className="text-white/60 text-xs">{new Date(game.releaseDate).getFullYear()}</span>
         )}
-        <div className="flex items-center">
-          <Star size={12} className="text-primary mr-1 fill-primary" />
-          <span className="text-white/60 text-xs">
-            {game.rating && game.rating !== "N/A" && !isNaN(parseFloat(game.rating))
-              ? (typeof game.rating === 'number' ? game.rating.toFixed(1) : parseFloat(game.rating).toFixed(1))
-              : "N/A"}
-          </span>
-        </div>
+        {game.rating && game.rating !== "N/A" && !isNaN(parseFloat(game.rating)) && (
+          <div className="flex items-center">
+            <Star size={12} className="text-primary mr-1 fill-primary" />
+            <span className="text-white/60 text-xs">
+              {typeof game.rating === 'number' ? game.rating.toFixed(1) : parseFloat(game.rating).toFixed(1)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   </Link>

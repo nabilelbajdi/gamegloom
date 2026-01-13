@@ -45,6 +45,16 @@ const GameCardSimple = ({ game }) => {
 
         {/* Hover overlay with "View Game" and game info */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* Rating Badge - shows on hover */}
+          {game.rating && game.rating !== "N/A" && !isNaN(parseFloat(game.rating)) && (
+            <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md">
+              <Star className="h-5 w-5 text-primary fill-primary" />
+              <span className="text-base font-medium text-light">
+                {parseFloat(game.rating).toFixed(1)}
+              </span>
+            </div>
+          )}
+
           {/* View Game Button */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-md flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
@@ -62,19 +72,6 @@ const GameCardSimple = ({ game }) => {
               {formatGenres(game.genres, 2)}
             </p>
           </div>
-        </div>
-
-        {/* Rating Badge */}
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md">
-          <Star className="h-5 w-5 text-primary fill-primary" />
-          <span className="text-base font-medium text-light">
-            {game.rating === "N/A"
-              ? "N/A"
-              : typeof game.rating === 'number' || !isNaN(parseFloat(game.rating))
-                ? parseFloat(game.rating).toFixed(1)
-                : "N/A"
-            }
-          </span>
         </div>
       </div>
     </Link>
