@@ -12,7 +12,9 @@ if database_url.startswith("postgresql://"):
 
 # Echo SQL queries (set DB_ECHO=true to enable, mainly for development)
 db_echo = os.getenv("DB_ECHO", "false").lower() == "true"
-engine = create_engine(database_url, echo=db_echo)
+
+# pool_pre_ping ensures stale connections (from Neon scale-to-zero) are refreshed
+engine = create_engine(database_url, echo=db_echo, pool_pre_ping=True)
 
 # Base class for models
 class Base(DeclarativeBase):

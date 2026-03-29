@@ -64,10 +64,11 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 origins = [
     "http://localhost:5173",
     "http://localhost:8000",
-    "https://gamegloom.vercel.app",  # Update this after renaming Vercel project
+    "https://gamegloom.vercel.app",
     "https://gamegloom.com",
     "https://www.gamegloom.com",
     "https://api.gamegloom.com",
+    "https://gamegloom-api.onrender.com",
 ]
 
 

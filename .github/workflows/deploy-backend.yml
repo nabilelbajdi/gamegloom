@@ -1,4 +1,4 @@
-name: Deploy Backend to EC2
+name: Backend CI
 
 on:
   push:
@@ -43,29 +43,6 @@ jobs:
         IGDB_ACCESS_TOKEN: "test-access-token"
         IGDB_WEBHOOK_SECRET: "test-webhook-secret"
 
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: test  # Only deploy if tests pass
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /home/ubuntu/fastapi-app/gamegloom/src
-          git pull origin main
-          source venv/bin/activate
-          # Force CPU-only installation for PyTorch to save space
-          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-          cd backend
-          alembic upgrade head
-          cd ..
-          sudo supervisorctl restart fastapi
-          sudo supervisorctl status fastapi
+  # Deployment is handled automatically by Render (auto-deploy from GitHub)
+  # No SSH deploy needed — Render watches the main branch
+
