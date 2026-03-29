@@ -83,7 +83,7 @@ GAME_TYPE_MAPPING = {
 }
 
 
-def fetch_from_igdb(game_id: int = None, query: str = None, endpoint: str = "games", max_retries: int = 3) -> dict | list:
+def fetch_from_igdb(game_id: int | None = None, query: str | None = None, endpoint: str = "games", max_retries: int = 3) -> dict | list:
     """Fetch data from IGDB API with retry logic.
     
     Retries with exponential backoff on transient failures (5xx, timeouts, rate limits).
