@@ -39,7 +39,16 @@ const SignUpPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Sign up failed");
+        // FastAPI 422 validation errors return detail as an array of objects
+        let errorMessage = "Sign up failed";
+        if (typeof errorData.detail === "string") {
+          errorMessage = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          errorMessage = errorData.detail
+            .map((err) => err.msg || err.message || JSON.stringify(err))
+            .join(", ");
+        }
+        throw new Error(errorMessage);
       }
 
       // Sign up successful, redirect to login
