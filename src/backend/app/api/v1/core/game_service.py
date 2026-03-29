@@ -301,32 +301,38 @@ async def fetch_game_editions_and_bundles(db: Session, game_id: int):
             logger.error(f"Error fetching editions for game {db_game.name}: {str(e)}")
         
         # Fetch bundles containing this game
+        # Use the game's existing 'bundles' field which contains bundle IDs
         try:
-            bundles_query = f"""
-                fields name, cover.image_id, slug, games.name, games.cover.image_id;
-                where games = [{db_game.igdb_id}] & id != {db_game.igdb_id};
-                limit 50;
-            """
-            
-            bundles = fetch_from_igdb(query=bundles_query)
-            
-            if bundles and len(bundles) > 0:
-                bundles_data = []
-                for bundle in bundles:
-                    if bundle.get('name'):
-                        bundle_data = {
-                            "id": bundle.get('id'),
-                            "name": bundle.get('name'),
-                            "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{bundle['cover']['image_id']}.jpg" 
-                            if bundle.get('cover', {}).get('image_id') else None,
-                            "slug": bundle.get('slug')
-                        }
-                        bundles_data.append(bundle_data)
+            if db_game.bundles and len(db_game.bundles) > 0:
+                bundle_ids = [b.get('id') for b in db_game.bundles if b.get('id')]
                 
-                if bundles_data:
-                    db_game.in_bundles = bundles_data
-                    db.commit()
-                    logger.info(f"Updated {len(bundles_data)} bundles containing {db_game.name}")
+                if bundle_ids:
+                    ids_string = ",".join(str(bid) for bid in bundle_ids)
+                    bundles_query = f"""
+                        fields name, cover.image_id, slug;
+                        where id = ({ids_string});
+                        limit 50;
+                    """
+                    
+                    bundles = fetch_from_igdb(query=bundles_query)
+                    
+                    if bundles and len(bundles) > 0:
+                        bundles_data = []
+                        for bundle in bundles:
+                            if bundle.get('name'):
+                                bundle_data = {
+                                    "id": bundle.get('id'),
+                                    "name": bundle.get('name'),
+                                    "cover_image": f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{bundle['cover']['image_id']}.jpg" 
+                                    if bundle.get('cover', {}).get('image_id') else None,
+                                    "slug": bundle.get('slug')
+                                }
+                                bundles_data.append(bundle_data)
+                        
+                        if bundles_data:
+                            db_game.in_bundles = bundles_data
+                            db.commit()
+                            logger.info(f"Updated {len(bundles_data)} bundles containing {db_game.name}")
         
         except Exception as e:
             logger.error(f"Error fetching bundles for game {db_game.name}: {str(e)}")

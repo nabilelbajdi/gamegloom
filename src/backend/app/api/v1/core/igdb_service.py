@@ -28,6 +28,7 @@ IGDB_GAME_FIELDS = """
            parent_game.name, parent_game.cover.image_id,
            ports.name, ports.cover.image_id,
            standalone_expansions.name, standalone_expansions.cover.image_id,
+           bundles.name, bundles.cover.image_id, bundles.slug,
            version_parent.name, version_parent.cover.image_id,
            version_title,
            slug, game_status, game_type,
