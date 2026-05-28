@@ -1,11 +1,10 @@
-# scheduler.py
-# Focused scheduler that only updates featured/homepage games
-# Individual game pages use SWR pattern for on-demand refresh
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from backend.app.api.db_setup import SessionLocal
 from backend.app.api.v1.core import services
+from backend.app.api.v1.models.token import Token
+from backend.app.api.v1.models.password_reset_token import PasswordResetToken
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -90,6 +89,26 @@ async def update_featured_games():
     except Exception as e:
         logger.error(f"[Scheduler] Error: {str(e)}")
 
+async def cleanup_expired_tokens():
+    """Delete expired session tokens and used/expired password reset tokens."""
+    db = SessionLocal()
+    try:
+        now = datetime.now(UTC).replace(tzinfo=None)
+
+        expired_sessions = db.query(Token).filter(Token.expires_at < now).delete()
+        expired_resets = db.query(PasswordResetToken).filter(
+            (PasswordResetToken.expires_at < now) | (PasswordResetToken.used_at != None)
+        ).delete()
+
+        db.commit()
+        logger.info(f"[Scheduler] Cleanup: removed {expired_sessions} sessions, {expired_resets} reset tokens")
+    except Exception as e:
+        logger.error(f"[Scheduler] Cleanup error: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def init_scheduler():
     """Initialize the scheduler with featured games update task."""
     try:
@@ -100,9 +119,16 @@ def init_scheduler():
             id="update_featured_games",
             replace_existing=True
         )
-        
+
+        scheduler.add_job(
+            cleanup_expired_tokens,
+            CronTrigger(hour=3, minute=0),  # 3am daily
+            id="cleanup_expired_tokens",
+            replace_existing=True
+        )
+
         scheduler.start()
-        logger.info("[Scheduler] Initialized - updating featured games every 6 hours")
+        logger.info("[Scheduler] Initialized - featured games every 6h, token cleanup daily at 3am")
 
     except Exception as e:
         logger.error(f"[Scheduler] Init error: {str(e)}")

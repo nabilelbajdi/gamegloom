@@ -6,7 +6,7 @@ const DEFAULT_IMAGE = "https://gamegloom.com/images/collage.jpg";
 const SITE_NAME = "GameGloom";
 
 const PageMeta = ({ title, description, image, url }) => {
-  const fullTitle = title ? `${title}: ${SITE_NAME}` : `${SITE_NAME}: Discover, Track & Share Games`;
+  const fullTitle = title ? `${title} - ${SITE_NAME}` : `${SITE_NAME}: Discover, Track & Share Games`;
   const metaDescription = description || DEFAULT_DESCRIPTION;
   const metaImage = image || DEFAULT_IMAGE;
 
