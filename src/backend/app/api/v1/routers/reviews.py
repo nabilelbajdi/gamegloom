@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 import sqlalchemy as sa
-from typing import List
+from typing import List, Optional
 from datetime import datetime, UTC
 
 from ..core import schemas
@@ -344,7 +344,7 @@ def get_review_comments(
     comments = db.query(ReviewComment).join(User).filter(ReviewComment.review_id == review_id).all()
     return comments
 
-@router.get("/user/game/{igdb_id}", response_model=schemas.Review)
+@router.get("/user/game/{igdb_id}", response_model=Optional[schemas.Review])
 def get_user_review_for_game(
     igdb_id: int,
     current_user: User = Depends(get_current_user),
@@ -365,12 +365,6 @@ def get_user_review_for_game(
         )
     ).first()
     
-    if not review:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Review not found"
-        )
-        
     return review
 
 @router.delete("/{review_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
