@@ -18,6 +18,7 @@
     "lucide-react": "^0.474.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
     "react-router-dom": "^7.1.5",
     "react-slick": "^0.30.3",
     "react-top-loading-bar": "^3.0.2",

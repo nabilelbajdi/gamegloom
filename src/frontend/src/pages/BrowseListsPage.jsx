@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import PageMeta from "../components/common/PageMeta";
 import { motion } from "framer-motion";
 import { Search, Sparkles, TrendingUp, Clock, Heart, Loader2 } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -200,6 +201,7 @@ const BrowseListsPage = () => {
 
     return (
         <div className="min-h-screen bg-dark pt-20 pb-16">
+            <PageMeta title="Browse Lists" description="Explore curated game lists created by the GameGloom community." />
             <div className="max-w-7xl mx-auto px-4">
                 {/* Header */}
                 <motion.div

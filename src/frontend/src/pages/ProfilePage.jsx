@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import PageMeta from '../components/common/PageMeta';
 import { fetchUserStats, fetchUserActivities } from '../api';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileBio from '../components/profile/ProfileBio';
@@ -79,6 +80,7 @@ const ProfilePage = () => {
 
   return (
     <div className="mt-14 bg-[var(--bg-base)]">
+      <PageMeta title={`${user.username}'s Profile`} />
       <ProfileHeader
         user={user}
         stats={stats}

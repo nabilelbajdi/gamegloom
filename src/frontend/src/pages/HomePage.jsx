@@ -1,6 +1,7 @@
 // src/pages/HomePage.jsx
 import React from "react";
 import { useAuth } from "../context/AuthContext";
+import PageMeta from "../components/common/PageMeta";
 import Hero from "../components/home/HeroSection";
 import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
@@ -36,6 +37,7 @@ const HomePage = () => {
 
     return (
         <>
+            <PageMeta />
             <Hero />
             <div className="bg-[var(--bg-base)]">
                 <FeaturedAnticipatedGames />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X } from 'lucide-react';
@@ -257,6 +258,7 @@ const SettingsPage = () => {
 
     return (
         <div className="settings-page">
+            <PageMeta title="Settings" />
             <div className="settings-container">
                 <header className="settings-header">
                     <h1 className="settings-title">Settings</h1>

@@ -12,6 +12,7 @@ import ScrollToTop from "../components/common/ScrollToTop";
 import { gamePassesAllFilters } from "../utils/filterUtils";
 import { normalizeGamesData, formatRating } from "../utils/gameUtils";
 import { Search, X, Filter, Info, ChevronDown, Gamepad2, Users, Monitor, ChevronLeft, ChevronRight, Tags } from "lucide-react";
+import PageMeta from "../components/common/PageMeta";
 
 // Number of games to display per page
 const GAMES_PER_PAGE = 48;
@@ -429,6 +430,7 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] pb-12">
+      <PageMeta title={query ? `Search: ${query}` : "Search Games"} />
       <div className="container mx-auto px-4 pt-20 pb-4">
         {/* Integrated Header */}
         <div className="mb-6 px-1">

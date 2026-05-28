@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import PageMeta from "../components/common/PageMeta";
 import { useAuth } from "../context/AuthContext";
 import useUserGameStore from "../store/useUserGameStore";
 import useUserListStore from "../store/useUserListStore";
@@ -338,6 +339,7 @@ const MyLibraryPage = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+      <PageMeta title="My Library" description="Your personal game collection — track what you're playing, what you've played, and what's on your wishlist." />
       <LibraryHeader />
 
       {/* Tabs Navigation - Sticky at top since navbar scrolls away */}

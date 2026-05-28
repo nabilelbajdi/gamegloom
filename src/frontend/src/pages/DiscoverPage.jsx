@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PageMeta from "../components/common/PageMeta";
 import useGameStore from "../store/useGameStore";
 import GenreCarousel from "../components/discover/GenreCarousel";
 import HeroSection from "../components/discover/HeroSection";
@@ -157,6 +158,7 @@ const DiscoverPage = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+      <PageMeta title="Discover" description="Explore trending games, upcoming releases, highly rated titles, and curated genre picks on GameGloom." />
       {/* Hero Section Component */}
       <HeroSection
         featuredGame={featuredGame}

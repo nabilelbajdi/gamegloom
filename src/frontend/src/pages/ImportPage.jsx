@@ -1,6 +1,7 @@
 // pages/ImportPage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import PageMeta from '../components/common/PageMeta';
 import { fetchIntegrationStatus } from '../api';
 import { Loader2, ChevronRight, Settings } from 'lucide-react';
 import BrandLogo from '../components/common/BrandLogo';
@@ -45,6 +46,7 @@ const ImportPage = () => {
 
     return (
         <div className="import-page">
+            <PageMeta title="Import & Sync" description="Connect your Steam and PlayStation accounts to import your game library into GameGloom." />
             <div className="import-container">
                 {/* Header */}
                 <header className="import-header">

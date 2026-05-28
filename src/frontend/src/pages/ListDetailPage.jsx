@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import PageMeta from "../components/common/PageMeta";
 import { motion } from "framer-motion";
 import {
     Heart,
@@ -171,6 +172,10 @@ const ListDetailPage = () => {
 
     return (
         <div className="min-h-screen bg-dark pt-20 pb-16">
+            <PageMeta
+                title={list.name}
+                description={list.description || `A curated game list on GameGloom.`}
+            />
             <div className="max-w-7xl mx-auto px-4">
                 {/* Back Button */}
                 <motion.button

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PageMeta from "../../components/common/PageMeta";
 import useGameStore from "../../store/useGameStore";
 import { useAuth } from "../../context/AuthContext";
 import { fetchGameCount } from "../../api";
@@ -301,6 +302,7 @@ const GameCategoryPage = ({
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+      <PageMeta title={title} description={description} />
       {/* Header Section */}
       <CategoryHeader
         title={title}

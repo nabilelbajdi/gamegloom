@@ -1,6 +1,7 @@
 // src/pages/GamePage.jsx
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import PageMeta from "../components/common/PageMeta";
 import useGameStore from "../store/useGameStore";
 import useUserGameStore from "../store/useUserGameStore";
 import GameSticky from "../components/GamePage/GameSticky";
@@ -205,8 +206,18 @@ const GamePage = () => {
       ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
       : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
 
+  const ogDescription = game.summary
+    ? game.summary.slice(0, 160)
+    : `Track, review, and discover ${game.name} on GameGloom.`;
+
   return (
     <div className="relative w-full">
+      <PageMeta
+        title={game.name}
+        description={ogDescription}
+        image={game.coverImage || undefined}
+        url={`https://gamegloom.com/game/${gameId}`}
+      />
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <div

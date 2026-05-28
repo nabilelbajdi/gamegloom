@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { fetchAllGames, fetchAllGamesCount } from "../../api";
+import PageMeta from "../../components/common/PageMeta";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
 import GamesList from "../../components/common/GamesList";
@@ -212,6 +213,7 @@ const GamesPage = () => {
 
     return (
         <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+            <PageMeta title="All Games" description="Browse the full GameGloom catalogue — filter by genre, platform, rating, and more." />
             {/* Header Section - Using CategoryHeader for consistency */}
             <CategoryHeader
                 title="All Games"
