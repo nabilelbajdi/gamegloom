@@ -9,6 +9,7 @@ import uuid
 import secrets
 import os
 import shutil
+import threading
 from pathlib import Path
 from PIL import Image
 import io
@@ -28,6 +29,13 @@ from ...settings import settings
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Brute-force protection: track failed login attempts per username
+# {username: {"count": int, "locked_until": datetime | None}}
+_login_attempts: dict = {}
+_attempts_lock = threading.Lock()
+_MAX_LOGIN_ATTEMPTS = 5
+_LOCKOUT_MINUTES = 15
 
 router = APIRouter(tags=["auth"])
 
@@ -69,22 +77,40 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
 @router.post("/login", response_model=schemas.TokenResponse)
 async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     """Login and get an access token."""
-    # Find user
+    now = datetime.now(UTC).replace(tzinfo=None)
+
+    # Check lockout before hitting the DB
+    with _attempts_lock:
+        attempt_data = _login_attempts.get(credentials.username)
+        if attempt_data and attempt_data.get("locked_until"):
+            if now < attempt_data["locked_until"]:
+                remaining = max(1, int((attempt_data["locked_until"] - now).total_seconds() / 60) + 1)
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Too many failed attempts. Try again in {remaining} minute(s)."
+                )
+            else:
+                _login_attempts.pop(credentials.username, None)
+
     user = db.query(User).filter(User.username == credentials.username).first()
-    if not user:
+    if not user or not security.verify_password(credentials.password, user.hashed_password):
+        if user:
+            # Only count failures for real accounts to avoid enumeration via lockout
+            with _attempts_lock:
+                data = _login_attempts.setdefault(credentials.username, {"count": 0, "locked_until": None})
+                data["count"] += 1
+                if data["count"] >= _MAX_LOGIN_ATTEMPTS:
+                    data["locked_until"] = now + timedelta(minutes=_LOCKOUT_MINUTES)
+                    logger.warning(f"Account locked after {_MAX_LOGIN_ATTEMPTS} failed attempts: {credentials.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
         )
-    
-    # Verify password
-    if not security.verify_password(credentials.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
-        )
-    
-    # Create token
+
+    # Success - clear any failed attempt history
+    with _attempts_lock:
+        _login_attempts.pop(credentials.username, None)
+
     token = security.create_token(db, user.id)
     return token
 

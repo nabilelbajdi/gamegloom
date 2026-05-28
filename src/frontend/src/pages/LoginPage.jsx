@@ -61,7 +61,8 @@ const LoginPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Invalid username or password");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "Invalid username or password");
       }
 
       // Handle remember me - only store username (password handled by browser)
