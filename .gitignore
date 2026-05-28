@@ -37,6 +37,7 @@ alembic/versions/*.pyc
 # Script data files
 scripts/data_management/fetch_progress.json
 scripts/**/*.log
+scripts
 
 # User uploaded content
 src/backend/static/avatars/

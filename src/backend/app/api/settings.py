@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     FROM_EMAIL: str = os.getenv("FROM_EMAIL", "GameGloom <noreply@gamegloom.com>")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+    # Cloudinary (avatar storage)
+    CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
+    CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
+
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL must be set in environment variables")

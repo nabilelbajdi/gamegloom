@@ -99,56 +99,77 @@ async def upload_avatar(
     db: Session = Depends(get_db)
 ):
     """Upload a new avatar image for the current user."""
-    # Validate file type
     allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only image files (JPEG, PNG, GIF, WEBP) are allowed"
         )
-    
-    # Ensure avatars directory exists
-    avatars_dir = Path("frontend/public/images/avatars")
-    os.makedirs(avatars_dir, exist_ok=True)
-    
-    # Generate unique filename
-    file_extension = file.filename.split(".")[-1]
-    unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
-    file_path = avatars_dir / unique_filename
-    
-    # Process and save the file
+
     try:
-        # Read the image
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes))
-        
-        # Resize while maintaining aspect ratio
-        max_size = (400, 400)
-        image.thumbnail(max_size)
-        
-        # Save the processed image
-        image.save(file_path)
-        
-        # Clean up old avatar if it's not the default
-        if current_user.avatar and '/images/default-avatar.svg' not in current_user.avatar:
-            old_avatar_path = Path("frontend/public") / current_user.avatar.lstrip('/')
-            if os.path.exists(old_avatar_path):
+        image.thumbnail((400, 400))
+
+        buf = io.BytesIO()
+        fmt = image.format or "JPEG"
+        image.save(buf, format=fmt)
+        buf.seek(0)
+
+        if settings.CLOUDINARY_CLOUD_NAME:
+            import cloudinary
+            import cloudinary.uploader
+            cloudinary.config(
+                cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+                api_key=settings.CLOUDINARY_API_KEY,
+                api_secret=settings.CLOUDINARY_API_SECRET,
+            )
+
+            # Delete old Cloudinary avatar if present
+            if current_user.avatar and "cloudinary.com" in current_user.avatar:
                 try:
-                    os.remove(old_avatar_path)
+                    # public_id is stored as gamegloom/avatars/<uuid>
+                    public_id = "/".join(current_user.avatar.split("/")[-3:-1] + [current_user.avatar.split("/")[-1].rsplit(".", 1)[0]])
+                    cloudinary.uploader.destroy(public_id)
                 except Exception as e:
-                    logger.error(f"Error removing old avatar: {str(e)}")
-        
-        # Update user's avatar URL in database
-        avatar_url = f"/images/avatars/{unique_filename}"
+                    logger.warning(f"Could not delete old Cloudinary avatar: {e}")
+
+            result = cloudinary.uploader.upload(
+                buf,
+                folder="gamegloom/avatars",
+                public_id=uuid.uuid4().hex,
+                overwrite=True,
+                resource_type="image",
+            )
+            avatar_url = result["secure_url"]
+        else:
+            # Local fallback for development
+            avatars_dir = Path("frontend/public/images/avatars")
+            os.makedirs(avatars_dir, exist_ok=True)
+            file_extension = (file.filename or "avatar.jpg").rsplit(".", 1)[-1]
+            unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
+            file_path = avatars_dir / unique_filename
+            with open(file_path, "wb") as f:
+                f.write(buf.read())
+
+            if current_user.avatar and "/images/default-avatar.svg" not in current_user.avatar and "cloudinary.com" not in current_user.avatar:
+                old_path = Path("frontend/public") / current_user.avatar.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except Exception as e:
+                        logger.error(f"Error removing old avatar: {e}")
+
+            avatar_url = f"/images/avatars/{unique_filename}"
+
         current_user.avatar = avatar_url
         db.commit()
         db.refresh(current_user)
-        
         return current_user
+
+    except HTTPException:
+        raise
     except Exception as e:
-        # Clean up if something goes wrong
-        if os.path.exists(file_path):
-            os.remove(file_path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload avatar: {str(e)}"
