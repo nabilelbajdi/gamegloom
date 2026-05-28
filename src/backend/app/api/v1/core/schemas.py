@@ -35,6 +35,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     """Schema for user data in responses."""
     id: int
+    is_verified: bool = False
     created_at: datetime
     updated_at: datetime
 

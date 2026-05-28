@@ -15,8 +15,9 @@ import io
 import logging
 
 from ..core import schemas, security
-from ..core.email_service import send_password_reset_email
+from ..core.email_service import send_password_reset_email, send_verification_email
 from ..models.user import User
+from ..models.email_verification import EmailVerification
 from ..models.user_game import UserGame, GameStatus
 from ..models.review import Review, ReviewLike, ReviewComment
 from ..models.game import Game
@@ -43,6 +44,20 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+
+        # Send verification email
+        token_str = secrets.token_urlsafe(32)
+        verification = EmailVerification(
+            token=token_str,
+            user_id=db_user.id,
+            expires_at=datetime.now(UTC) + timedelta(hours=24),
+        )
+        db.add(verification)
+        db.commit()
+
+        verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_str}"
+        send_verification_email(db_user.email, verify_url)
+
         return db_user
     except IntegrityError:
         db.rollback()
@@ -372,6 +387,58 @@ async def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = 
         send_password_reset_email(user.email, reset_url)
 
     return {"message": "If that email is registered, you'll receive a reset link shortly."}
+
+
+@router.post("/verify-email", status_code=status.HTTP_200_OK)
+async def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
+    """Verify a user's email address using the token from the verification link."""
+    record = db.query(EmailVerification).filter(
+        EmailVerification.token == token,
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification link.")
+
+    if record.expires_at < datetime.now(UTC).replace(tzinfo=None):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Verification link has expired.")
+
+    user = db.query(User).filter(User.id == record.user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found.")
+
+    user.is_verified = True
+    db.query(EmailVerification).filter(EmailVerification.user_id == user.id).delete()
+    db.commit()
+
+    return {"message": "Email verified successfully."}
+
+
+@router.post("/resend-verification", status_code=status.HTTP_200_OK)
+async def resend_verification(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Resend the verification email for the current user."""
+    if current_user.is_verified:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already verified.")
+
+    # Invalidate existing tokens
+    db.query(EmailVerification).filter(EmailVerification.user_id == current_user.id).delete()
+    db.commit()
+
+    token_str = secrets.token_urlsafe(32)
+    verification = EmailVerification(
+        token=token_str,
+        user_id=current_user.id,
+        expires_at=datetime.now(UTC) + timedelta(hours=24),
+    )
+    db.add(verification)
+    db.commit()
+
+    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_str}"
+    send_verification_email(current_user.email, verify_url)
+
+    return {"message": "Verification email sent."}
 
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)

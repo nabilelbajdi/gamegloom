@@ -1,6 +1,6 @@
 # models/user.py
 from datetime import datetime, UTC
-from sqlalchemy import Integer, String, DateTime, Text
+from sqlalchemy import Integer, String, DateTime, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ...db_setup import Base
 
@@ -13,6 +13,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     avatar: Mapped[str] = mapped_column(String(255), nullable=False, default="/images/default-avatar.svg")
     bio: Mapped[str] = mapped_column(Text, nullable=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default='false')
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     

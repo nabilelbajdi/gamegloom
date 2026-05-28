@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile } from '../api';
+import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail } from 'lucide-react';
+import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail } from '../api';
 import { format } from 'date-fns';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
@@ -29,6 +29,22 @@ const SettingsPage = () => {
     const [isConfirming, setIsConfirming] = useState(false);
     const [clearInput, setClearInput] = useState('');
     const callbackProcessed = useRef(false);
+
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendSent, setResendSent] = useState(false);
+
+    const handleResendVerification = async () => {
+        setResendLoading(true);
+        try {
+            await resendVerificationEmail();
+            setResendSent(true);
+            toast.success('Verification email sent');
+        } catch (err) {
+            toast.error(err.message || 'Failed to send email');
+        } finally {
+            setResendLoading(false);
+        }
+    };
 
     // Profile state
     const [isEditingBio, setIsEditingBio] = useState(false);
@@ -355,6 +371,31 @@ const SettingsPage = () => {
                             </p>
                         )}
                     </div>
+                    {/* Email verification notice */}
+                    {user && user.is_verified === false && (
+                        <div className="verify-email-banner">
+                            <div className="verify-email-banner-content">
+                                <Mail size={16} className="verify-email-icon" />
+                                <div>
+                                    <p className="verify-email-title">Verify your email address</p>
+                                    <p className="verify-email-subtitle">{user.email}</p>
+                                </div>
+                            </div>
+                            <button
+                                className="verify-email-btn"
+                                onClick={handleResendVerification}
+                                disabled={resendLoading || resendSent}
+                            >
+                                {resendLoading ? (
+                                    <Loader2 size={13} className="animate-spin" />
+                                ) : resendSent ? (
+                                    'Sent!'
+                                ) : (
+                                    'Resend email'
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </section>
 
                 {/* Platforms */}

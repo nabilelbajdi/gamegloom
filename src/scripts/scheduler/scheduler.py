@@ -5,6 +5,7 @@ from backend.app.api.db_setup import SessionLocal
 from backend.app.api.v1.core import services
 from backend.app.api.v1.models.token import Token
 from backend.app.api.v1.models.password_reset_token import PasswordResetToken
+from backend.app.api.v1.models.email_verification import EmailVerification
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -99,9 +100,10 @@ async def cleanup_expired_tokens():
         expired_resets = db.query(PasswordResetToken).filter(
             (PasswordResetToken.expires_at < now) | (PasswordResetToken.used_at != None)
         ).delete()
+        expired_verifications = db.query(EmailVerification).filter(EmailVerification.expires_at < now).delete()
 
         db.commit()
-        logger.info(f"[Scheduler] Cleanup: removed {expired_sessions} sessions, {expired_resets} reset tokens")
+        logger.info(f"[Scheduler] Cleanup: removed {expired_sessions} sessions, {expired_resets} reset tokens, {expired_verifications} verification tokens")
     except Exception as e:
         logger.error(f"[Scheduler] Cleanup error: {str(e)}")
         db.rollback()

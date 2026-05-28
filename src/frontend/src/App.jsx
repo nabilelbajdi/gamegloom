@@ -29,6 +29,7 @@ import SyncReviewPage from "./pages/SyncReviewPage";
 import ImportPage from "./pages/ImportPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -47,7 +48,7 @@ function AppContent() {
   useRouteLoadingBar();
   const location = useLocation();
 
-  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(location.pathname);
+  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname);
 
   return (
     <>
@@ -73,6 +74,7 @@ function AppContent() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/sync" element={<ImportPage />} />

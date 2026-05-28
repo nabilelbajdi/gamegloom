@@ -1366,3 +1366,16 @@ export const toggleListLike = async (listId, currentlyLiked) => {
     return await likeList(listId);
   }
 };
+
+export const resendVerificationEmail = async () => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${BASE_URL}/resend-verification`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to resend verification email");
+  }
+  return await response.json();
+};

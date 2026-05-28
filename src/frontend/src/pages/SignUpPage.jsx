@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API_URL from "../utils/apiConfig";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Mail, Lock, AlertCircle, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Mail, Lock, AlertCircle, ChevronLeft, CheckCircle } from "lucide-react";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ const SignUpPage = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -51,8 +52,7 @@ const SignUpPage = () => {
         throw new Error(errorMessage);
       }
 
-      // Sign up successful, redirect to login
-      navigate("/login");
+      setRegistered(true);
     } catch (err) {
       setError(err.message);
       setIsLoading(false);
@@ -106,6 +106,28 @@ const SignUpPage = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="bg-surface-dark/90 backdrop-blur-sm border border-gray-800/50 p-3 rounded-xl shadow-xl">
+
+            {registered ? (
+              <motion.div
+                className="flex flex-col items-center gap-3 py-6 text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <CheckCircle size={40} className="text-primary" />
+                <p className="text-white font-medium text-sm">Check your inbox</p>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  We sent a verification link to <span className="text-white">{formData.email}</span>.
+                  Click it to activate your account.
+                </p>
+                <Link
+                  to="/login"
+                  className="mt-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-black text-sm font-semibold rounded-lg transition-colors"
+                >
+                  Go to Login
+                </Link>
+              </motion.div>
+            ) : (
+            <>
             <div className="mb-3 text-center">
               <h1 className="text-lg font-bold text-white mb-0.5">Create Account</h1>
               <p className="text-gray-400 text-xs">Enter your details to get started</p>
@@ -277,6 +299,8 @@ const SignUpPage = () => {
                 </Link>
               </p>
             </div>
+            </>
+            )}
           </div>
         </motion.div>
       </div>

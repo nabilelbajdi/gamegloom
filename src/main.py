@@ -21,6 +21,7 @@ from backend.app.api.v1.routers.public_lists import router as public_lists_route
 # Import models to ensure SQLAlchemy can resolve relationships
 from backend.app.api.v1.models.user_platform_link import UserPlatformLink
 from backend.app.api.v1.models.password_reset_token import PasswordResetToken
+from backend.app.api.v1.models.email_verification import EmailVerification
 from scripts.scheduler.scheduler import init_scheduler
 import logging
 import os
