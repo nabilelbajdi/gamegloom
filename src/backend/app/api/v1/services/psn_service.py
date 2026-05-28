@@ -41,26 +41,45 @@ class PSNServiceError(Exception):
 # PSNAWP Client
 # ═══════════════════════════════════════════════════════════════════
 
+_psnawp_client = None
+
 def _get_psnawp_client():
     """
     Get a PSNAWP client using the server-side NPSSO token.
     
-    Returns:
-        PSNAWP instance
-        
-    Raises:
-        PSNServiceError: If PSN_NPSSO is not configured or invalid
+    Uses a module-level singleton to reuse the authenticated session across
+    requests. The PSNAWP library authenticates lazily on first API call and
+    keeps an internal access/refresh token pair, so reusing one instance
+    avoids redundant NPSSO exchanges that Sony may reject.
+    
+    Performs eager authentication on first call to surface token errors
+    immediately rather than on the first user-facing request.
     """
+    global _psnawp_client
     from psnawp_api import PSNAWP
+    
+    if _psnawp_client is not None:
+        return _psnawp_client
     
     npsso = settings.PSN_NPSSO
     if not npsso:
         raise PSNServiceError("PSN_NPSSO not configured in environment variables")
     
     try:
-        return PSNAWP(npsso)
+        client = PSNAWP(npsso)
+        client.me().account_id  # force NPSSO exchange now
+        _psnawp_client = client
+        logger.info("[PSN] PSNAWP client initialized successfully")
+        return _psnawp_client
     except Exception as e:
+        logger.error(f"[PSN] Failed to initialize client: {e}")
         raise PSNServiceError(f"Failed to initialize PSN client: {e}")
+
+
+def _reset_psnawp_client():
+    """Reset the cached PSNAWP client (e.g. after token refresh)."""
+    global _psnawp_client
+    _psnawp_client = None
 
 
 def check_psn_health() -> dict:
@@ -71,13 +90,12 @@ def check_psn_health() -> dict:
         {"status": "ok"} or {"status": "error", "message": "..."}
     """
     try:
-        client = _get_psnawp_client()
-        # Try to get client's own account to verify token
-        client.me()
+        _get_psnawp_client()
         return {"status": "ok"}
     except PSNServiceError as e:
         return {"status": "error", "message": str(e)}
     except Exception as e:
+        _reset_psnawp_client()
         return {"status": "error", "message": f"PSN API error: {e}"}
 
 
@@ -118,6 +136,7 @@ def match_game_to_igdb(
         (igdb_id, igdb_name, cover_url, confidence, method) - any can be None
     """
     # Step 1: Sony title lookup table
+    original_platform_name = platform_name
     lookup = db.query(PsnTitleLookup).filter(
         PsnTitleLookup.title_id == platform_id
     ).first()
@@ -136,12 +155,10 @@ def match_game_to_igdb(
         if game:
             logger.debug(f"[Match] {platform_name} → {game.name} (iexact)")
             return (game.igdb_id, game.name, game.cover_image, 0.95, "iexact")
-        
-        # Use Sony lookup name for slug matching
-        platform_name = c_name
     
-    # Step 2: Slug matching
-    slug = generate_slug(platform_name)
+    # Step 2: Slug matching -- try the PSN name first (often cleaner than Sony
+    # lookup names which may include "Beta", "Demo", trademark symbols, etc.)
+    slug = generate_slug(original_platform_name)
     
     candidates = db.query(Game).filter(
         (Game.slug == slug) | 
@@ -311,14 +328,19 @@ def verify_psn_username(username: str) -> dict:
     try:
         psnawp = _get_psnawp_client()
         user = psnawp.user(online_id=username)
-        
         return {
             "online_id": user.online_id,
             "account_id": str(user.account_id),
         }
+    except PSNServiceError:
+        raise
     except Exception as e:
-        if "not found" in str(e).lower():
+        err = str(e).lower()
+        if "not found" in err:
             raise PSNServiceError(f"PSN user '{username}' not found")
+        if "expired" in err or "unauthorized" in err or "authentication" in err:
+            logger.warning("[PSN] Auth error during verify, resetting client")
+            _reset_psnawp_client()
         raise PSNServiceError(f"Failed to verify PSN user: {e}")
 
 

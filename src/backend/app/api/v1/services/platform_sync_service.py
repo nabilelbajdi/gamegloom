@@ -549,10 +549,16 @@ def migrate_preferences(db: Session, user_id: int) -> int:
     Migrate user_psn_preferences to user_platform_games.
     
     Call this during sync to ensure old preferences are preserved.
+    Safe to call when the legacy table no longer exists (returns 0).
     
     Returns:
         Number of preferences migrated
     """
+    from sqlalchemy import inspect as sa_inspect
+    
+    if not sa_inspect(db.bind).has_table("user_psn_preferences"):
+        return 0
+    
     from ..models.user_psn_preference import UserPsnPreference
     
     prefs = db.query(UserPsnPreference).filter(
@@ -567,7 +573,6 @@ def migrate_preferences(db: Session, user_id: int) -> int:
                 game.status = 'hidden'
                 game.updated_at = datetime.now(timezone.utc)
             elif pref.action == 'matched' and pref.igdb_id:
-                # Fetch IGDB data for the match
                 from ..models.game import Game
                 igdb_game = db.query(Game).filter(Game.igdb_id == pref.igdb_id).first()
                 if igdb_game:
