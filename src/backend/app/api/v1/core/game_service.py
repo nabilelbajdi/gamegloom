@@ -9,7 +9,7 @@ import logging
 from ..models import game
 from . import schemas
 from .igdb_service import (
-    fetch_from_igdb, process_igdb_data, meets_quality_requirements, IGDB_GAME_FIELDS
+    fetch_from_igdb_async, process_igdb_data, meets_quality_requirements, IGDB_GAME_FIELDS
 )
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ def get_all_games_count(db: Session):
 async def sync_games_from_igdb(db: Session, query: str) -> tuple[int, int]:
     """Sync games from IGDB to database"""
     try:
-        igdb_data = fetch_from_igdb(query=query)
+        igdb_data = await fetch_from_igdb_async(query=query)
         new_count = 0
         update_count = 0
         skipped_count = 0
@@ -229,7 +229,7 @@ async def fetch_related_game_types(db: Session, game_id: int):
             """
             
             try:
-                related_games = fetch_from_igdb(query=query)
+                related_games = await fetch_from_igdb_async(query=query)
                 
                 if related_games and len(related_games) > 0:
                     related_data = []
@@ -276,7 +276,7 @@ async def fetch_game_editions_and_bundles(db: Session, game_id: int):
                 limit 50;
             """
             
-            editions = fetch_from_igdb(query=editions_query)
+            editions = await fetch_from_igdb_async(query=editions_query)
             
             if editions and len(editions) > 0:
                 editions_data = []
@@ -314,7 +314,7 @@ async def fetch_game_editions_and_bundles(db: Session, game_id: int):
                         limit 50;
                     """
                     
-                    bundles = fetch_from_igdb(query=bundles_query)
+                    bundles = await fetch_from_igdb_async(query=bundles_query)
                     
                     if bundles and len(bundles) > 0:
                         bundles_data = []

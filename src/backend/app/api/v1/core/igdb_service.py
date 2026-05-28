@@ -5,6 +5,8 @@ from datetime import datetime
 import requests
 import logging
 import time
+import asyncio
+import httpx
 
 from . import schemas
 from ...settings import settings
@@ -171,6 +173,88 @@ def fetch_time_to_beat(game_id: int) -> dict | None:
             if "count" in time_data:
                 time_to_beat["count"] = time_data["count"]
                 
+            return time_to_beat
+        return None
+    except Exception as e:
+        logger.error(f"Error fetching time to beat data: {str(e)}")
+        return None
+
+
+async def fetch_from_igdb_async(game_id: int | None = None, query: str | None = None, endpoint: str = "games", max_retries: int = 3) -> dict | list:
+    """Fetch data from IGDB API with retry logic and exponential backoff."""
+    headers = {
+        "Client-ID": settings.IGDB_CLIENT_ID,
+        "Authorization": f"Bearer {settings.IGDB_ACCESS_TOKEN}",
+        "Accept": "application/json",
+    }
+    body = f"{IGDB_GAME_FIELDS} where id = {game_id};" if game_id else query
+    url = f"https://api.igdb.com/v4/{endpoint}"
+
+    last_exception = None
+    async with httpx.AsyncClient(timeout=10) as client:
+        for attempt in range(max_retries):
+            try:
+                response = await client.post(url, headers=headers, content=body)
+
+                if response.status_code == 429:
+                    wait_time = min(2 ** attempt, 8)
+                    logger.warning(f"[IGDB] Rate limited, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                    await asyncio.sleep(wait_time)
+                    continue
+
+                response.raise_for_status()
+                data = response.json()
+                return data[0] if game_id else data
+
+            except httpx.TimeoutException as e:
+                last_exception = e
+                wait_time = min(2 ** attempt, 8)
+                logger.warning(f"[IGDB] Timeout, retrying in {wait_time}s ({attempt + 1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+
+            except httpx.HTTPStatusError as e:
+                if 500 <= e.response.status_code < 600:
+                    last_exception = e
+                    wait_time = min(2 ** attempt, 8)
+                    logger.warning(f"[IGDB] Server error {e.response.status_code}, retrying in {wait_time}s ({attempt + 1}/{max_retries})")
+                    await asyncio.sleep(wait_time)
+                else:
+                    raise
+
+            except httpx.RequestError as e:
+                last_exception = e
+                wait_time = min(2 ** attempt, 8)
+                logger.warning(f"[IGDB] Request failed, retrying in {wait_time}s ({attempt + 1}/{max_retries}): {e}")
+                await asyncio.sleep(wait_time)
+
+    logger.error(f"[IGDB] All {max_retries} retries failed")
+    if last_exception:
+        raise last_exception
+    raise httpx.RequestError("IGDB request failed after retries")
+
+
+async def fetch_time_to_beat_async(game_id: int) -> dict | None:
+    """Fetch time to beat data from IGDB for a specific game ID."""
+    try:
+        query = f"fields completely,count,game_id,hastily,normally; where game_id = {game_id};"
+        data = await fetch_from_igdb_async(query=query, endpoint="game_time_to_beats")
+
+        if data and len(data) > 0:
+            time_data = data[0]
+            time_to_beat = {}
+            for key in ["hastily", "normally", "completely"]:
+                if key in time_data and time_data[key]:
+                    seconds = time_data[key]
+                    hours = seconds // 3600
+                    minutes = (seconds % 3600) // 60
+                    time_to_beat[key] = {
+                        "seconds": seconds,
+                        "hours": hours,
+                        "minutes": minutes,
+                        "formatted": f"{hours}h"
+                    }
+            if "count" in time_data:
+                time_to_beat["count"] = time_data["count"]
             return time_to_beat
         return None
     except Exception as e:

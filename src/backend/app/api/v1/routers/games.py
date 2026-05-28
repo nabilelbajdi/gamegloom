@@ -78,7 +78,7 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
         
         if not db_game:
             try:
-                igdb_data = services.fetch_from_igdb(game_id=igdb_id)
+                igdb_data = await services.fetch_from_igdb_async(game_id=igdb_id)
                 game_data = services.process_igdb_data(igdb_data)
                 
                 # Only store games that meet quality requirements
@@ -100,7 +100,7 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
         if not db_game:
             try:
                 search_query = f"{services.IGDB_GAME_FIELDS} where slug = \"{slug}\"; limit 1;"
-                search_results = services.fetch_from_igdb(query=search_query)
+                search_results = await services.fetch_from_igdb_async(query=search_query)
                 
                 if search_results and len(search_results) > 0:
                     game_data = services.process_igdb_data(search_results[0])
@@ -158,7 +158,7 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
         
         # Fetch time to beat (this one is quick, do it synchronously)
         try:
-            time_to_beat = services.fetch_time_to_beat(db_game.igdb_id)
+            time_to_beat = await services.fetch_time_to_beat_async(db_game.igdb_id)
             if time_to_beat:
                 db_game.time_to_beat = time_to_beat
                 db.commit()

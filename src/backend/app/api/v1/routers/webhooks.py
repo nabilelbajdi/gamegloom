@@ -84,10 +84,10 @@ async def process_created_game(db: Session, game_id: int, game_data: dict = None
             return await process_updated_game(db, game_id, game_data)
             
         # Always fetch complete game data from IGDB
-        igdb_data = services.fetch_from_igdb(game_id=game_id)
+        igdb_data = await services.fetch_from_igdb_async(game_id=game_id)
         if not igdb_data:
             raise ValueError(f"Could not fetch game data for ID {game_id}")
-            
+
         game_data = services.process_igdb_data(igdb_data[0] if isinstance(igdb_data, list) else igdb_data)
         db_game = services.create_game(db, game_data)
         # Ensure new games are not marked as deleted
@@ -103,7 +103,7 @@ async def process_updated_game(db: Session, game_id: int, game_data: dict = None
     """Fetch and update an existing game from IGDB"""
     try:
         # Always fetch complete game data from IGDB
-        igdb_data = services.fetch_from_igdb(game_id=game_id)
+        igdb_data = await services.fetch_from_igdb_async(game_id=game_id)
         if not igdb_data:
             raise ValueError(f"Could not fetch game data for ID {game_id}")
             

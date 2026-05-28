@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 import logging
 
 from ..models import game
-from .igdb_service import fetch_from_igdb, process_igdb_data, meets_quality_requirements
+from .igdb_service import fetch_from_igdb_async, process_igdb_data, meets_quality_requirements
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def refresh_game_async(igdb_id: int) -> bool:
         logger.info(f"[SWR] Background refresh starting for IGDB ID: {igdb_id}")
         
         # Fetch fresh data from IGDB
-        igdb_data = fetch_from_igdb(game_id=igdb_id)
+        igdb_data = await fetch_from_igdb_async(game_id=igdb_id)
         if not igdb_data:
             logger.warning(f"[SWR] No data returned from IGDB for game {igdb_id}")
             return False
