@@ -31,6 +31,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 const LoadingBarContext = createContext(null);
 
@@ -52,32 +53,34 @@ function AppContent() {
     <>
       <ScrollToTopOnMount />
       {!isAuthPage && <Navbar />}
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/library" element={<MyLibraryPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
-        <Route path="/discover/trending" element={<TrendingGamesPage />} />
-        <Route path="/discover/anticipated" element={<AnticipatedGamesPage />} />
-        <Route path="/discover/highly-rated" element={<HighlyRatedGamesPage />} />
-        <Route path="/discover/latest-releases" element={<LatestReleasesPage />} />
-        <Route path="/discover/recommendations" element={<RecommendationsPage />} />
-        <Route path="/lists" element={<BrowseListsPage />} />
-        <Route path="/games" element={<GamesPage />} />
-        <Route path="/lists/:listId" element={<ListDetailPage />} />
-        <Route path="/genre/:genreSlug" element={<GenrePage />} />
-        <Route path="/theme/:themeSlug" element={<ThemePage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/sync" element={<ImportPage />} />
-        <Route path="/sync/:platform" element={<SyncReviewPage />} />
-        <Route path="/game/:gameId" element={<GamePage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/library" element={<MyLibraryPage />} />
+          <Route path="/discover" element={<DiscoverPage />} />
+          <Route path="/discover/trending" element={<TrendingGamesPage />} />
+          <Route path="/discover/anticipated" element={<AnticipatedGamesPage />} />
+          <Route path="/discover/highly-rated" element={<HighlyRatedGamesPage />} />
+          <Route path="/discover/latest-releases" element={<LatestReleasesPage />} />
+          <Route path="/discover/recommendations" element={<RecommendationsPage />} />
+          <Route path="/lists" element={<BrowseListsPage />} />
+          <Route path="/games" element={<GamesPage />} />
+          <Route path="/lists/:listId" element={<ListDetailPage />} />
+          <Route path="/genre/:genreSlug" element={<GenrePage />} />
+          <Route path="/theme/:themeSlug" element={<ThemePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/sync" element={<ImportPage />} />
+          <Route path="/sync/:platform" element={<SyncReviewPage />} />
+          <Route path="/game/:gameId" element={<GamePage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </ErrorBoundary>
       {!isAuthPage && <Footer />}
     </>
   );
