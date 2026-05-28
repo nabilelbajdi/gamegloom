@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     # PSN Integration settings (required for PSN features)
     PSN_NPSSO: str = os.getenv("PSN_NPSSO", "")
 
+    # Email settings (Resend)
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "GameGloom <noreply@gamegloom.com>")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL must be set in environment variables")
@@ -38,6 +43,9 @@ class Settings(BaseSettings):
             raise ValueError("IGDB_ACCESS_TOKEN must be set in environment variables")
         if not self.IGDB_WEBHOOK_SECRET:
             raise ValueError("IGDB_WEBHOOK_SECRET must be set in environment variables")
+        if not self.RESEND_API_KEY:
+            import logging
+            logging.getLogger(__name__).warning("RESEND_API_KEY not set — password reset emails will not be sent")
         return self
 
 settings = Settings().validate()

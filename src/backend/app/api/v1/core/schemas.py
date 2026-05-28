@@ -14,7 +14,18 @@ class UserBase(BaseModel):
     
 class UserCreate(UserBase):
     """Schema for user registration."""
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for requesting a password reset."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for resetting a password with a token."""
+    token: str
+    password: str = Field(..., min_length=8, max_length=128)
 
 class UserLogin(BaseModel):
     """Schema for login credentials."""

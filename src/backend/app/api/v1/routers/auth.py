@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, and_, desc, union_all, select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List
 import uuid
+import secrets
 import os
 import shutil
 from pathlib import Path
@@ -14,10 +15,13 @@ import io
 import logging
 
 from ..core import schemas, security
+from ..core.email_service import send_password_reset_email
 from ..models.user import User
 from ..models.user_game import UserGame, GameStatus
 from ..models.review import Review, ReviewLike, ReviewComment
 from ..models.game import Game
+from ..models.password_reset_token import PasswordResetToken
+from ..models.token import Token
 from ...db_setup import get_db
 from ...settings import settings
 
@@ -317,5 +321,63 @@ async def get_user_activities(
     # Sort activities by timestamp (newest first) and apply limit
     activities.sort(key=lambda x: x.timestamp, reverse=True)
     activities = activities[:limit]
-    
-    return schemas.UserActivityResponse(activities=activities) 
+
+    return schemas.UserActivityResponse(activities=activities)
+
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Request a password reset link. Always returns success to prevent email enumeration."""
+    user = db.query(User).filter(User.email == request.email).first()
+
+    if user:
+        # Invalidate any existing unused tokens for this user
+        db.query(PasswordResetToken).filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at == None,
+        ).delete()
+        db.commit()
+
+        token_str = secrets.token_urlsafe(32)
+        reset_token = PasswordResetToken(
+            token=token_str,
+            user_id=user.id,
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        db.add(reset_token)
+        db.commit()
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token_str}"
+        send_password_reset_email(user.email, reset_url)
+
+    return {"message": "If that email is registered, you'll receive a reset link shortly."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(request: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset password using a valid reset token."""
+    reset_token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == request.token,
+        PasswordResetToken.used_at == None,
+        PasswordResetToken.expires_at > datetime.now(UTC),
+    ).first()
+
+    if not reset_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token.",
+        )
+
+    user = db.query(User).filter(User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid reset token.")
+
+    user.hashed_password = security.get_password_hash(request.password)
+    reset_token.used_at = datetime.now(UTC)
+
+    # Invalidate all active sessions for security
+    db.query(Token).filter(Token.user_id == user.id).delete()
+
+    db.commit()
+
+    return {"message": "Password reset successfully. Please log in with your new password."}
