@@ -30,6 +30,26 @@ from ...settings import settings
 # Configure logger
 logger = logging.getLogger(__name__)
 
+_MAGIC_BYTES = {
+    b"\xff\xd8\xff": "image/jpeg",
+    b"\x89PNG\r\n\x1a\n": "image/png",
+    b"GIF87a": "image/gif",
+    b"GIF89a": "image/gif",
+    b"RIFF": "image/webp",  # checked further below
+}
+
+def _detect_image_type(data: bytes) -> str | None:
+    """Return MIME type from magic bytes, or None if unrecognised."""
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    for magic, mime in _MAGIC_BYTES.items():
+        if magic == b"RIFF":
+            continue
+        if data[:len(magic)] == magic:
+            return mime
+    return None
+
+
 # Brute-force protection: track failed login attempts per username
 # {username: {"count": int, "locked_until": datetime | None}}
 _login_attempts: dict = {}
@@ -149,6 +169,14 @@ async def upload_avatar(
 
     try:
         image_bytes = await file.read()
+
+        actual_type = _detect_image_type(image_bytes)
+        if actual_type not in ["image/jpeg", "image/png", "image/gif", "image/webp"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only image files (JPEG, PNG, GIF, WEBP) are allowed"
+            )
+
         image = Image.open(io.BytesIO(image_bytes))
         image.thumbnail((400, 400))
 
