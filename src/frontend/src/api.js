@@ -864,6 +864,37 @@ export const previewPSNProfile = async (username) => {
 };
 
 /**
+ * Download a JSON export of all the current user's data.
+ * GET /me/export
+ */
+export const exportMyData = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/me/export`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to export data");
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") || "";
+  const match = disposition.match(/filename="?([^"]+)"?/);
+  const filename = match ? match[1] : `gamegloom-export-${new Date().toISOString().slice(0, 10)}.zip`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Permanently delete the current user's account.
  * DELETE /me
  */

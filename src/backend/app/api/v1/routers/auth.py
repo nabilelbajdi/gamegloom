@@ -1,5 +1,8 @@
 # routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Response
+import csv
+import io
+import zipfile
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, and_, desc, union_all, select
@@ -142,6 +145,238 @@ async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 async def get_current_user_info(current_user: User = Depends(security.get_current_user)):
     """Test endpoint to verify authentication."""
     return current_user
+
+def _iso(dt):
+    """ISO 8601 string, or empty string if None."""
+    return dt.isoformat() if dt else ""
+
+
+def _csv_bytes(fieldnames: list[str], rows: list[dict]) -> str:
+    """Render a list of dicts to a CSV string with the given header order."""
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    return buf.getvalue()
+
+
+@router.get("/me/export")
+async def export_user_data(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Export the user's data as a ZIP of CSVs (GDPR Art. 20)."""
+    user_id = current_user.id
+
+    library = (
+        db.query(UserGame, Game)
+        .join(Game, UserGame.game_id == Game.id)
+        .filter(UserGame.user_id == user_id)
+        .all()
+    )
+    reviews = (
+        db.query(Review, Game)
+        .join(Game, Review.game_id == Game.id)
+        .filter(Review.user_id == user_id)
+        .all()
+    )
+    review_comments = (
+        db.query(ReviewComment, Review, Game, User)
+        .join(Review, ReviewComment.review_id == Review.id)
+        .join(Game, Review.game_id == Game.id)
+        .join(User, Review.user_id == User.id)
+        .filter(ReviewComment.user_id == user_id)
+        .all()
+    )
+    review_likes = (
+        db.query(ReviewLike, Review, Game, User)
+        .join(Review, ReviewLike.review_id == Review.id)
+        .join(Game, Review.game_id == Game.id)
+        .join(User, Review.user_id == User.id)
+        .filter(ReviewLike.user_id == user_id)
+        .all()
+    )
+    lists = db.query(UserList).filter(UserList.user_id == user_id).all()
+    list_likes = (
+        db.query(ListLike, UserList, User)
+        .join(UserList, ListLike.list_id == UserList.id)
+        .join(User, UserList.user_id == User.id)
+        .filter(ListLike.user_id == user_id)
+        .all()
+    )
+    platform_links = db.query(UserPlatformLink).filter(UserPlatformLink.user_id == user_id).all()
+
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
+
+    profile_csv = _csv_bytes(
+        ["field", "value"],
+        [
+            {"field": "username", "value": current_user.username},
+            {"field": "email", "value": current_user.email},
+            {"field": "bio", "value": current_user.bio or ""},
+            {"field": "avatar", "value": current_user.avatar or ""},
+            {"field": "is_verified", "value": current_user.is_verified},
+            {"field": "created_at", "value": _iso(current_user.created_at)},
+            {"field": "updated_at", "value": _iso(current_user.updated_at)},
+            {"field": "exported_at", "value": datetime.now(UTC).isoformat()},
+        ],
+    )
+
+    library_csv = _csv_bytes(
+        ["game", "igdb_id", "status", "added_at", "updated_at"],
+        [
+            {
+                "game": game.name,
+                "igdb_id": game.igdb_id,
+                "status": ug.status.value if ug.status else "",
+                "added_at": _iso(ug.added_at),
+                "updated_at": _iso(ug.updated_at),
+            }
+            for ug, game in library
+        ],
+    )
+
+    reviews_csv = _csv_bytes(
+        [
+            "game", "igdb_id", "rating", "content", "platform",
+            "playtime_hours", "completion_status", "recommended",
+            "story_rating", "gameplay_rating", "visuals_rating",
+            "audio_rating", "performance_rating",
+            "created_at", "updated_at",
+        ],
+        [
+            {
+                "game": game.name,
+                "igdb_id": game.igdb_id,
+                "rating": r.rating,
+                "content": r.content or "",
+                "platform": r.platform or "",
+                "playtime_hours": r.playtime_hours if r.playtime_hours is not None else "",
+                "completion_status": r.completion_status or "",
+                "recommended": r.recommended if r.recommended is not None else "",
+                "story_rating": r.story_rating if r.story_rating is not None else "",
+                "gameplay_rating": r.gameplay_rating if r.gameplay_rating is not None else "",
+                "visuals_rating": r.visuals_rating if r.visuals_rating is not None else "",
+                "audio_rating": r.audio_rating if r.audio_rating is not None else "",
+                "performance_rating": r.performance_rating if r.performance_rating is not None else "",
+                "created_at": _iso(r.created_at),
+                "updated_at": _iso(r.updated_at),
+            }
+            for r, game in reviews
+        ],
+    )
+
+    review_comments_csv = _csv_bytes(
+        ["on_review_of_game", "review_author", "content", "created_at", "updated_at"],
+        [
+            {
+                "on_review_of_game": game.name,
+                "review_author": author.username,
+                "content": c.content,
+                "created_at": _iso(c.created_at),
+                "updated_at": _iso(c.updated_at),
+            }
+            for c, r, game, author in review_comments
+        ],
+    )
+
+    review_likes_csv = _csv_bytes(
+        ["on_review_of_game", "review_author", "liked_at"],
+        [
+            {
+                "on_review_of_game": game.name,
+                "review_author": author.username,
+                "liked_at": _iso(l.created_at),
+            }
+            for l, r, game, author in review_likes
+        ],
+    )
+
+    lists_csv = _csv_bytes(
+        ["name", "description", "is_public", "game_count", "created_at", "updated_at"],
+        [
+            {
+                "name": ul.name,
+                "description": ul.description or "",
+                "is_public": ul.is_public,
+                "game_count": len(ul.games),
+                "created_at": _iso(ul.created_at),
+                "updated_at": _iso(ul.updated_at),
+            }
+            for ul in lists
+        ],
+    )
+
+    list_games_csv = _csv_bytes(
+        ["list_name", "game", "igdb_id"],
+        [
+            {"list_name": ul.name, "game": g.name, "igdb_id": g.igdb_id}
+            for ul in lists
+            for g in ul.games
+        ],
+    )
+
+    list_likes_csv = _csv_bytes(
+        ["list_name", "list_owner", "liked_at"],
+        [
+            {
+                "list_name": ul.name,
+                "list_owner": owner.username,
+                "liked_at": _iso(l.created_at),
+            }
+            for l, ul, owner in list_likes
+        ],
+    )
+
+    platform_links_csv = _csv_bytes(
+        ["platform", "platform_user_id", "platform_username", "linked_at", "last_synced_at"],
+        [
+            {
+                "platform": pl.platform,
+                "platform_user_id": pl.platform_user_id,
+                "platform_username": pl.platform_username or "",
+                "linked_at": _iso(pl.created_at),
+                "last_synced_at": _iso(pl.last_synced_at),
+            }
+            for pl in platform_links
+        ],
+    )
+
+    readme = (
+        f"GameGloom data export for {current_user.username}\n"
+        f"Exported: {datetime.now(UTC).isoformat()}\n\n"
+        "Files in this archive:\n"
+        "  profile.csv         - your account profile\n"
+        "  library.csv         - games you're tracking and their status\n"
+        "  reviews.csv         - reviews you've written\n"
+        "  review-comments.csv - comments you've posted on reviews\n"
+        "  review-likes.csv    - reviews you've liked\n"
+        "  lists.csv           - lists you've created\n"
+        "  list-games.csv      - the games in each of your lists\n"
+        "  list-likes.csv      - lists you've liked\n"
+        "  platform-links.csv  - your linked Steam/PlayStation accounts\n\n"
+        "All timestamps are in UTC, ISO 8601 format.\n"
+    )
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("README.txt", readme)
+        zf.writestr("profile.csv", profile_csv)
+        zf.writestr("library.csv", library_csv)
+        zf.writestr("reviews.csv", reviews_csv)
+        zf.writestr("review-comments.csv", review_comments_csv)
+        zf.writestr("review-likes.csv", review_likes_csv)
+        zf.writestr("lists.csv", lists_csv)
+        zf.writestr("list-games.csv", list_games_csv)
+        zf.writestr("list-likes.csv", list_likes_csv)
+        zf.writestr("platform-links.csv", platform_links_csv)
+
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="gamegloom-export-{today}.zip"'},
+    )
+
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_account(

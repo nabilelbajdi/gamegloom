@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount } from '../api';
+import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail, Download } from 'lucide-react';
+import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount, exportMyData } from '../api';
 import { format } from 'date-fns';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
@@ -153,6 +153,18 @@ const SettingsPage = () => {
     const cancelClear = () => {
         setIsConfirming(false);
         setClearInput('');
+    };
+
+    const handleExportData = async () => {
+        try {
+            setActionLoading('export');
+            await exportMyData();
+            toast.success('Export downloaded');
+        } catch (error) {
+            toast.error('Failed to export data');
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     const handleDeleteAccount = async () => {
@@ -455,6 +467,25 @@ const SettingsPage = () => {
                 <section className="settings-card">
                     <div className="settings-card-header">
                         <h2 className="settings-card-title">Data</h2>
+                    </div>
+
+                    <div className="clear-row-wrapper">
+                        <button
+                            className="clear-row"
+                            onClick={handleExportData}
+                            disabled={actionLoading === 'export'}
+                        >
+                            <div className="clear-row-icon">
+                                {actionLoading === 'export'
+                                    ? <Loader2 size={18} className="animate-spin" />
+                                    : <Download size={18} />}
+                            </div>
+                            <div className="clear-row-content">
+                                <p className="clear-row-title">Export my data</p>
+                                <p className="clear-row-meta">Download a ZIP of spreadsheets with everything in your account</p>
+                            </div>
+                            <ChevronRight size={18} className="clear-row-chevron" />
+                        </button>
                     </div>
 
                     <div className={`clear-row-wrapper ${isConfirming ? 'confirming' : ''}`}>
