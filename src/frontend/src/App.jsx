@@ -35,6 +35,7 @@ import TermsPage from "./pages/TermsPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import CookieBanner from "./components/common/CookieBanner";
 
 const LoadingBarContext = createContext(null);
 
@@ -113,6 +114,7 @@ const App = () => {
           />
           <AppContent />
           <ToastContainer />
+          <CookieBanner />
         </Router>
       </AuthProvider>
     </LoadingBarContext.Provider>
