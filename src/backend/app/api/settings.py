@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
+    # Dev convenience: when true, new registrations are auto-verified (no email sent).
+    # Must remain false in production.
+    SKIP_EMAIL_VERIFICATION: bool = os.getenv("SKIP_EMAIL_VERIFICATION", "false").lower() == "true"
+
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL must be set in environment variables")
@@ -51,6 +55,9 @@ class Settings(BaseSettings):
         if not self.RESEND_API_KEY:
             import logging
             logging.getLogger(__name__).warning("RESEND_API_KEY not set — password reset emails will not be sent")
+        if self.SKIP_EMAIL_VERIFICATION:
+            import logging
+            logging.getLogger(__name__).warning("SKIP_EMAIL_VERIFICATION is enabled — new accounts auto-verified. Disable in production.")
         return self
 
 settings = Settings().validate()

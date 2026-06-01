@@ -21,6 +21,10 @@ from ..models.user import User
 from ..models.email_verification import EmailVerification
 from ..models.user_game import UserGame, GameStatus
 from ..models.review import Review, ReviewLike, ReviewComment
+from ..models.user_list import UserList, ListLike, user_list_games
+from ..models.user_platform_link import UserPlatformLink
+from ..models.user_platform_game import UserPlatformGame
+from ..models.user_psn_preference import UserPsnPreference
 from ..models.game import Game
 from ..models.password_reset_token import PasswordResetToken
 from ..models.token import Token
@@ -63,28 +67,28 @@ router = APIRouter(tags=["auth"])
 async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     try:
-        # Create user with hashed password
         db_user = User(
             username=user_data.username,
             email=user_data.email,
-            hashed_password=security.get_password_hash(user_data.password)
+            hashed_password=security.get_password_hash(user_data.password),
+            is_verified=settings.SKIP_EMAIL_VERIFICATION,
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
 
-        # Send verification email
-        token_str = secrets.token_urlsafe(32)
-        verification = EmailVerification(
-            token=token_str,
-            user_id=db_user.id,
-            expires_at=datetime.now(UTC) + timedelta(hours=24),
-        )
-        db.add(verification)
-        db.commit()
+        if not settings.SKIP_EMAIL_VERIFICATION:
+            token_str = secrets.token_urlsafe(32)
+            verification = EmailVerification(
+                token=token_str,
+                user_id=db_user.id,
+                expires_at=datetime.now(UTC) + timedelta(hours=24),
+            )
+            db.add(verification)
+            db.commit()
 
-        verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_str}"
-        send_verification_email(db_user.email, verify_url)
+            verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_str}"
+            send_verification_email(db_user.email, verify_url)
 
         return db_user
     except IntegrityError:
@@ -138,6 +142,76 @@ async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 async def get_current_user_info(current_user: User = Depends(security.get_current_user)):
     """Test endpoint to verify authentication."""
     return current_user
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    request: schemas.DeleteAccountRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Permanently delete the current user's account and all associated data."""
+    if not security.verify_password(request.password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+        )
+
+    user_id = current_user.id
+    avatar_url = current_user.avatar
+
+    # Detach so the ORM does not try to null backref FKs on related rows during commit.
+    db.expunge(current_user)
+    db.expire_all()
+
+    # Auth + verification rows
+    db.query(Token).filter(Token.user_id == user_id).delete(synchronize_session=False)
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
+    db.query(EmailVerification).filter(EmailVerification.user_id == user_id).delete(synchronize_session=False)
+
+    # Lists: likes the user gave, then their owned lists (clearing likes-on-them + association rows first)
+    db.query(ListLike).filter(ListLike.user_id == user_id).delete(synchronize_session=False)
+    owned_list_ids = [lid for (lid,) in db.query(UserList.id).filter(UserList.user_id == user_id).all()]
+    if owned_list_ids:
+        db.query(ListLike).filter(ListLike.list_id.in_(owned_list_ids)).delete(synchronize_session=False)
+        db.execute(user_list_games.delete().where(user_list_games.c.user_list_id.in_(owned_list_ids)))
+        db.query(UserList).filter(UserList.id.in_(owned_list_ids)).delete(synchronize_session=False)
+
+    # Reviews: likes/comments the user gave, then likes/comments ON their reviews, then the reviews
+    db.query(ReviewLike).filter(ReviewLike.user_id == user_id).delete(synchronize_session=False)
+    db.query(ReviewComment).filter(ReviewComment.user_id == user_id).delete(synchronize_session=False)
+    user_review_ids = [rid for (rid,) in db.query(Review.id).filter(Review.user_id == user_id).all()]
+    if user_review_ids:
+        db.query(ReviewLike).filter(ReviewLike.review_id.in_(user_review_ids)).delete(synchronize_session=False)
+        db.query(ReviewComment).filter(ReviewComment.review_id.in_(user_review_ids)).delete(synchronize_session=False)
+    db.query(Review).filter(Review.user_id == user_id).delete(synchronize_session=False)
+
+    # Library + platform data
+    db.query(UserGame).filter(UserGame.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserPlatformLink).filter(UserPlatformLink.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserPsnPreference).filter(UserPsnPreference.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserPlatformGame).filter(UserPlatformGame.user_id == user_id).delete(synchronize_session=False)
+
+    # Best-effort avatar removal from Cloudinary
+    if avatar_url and "cloudinary.com" in avatar_url and settings.CLOUDINARY_CLOUD_NAME:
+        try:
+            import cloudinary
+            import cloudinary.uploader
+            cloudinary.config(
+                cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+                api_key=settings.CLOUDINARY_API_KEY,
+                api_secret=settings.CLOUDINARY_API_SECRET,
+            )
+            public_id = "/".join(
+                avatar_url.split("/")[-3:-1] + [avatar_url.split("/")[-1].rsplit(".", 1)[0]]
+            )
+            cloudinary.uploader.destroy(public_id)
+        except Exception as e:
+            logger.warning(f"Could not delete Cloudinary avatar for user {user_id}: {e}")
+
+    db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
+    db.commit()
+    logger.info(f"Account deleted: user_id={user_id}")
+
 
 @router.patch("/me/profile", response_model=schemas.UserResponse)
 async def update_user_profile(

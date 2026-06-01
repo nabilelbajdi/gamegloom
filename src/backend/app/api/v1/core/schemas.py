@@ -32,6 +32,11 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+
+class DeleteAccountRequest(BaseModel):
+    """Schema for confirming account deletion with a password."""
+    password: str
+
 class UserResponse(UserBase):
     """Schema for user data in responses."""
     id: int

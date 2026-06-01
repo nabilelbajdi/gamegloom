@@ -3,7 +3,7 @@ import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail } from '../api';
+import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount } from '../api';
 import { format } from 'date-fns';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
@@ -15,7 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
-    const { user, checkAuth } = useAuth();
+    const { user, checkAuth, logout } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const toast = useToastStore();
@@ -28,6 +28,9 @@ const SettingsPage = () => {
     const [actionLoading, setActionLoading] = useState(null);
     const [isConfirming, setIsConfirming] = useState(false);
     const [clearInput, setClearInput] = useState('');
+    const [isDeleteConfirming, setIsDeleteConfirming] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteError, setDeleteError] = useState('');
     const callbackProcessed = useRef(false);
 
     const [resendLoading, setResendLoading] = useState(false);
@@ -150,6 +153,28 @@ const SettingsPage = () => {
     const cancelClear = () => {
         setIsConfirming(false);
         setClearInput('');
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) return;
+        setDeleteError('');
+        try {
+            setActionLoading('delete-account');
+            await deleteAccount(deletePassword);
+            toast.success('Account deleted');
+            logout();
+            navigate('/');
+        } catch (error) {
+            setDeleteError(error.message || 'Failed to delete account');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const cancelDeleteAccount = () => {
+        setIsDeleteConfirming(false);
+        setDeletePassword('');
+        setDeleteError('');
     };
 
     // Profile handlers
@@ -476,6 +501,69 @@ const SettingsPage = () => {
                                             <Loader2 size={14} className="animate-spin" />
                                         ) : (
                                             'Clear'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Danger zone */}
+                <section className="settings-card">
+                    <div className="settings-card-header">
+                        <h2 className="settings-card-title">Danger zone</h2>
+                    </div>
+
+                    <div className={`clear-row-wrapper ${isDeleteConfirming ? 'confirming' : ''}`}>
+                        <button
+                            className="clear-row"
+                            onClick={() => !isDeleteConfirming && setIsDeleteConfirming(true)}
+                            disabled={isDeleteConfirming}
+                        >
+                            <div className="clear-row-icon">
+                                <Trash2 size={18} />
+                            </div>
+                            <div className="clear-row-content">
+                                <p className="clear-row-title">
+                                    {isDeleteConfirming ? 'Confirm with your password' : 'Delete account'}
+                                </p>
+                                <p className="clear-row-meta">
+                                    {isDeleteConfirming
+                                        ? 'Your account and all data will be permanently removed'
+                                        : 'Permanently delete your account and all data'}
+                                </p>
+                            </div>
+                            <ChevronRight size={18} className="clear-row-chevron" />
+                        </button>
+
+                        {isDeleteConfirming && (
+                            <div className="clear-confirm-panel">
+                                <input
+                                    type="password"
+                                    value={deletePassword}
+                                    onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+                                    placeholder="Your password"
+                                    className="clear-confirm-input"
+                                    autoComplete="current-password"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleDeleteAccount()}
+                                />
+                                {deleteError && (
+                                    <p className="text-red-400 text-sm mt-2">{deleteError}</p>
+                                )}
+                                <div className="clear-confirm-actions">
+                                    <button className="clear-confirm-btn cancel" onClick={cancelDeleteAccount}>
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="clear-confirm-btn confirm"
+                                        onClick={handleDeleteAccount}
+                                        disabled={!deletePassword || actionLoading === 'delete-account'}
+                                    >
+                                        {actionLoading === 'delete-account' ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            'Delete account'
                                         )}
                                     </button>
                                 </div>

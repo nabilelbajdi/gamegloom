@@ -864,6 +864,29 @@ export const previewPSNProfile = async (username) => {
 };
 
 /**
+ * Permanently delete the current user's account.
+ * DELETE /me
+ */
+export const deleteAccount = async (password) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No token found");
+
+  const response = await fetch(`${BASE_URL}/me`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to delete account");
+  }
+};
+
+/**
  * Clear all games from user's library
  * DELETE /user-games/all
  */
