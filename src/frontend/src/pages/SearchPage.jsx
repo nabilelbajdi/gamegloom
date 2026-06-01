@@ -13,6 +13,7 @@ import { gamePassesAllFilters } from "../utils/filterUtils";
 import { normalizeGamesData, formatRating } from "../utils/gameUtils";
 import { Search, X, Filter, Info, ChevronDown, Gamepad2, Users, Monitor, ChevronLeft, ChevronRight, Tags } from "lucide-react";
 import PageMeta from "../components/common/PageMeta";
+import { readFunctional, writeFunctional } from "../utils/consent";
 
 // Number of games to display per page
 const GAMES_PER_PAGE = 48;
@@ -27,7 +28,7 @@ const SearchPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem("searchViewMode") || "grid");
+  const [viewMode, setViewMode] = useState(() => readFunctional("searchViewMode") || "grid");
   const [sortOption, setSortOption] = useState("relevance"); // Don't persist - should always start with relevance for search
   const [genreFilters, setGenreFilters] = useState([]);
   const [themeFilters, setThemeFilters] = useState([]);
@@ -37,9 +38,9 @@ const SearchPage = () => {
   const [minRatingFilter, setMinRatingFilter] = useState(0);
   const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
-  // Persist view mode preference
+  // Persist view mode preference (no-op if user hasn't accepted cookie consent)
   useEffect(() => {
-    localStorage.setItem("searchViewMode", viewMode);
+    writeFunctional("searchViewMode", viewMode);
   }, [viewMode]);
 
   // For new search

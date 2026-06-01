@@ -18,6 +18,7 @@ import ViewToggle from "../components/common/ViewToggle";
 import ActiveFilters from "../components/common/ActiveFilters";
 import { gamePassesAllFilters } from "../utils/filterUtils";
 import { createSlug } from "../utils/stringUtils";
+import { readFunctional, writeFunctional } from "../utils/consent";
 
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
@@ -29,17 +30,17 @@ const MyLibraryPage = () => {
   // Component state
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState(() => localStorage.getItem("librarySortOption") || "last_played");
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem("libraryViewMode") || "grid");
+  const [sortOption, setSortOption] = useState(() => readFunctional("librarySortOption") || "last_played");
+  const [viewMode, setViewMode] = useState(() => readFunctional("libraryViewMode") || "grid");
   const [selectedList, setSelectedList] = useState(null);
 
-  // Persist preferences
+  // Persist preferences (no-op if user hasn't accepted cookie consent)
   useEffect(() => {
-    localStorage.setItem("librarySortOption", sortOption);
+    writeFunctional("librarySortOption", sortOption);
   }, [sortOption]);
 
   useEffect(() => {
-    localStorage.setItem("libraryViewMode", viewMode);
+    writeFunctional("libraryViewMode", viewMode);
   }, [viewMode]);
 
   // Filter states

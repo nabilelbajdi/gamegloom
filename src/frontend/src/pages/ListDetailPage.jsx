@@ -18,6 +18,7 @@ import ViewToggle from "../components/common/ViewToggle";
 import GridGameCard from "../components/game/GridGameCard";
 import GameListCard from "../components/common/GameListCard";
 import { formatDistanceToNow } from "date-fns";
+import { readFunctional, writeFunctional } from "../utils/consent";
 
 // Sort options for list detail
 const SORT_OPTIONS = [
@@ -41,18 +42,18 @@ const ListDetailPage = () => {
     const [list, setList] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("listDetailViewMode") || "grid");
-    const [sortBy, setSortBy] = useState(() => localStorage.getItem("listDetailSortBy") || "added");
+    const [viewMode, setViewMode] = useState(() => readFunctional("listDetailViewMode") || "grid");
+    const [sortBy, setSortBy] = useState(() => readFunctional("listDetailSortBy") || "added");
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [liking, setLiking] = useState(false);
 
-    // Persist preferences
+    // Persist preferences (no-op if user hasn't accepted cookie consent)
     useEffect(() => {
-        localStorage.setItem("listDetailViewMode", viewMode);
+        writeFunctional("listDetailViewMode", viewMode);
     }, [viewMode]);
 
     useEffect(() => {
-        localStorage.setItem("listDetailSortBy", sortBy);
+        writeFunctional("listDetailSortBy", sortBy);
     }, [sortBy]);
 
     useEffect(() => {

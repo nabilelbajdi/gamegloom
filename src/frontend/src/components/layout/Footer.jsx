@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Mail, Github, Linkedin, Twitter, ChevronRigh
 import { useAuth } from "../../context/AuthContext";
 import GameCardStatus from "../game/GameCardStatus";
 import useStatusDropdown from "../../hooks/useStatusDropdown";
+import { readFunctional, removeFunctional, CONSENT_CHANGED_EVENT, resetConsent } from "../../utils/consent";
 
 const SimplifiedGameCard = ({ game }) => {
   const { user } = useAuth();
@@ -78,7 +79,7 @@ const RecentlyViewedGames = () => {
   };
 
   const clearRecentlyViewed = () => {
-    localStorage.removeItem('recentlyViewedGames');
+    removeFunctional('recentlyViewedGames');
     setRecentGames([]);
     setTotalGames(0);
   };
@@ -95,14 +96,17 @@ const RecentlyViewedGames = () => {
   };
 
   useEffect(() => {
-    // Load recently viewed games from localStorage
+    // Load recently viewed games from localStorage (only if consent given)
     const loadRecentGames = () => {
       try {
-        const storedGames = localStorage.getItem('recentlyViewedGames');
+        const storedGames = readFunctional('recentlyViewedGames');
         if (storedGames) {
           const parsedGames = JSON.parse(storedGames);
           setRecentGames(parsedGames);
           setTotalGames(parsedGames.length);
+        } else {
+          setRecentGames([]);
+          setTotalGames(0);
         }
       } catch (error) {
         console.error('Error loading recently viewed games:', error);
@@ -111,11 +115,13 @@ const RecentlyViewedGames = () => {
 
     loadRecentGames();
 
-    // Listen for storage events to update if changed in another tab
+    // Listen for storage events to update if changed in another tab, and for consent changes
     window.addEventListener('storage', loadRecentGames);
+    window.addEventListener(CONSENT_CHANGED_EVENT, loadRecentGames);
 
     return () => {
       window.removeEventListener('storage', loadRecentGames);
+      window.removeEventListener(CONSENT_CHANGED_EVENT, loadRecentGames);
     };
   }, [location.pathname]);
 
@@ -328,6 +334,18 @@ const Footer = () => {
                 <li><FooterLink to="/terms">Terms</FooterLink></li>
                 <li><FooterLink to="/privacy">Privacy</FooterLink></li>
                 <li><FooterLink to="/copyright">Copyright</FooterLink></li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={resetConsent}
+                    className="text-gray-400 hover:text-white transition-colors text-sm tracking-wide py-1 bg-transparent border-0 p-0 cursor-pointer text-left"
+                  >
+                    <span className="relative inline-block group">
+                      Cookie preferences
+                      <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-primary group-hover:w-full transition-all duration-300"></span>
+                    </span>
+                  </button>
+                </li>
               </ul>
             </div>
 

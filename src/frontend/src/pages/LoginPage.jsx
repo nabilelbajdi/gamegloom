@@ -5,6 +5,7 @@ import { useLoadingBar } from "../App";
 import API_URL from "../utils/apiConfig";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, UserCheck, Lock, AlertCircle, ChevronLeft } from "lucide-react";
+import { readFunctional, writeFunctional, removeFunctional } from "../utils/consent";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -21,8 +22,8 @@ const LoginPage = () => {
 
   // Load saved username if it exists (password handled by browser's password manager)
   useEffect(() => {
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    const wasRemembered = localStorage.getItem('rememberMe') === 'true';
+    const savedUsername = readFunctional('rememberedUsername');
+    const wasRemembered = readFunctional('rememberMe') === 'true';
 
     if (savedUsername && wasRemembered) {
       setFormData(prev => ({
@@ -66,16 +67,17 @@ const LoginPage = () => {
       }
 
       // Handle remember me - only store username (password handled by browser)
+      // writeFunctional silently no-ops if the user hasn't accepted cookie consent.
       if (rememberMe) {
-        localStorage.setItem('rememberedUsername', formData.username);
-        localStorage.setItem('rememberMe', 'true');
+        writeFunctional('rememberedUsername', formData.username);
+        writeFunctional('rememberMe', 'true');
       } else {
-        localStorage.removeItem('rememberedUsername');
-        localStorage.removeItem('rememberMe');
+        removeFunctional('rememberedUsername');
+        removeFunctional('rememberMe');
       }
 
       // Clean up any old password storage from previous versions
-      localStorage.removeItem('rememberedPassword');
+      removeFunctional('rememberedPassword');
 
       const data = await response.json();
       await login(data.token, data);

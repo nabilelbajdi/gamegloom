@@ -10,6 +10,7 @@ import GameMedia from "../components/GamePage/GameMedia";
 import SimilarGames from "../components/GamePage/SimilarGames";
 import RelatedContent from "../components/GamePage/RelatedContent";
 import ReviewList from "../components/reviews/ReviewList";
+import { hasConsent, readFunctional, writeFunctional } from "../utils/consent";
 
 // Loading Skeleton Component
 const GamePageSkeleton = () => {
@@ -162,13 +163,12 @@ const GamePage = () => {
     }
   }, [fetchGameDetails, gameId, fetchCollection, isLoggedIn]);
 
-  // Save recently viewed game
+  // Save recently viewed game (only when user has accepted cookie consent)
   useEffect(() => {
-    if (game) {
+    if (game && hasConsent()) {
       try {
-        const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewedGames') || '[]');
+        const recentlyViewed = JSON.parse(readFunctional('recentlyViewedGames') || '[]');
 
-        // Prepare simplified game object with essential info
         const gameToSave = {
           id: game.id || game.igdb_id,
           igdb_id: game.igdb_id,
@@ -177,14 +177,10 @@ const GamePage = () => {
           coverImage: game.coverImage
         };
 
-        // Remove this game if it exists already (to move it to the front)
         const filteredGames = recentlyViewed.filter(g => g.id !== gameToSave.id && g.igdb_id !== gameToSave.igdb_id);
-
-        // Add current game to the beginning - store up to 15 games
         const updatedGames = [gameToSave, ...filteredGames].slice(0, 15);
 
-        // Save to localStorage
-        localStorage.setItem('recentlyViewedGames', JSON.stringify(updatedGames));
+        writeFunctional('recentlyViewedGames', JSON.stringify(updatedGames));
       } catch (error) {
         console.error('Error saving recently viewed game:', error);
       }

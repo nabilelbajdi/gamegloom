@@ -14,6 +14,7 @@ import ViewToggle from "../../components/common/ViewToggle";
 import ActiveFilters from "../../components/common/ActiveFilters";
 import ScrollToTop from "../../components/common/ScrollToTop";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
+import { readFunctional, writeFunctional } from "../../utils/consent";
 
 const GameCategoryPage = ({
   title,
@@ -41,10 +42,9 @@ const GameCategoryPage = ({
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem("categoryViewMode") || "grid");
+  const [viewMode, setViewMode] = useState(() => readFunctional("categoryViewMode") || "grid");
   const [sortOption, setSortOption] = useState(() => {
-    const saved = localStorage.getItem("categorySortOption");
-    // Validate saved option is in discovery options
+    const saved = readFunctional("categorySortOption");
     const validOptions = ["rating_high", "release_new", "name_asc"];
     if (saved && validOptions.includes(saved)) return saved;
     return "rating_high";
@@ -57,13 +57,13 @@ const GameCategoryPage = ({
   const [minRatingFilter, setMinRatingFilter] = useState(0);
   const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
-  // Persist preferences
+  // Persist preferences (no-op if user hasn't accepted cookie consent)
   useEffect(() => {
-    localStorage.setItem("categoryViewMode", viewMode);
+    writeFunctional("categoryViewMode", viewMode);
   }, [viewMode]);
 
   useEffect(() => {
-    localStorage.setItem("categorySortOption", sortOption);
+    writeFunctional("categorySortOption", sortOption);
   }, [sortOption]);
 
   const getGamesForCategory = () => {

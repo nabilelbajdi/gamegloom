@@ -11,6 +11,7 @@ import ViewToggle from "../../components/common/ViewToggle";
 import ActiveFilters from "../../components/common/ActiveFilters";
 import ScrollToTop from "../../components/common/ScrollToTop";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
+import { readFunctional, writeFunctional } from "../../utils/consent";
 
 // Sort options for all games
 const SORT_OPTIONS = [
@@ -36,8 +37,8 @@ const GamesPage = () => {
     const [hasMore, setHasMore] = useState(true);
 
     // Preferences - persisted
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem("allGamesViewMode") || "grid");
-    const [sortOption, setSortOption] = useState(() => localStorage.getItem("allGamesSortOption") || "rating_high");
+    const [viewMode, setViewMode] = useState(() => readFunctional("allGamesViewMode") || "grid");
+    const [sortOption, setSortOption] = useState(() => readFunctional("allGamesSortOption") || "rating_high");
 
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
@@ -49,13 +50,13 @@ const GamesPage = () => {
     const [minRatingFilter, setMinRatingFilter] = useState(0);
     const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
-    // Persist preferences
+    // Persist preferences (no-op if user hasn't accepted cookie consent)
     useEffect(() => {
-        localStorage.setItem("allGamesViewMode", viewMode);
+        writeFunctional("allGamesViewMode", viewMode);
     }, [viewMode]);
 
     useEffect(() => {
-        localStorage.setItem("allGamesSortOption", sortOption);
+        writeFunctional("allGamesSortOption", sortOption);
     }, [sortOption]);
 
     // Fetch games on mount and when sort changes
