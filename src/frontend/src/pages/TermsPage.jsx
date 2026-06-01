@@ -129,8 +129,8 @@ const TermsPage = () => {
           <h2 className="text-white text-2xl font-semibold mt-8">12. Contact</h2>
           <p>
             For any questions about these Terms, contact us at{" "}
-            <a className="text-primary underline" href="mailto:nabilelbajdi@hotmail.com">
-              nabilelbajdi@hotmail.com
+            <a className="text-primary underline" href="mailto:support@gamegloom.com">
+              support@gamegloom.com
             </a>
             .
           </p>

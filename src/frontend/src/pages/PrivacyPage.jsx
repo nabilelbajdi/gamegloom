@@ -26,8 +26,8 @@ const PrivacyPage = () => {
             GameGloom is an independent game tracking and discovery platform operated
             from Sweden. The data controller for the purposes of the EU General Data
             Protection Regulation (GDPR) is the operator of GameGloom, reachable at{" "}
-            <a className="text-primary underline" href="mailto:nabilelbajdi@hotmail.com">
-              nabilelbajdi@hotmail.com
+            <a className="text-primary underline" href="mailto:support@gamegloom.com">
+              support@gamegloom.com
             </a>
             .
           </p>
@@ -169,8 +169,8 @@ const PrivacyPage = () => {
           <p>
             For any questions about this Privacy Policy or how we handle your data,
             contact us at{" "}
-            <a className="text-primary underline" href="mailto:nabilelbajdi@hotmail.com">
-              nabilelbajdi@hotmail.com
+            <a className="text-primary underline" href="mailto:support@gamegloom.com">
+              support@gamegloom.com
             </a>
             .
           </p>
