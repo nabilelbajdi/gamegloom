@@ -23,13 +23,15 @@ from backend.app.api.v1.models.user_platform_link import UserPlatformLink
 from backend.app.api.v1.models.password_reset_token import PasswordResetToken
 from backend.app.api.v1.models.email_verification import EmailVerification
 from scripts.scheduler.scheduler import init_scheduler
+from backend.app.api.v1.core.logging_config import configure_logging, request_id_ctx
 import logging
 import os
+import uuid
 
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Emit logs as JSON and stamp each line with the active request ID.
+configure_logging()
 logger = logging.getLogger(__name__)
 
 # Initialise Sentry as early as possible so it can capture startup errors.
@@ -90,6 +92,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    token = request_id_ctx.set(request_id)
+    try:
+        response = await call_next(request)
+    finally:
+        request_id_ctx.reset(token)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 @app.middleware("http")
