@@ -2,8 +2,31 @@
 from datetime import datetime
 from typing import Optional, List, Dict
 from enum import Enum
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 from ..models.user_game import GameStatus
+
+# A short blocklist of the worst-offender passwords. Lowercase + stripped at compare time.
+# Curated from the top of public breach datasets (e.g. rockyou). Not exhaustive — a
+# determined attacker can pick a slightly less common weak password — but blocks the
+# ones that account for a disproportionate share of compromised accounts.
+_COMMON_PASSWORDS = frozenset({
+    "password", "password1", "password12", "password123", "passw0rd", "p@ssw0rd",
+    "12345678", "123456789", "1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm",
+    "qwerty", "qwerty123", "qwerty1234", "abc12345", "abcd1234", "abcdef123",
+    "letmein", "welcome", "welcome1", "welcome123", "iloveyou", "trustno1",
+    "monkey", "dragon", "football", "baseball", "shadow", "master", "michael",
+    "admin", "admin123", "administrator", "root", "rootroot",
+    "1q2w3e4r", "1q2w3e4r5t", "1qaz2wsx", "qazwsx123", "asdf1234",
+    "00000000", "11111111", "88888888", "01234567", "87654321",
+    "gamegloom", "gamegloom1", "gamegloom123",
+})
+
+
+def _validate_password_strength(v: str) -> str:
+    if v.lower().strip() in _COMMON_PASSWORDS:
+        raise ValueError("This password is too common. Please choose something less guessable.")
+    return v
+
 
 class UserBase(BaseModel):
     """Base schema for user data."""
@@ -11,10 +34,15 @@ class UserBase(BaseModel):
     email: EmailStr
     avatar: str = Field(default="/images/default-avatar.svg")
     bio: Optional[str] = None
-    
+
 class UserCreate(UserBase):
     """Schema for user registration."""
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=10, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def _check_password(cls, v: str) -> str:
+        return _validate_password_strength(v)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -25,7 +53,12 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     """Schema for resetting a password with a token."""
     token: str
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=10, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def _check_password(cls, v: str) -> str:
+        return _validate_password_strength(v)
 
 class UserLogin(BaseModel):
     """Schema for login credentials."""
