@@ -30,6 +30,8 @@ import ImportPage from "./pages/ImportPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -80,6 +82,8 @@ function AppContent() {
           <Route path="/sync" element={<ImportPage />} />
           <Route path="/sync/:platform" element={<SyncReviewPage />} />
           <Route path="/game/:gameId" element={<GamePage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ErrorBoundary>
