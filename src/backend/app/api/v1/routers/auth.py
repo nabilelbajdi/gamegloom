@@ -1,5 +1,6 @@
 # routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Response, Request
+from fastapi.security import HTTPAuthorizationCredentials
 import csv
 import io
 import zipfile
@@ -150,6 +151,16 @@ async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 async def get_current_user_info(current_user: User = Depends(security.get_current_user)):
     """Test endpoint to verify authentication."""
     return current_user
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security.security),
+    db: Session = Depends(get_db),
+):
+    """Revoke the current auth token. Idempotent: returns 204 whether the token existed or not."""
+    db.query(Token).filter(Token.token == credentials.credentials).delete()
+    db.commit()
 
 def _iso(dt):
     """ISO 8601 string, or empty string if None."""

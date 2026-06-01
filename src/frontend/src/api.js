@@ -864,6 +864,25 @@ export const previewPSNProfile = async (username) => {
 };
 
 /**
+ * Revoke the current auth token server-side.
+ * POST /logout
+ */
+export const logoutApi = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  // Best-effort: even if this fails (network down, etc.) we still clear the local token.
+  try {
+    await fetch(`${BASE_URL}/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (e) {
+    // swallow — local logout will still happen
+  }
+};
+
+/**
  * Download a JSON export of all the current user's data.
  * GET /me/export
  */

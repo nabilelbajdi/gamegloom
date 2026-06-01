@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import API_URL from "../utils/apiConfig";
+import { logoutApi } from "../api";
 
 // Create the context
 const AuthContext = createContext();
@@ -83,8 +84,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Logout function
-  const logout = () => {
+  // Logout function: revoke token server-side, then clear locally.
+  const logout = async () => {
+    await logoutApi();
     localStorage.removeItem("token");
     setUser(null);
   };
