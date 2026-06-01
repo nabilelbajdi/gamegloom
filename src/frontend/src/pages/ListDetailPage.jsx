@@ -175,7 +175,9 @@ const ListDetailPage = () => {
         <div className="min-h-screen bg-dark pt-20 pb-16">
             <PageMeta
                 title={list.name}
-                description={list.description || `A curated game list on GameGloom.`}
+                description={list.description || `A curated game list on GameGloom — ${list.games?.length || 0} games.`}
+                image={list.games?.[0]?.coverImage || undefined}
+                url={`https://gamegloom.com/lists/${listId}`}
             />
             <div className="max-w-7xl mx-auto px-4">
                 {/* Back Button */}
