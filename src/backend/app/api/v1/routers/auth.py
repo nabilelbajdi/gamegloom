@@ -1,5 +1,5 @@
 # routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Response, Request
 import csv
 import io
 import zipfile
@@ -19,6 +19,7 @@ import io
 import logging
 
 from ..core import schemas, security
+from ..core.rate_limit import limiter
 from ..core.email_service import send_password_reset_email, send_verification_email
 from ..models.user import User
 from ..models.email_verification import EmailVerification
@@ -64,10 +65,14 @@ _attempts_lock = threading.Lock()
 _MAX_LOGIN_ATTEMPTS = 5
 _LOCKOUT_MINUTES = 15
 
+# Reject avatar uploads above 5 MB to bound memory/Cloudinary usage.
+_MAX_AVATAR_BYTES = 5 * 1024 * 1024
+
 router = APIRouter(tags=["auth"])
 
 @router.post("/register", response_model=schemas.UserResponse)
-async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     try:
         db_user = User(
@@ -476,8 +481,21 @@ async def upload_avatar(
             detail="Only image files (JPEG, PNG, GIF, WEBP) are allowed"
         )
 
+    # Reject obviously oversized uploads before reading anything into memory.
+    if file.size is not None and file.size > _MAX_AVATAR_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Avatar must be 5 MB or smaller"
+        )
+
     try:
-        image_bytes = await file.read()
+        # Read at most one byte past the limit so we can detect liars who under-report size.
+        image_bytes = await file.read(_MAX_AVATAR_BYTES + 1)
+        if len(image_bytes) > _MAX_AVATAR_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Avatar must be 5 MB or smaller"
+            )
 
         actual_type = _detect_image_type(image_bytes)
         if actual_type not in ["image/jpeg", "image/png", "image/gif", "image/webp"]:
@@ -725,9 +743,10 @@ async def get_user_activities(
 
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
-async def forgot_password(request: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, payload: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
     """Request a password reset link. Always returns success to prevent email enumeration."""
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == payload.email).first()
 
     if user:
         # Invalidate any existing unused tokens for this user
@@ -777,7 +796,9 @@ async def verify_email(token: str = Query(...), db: Session = Depends(get_db)):
 
 
 @router.post("/resend-verification", status_code=status.HTTP_200_OK)
+@limiter.limit("3/minute")
 async def resend_verification(
+    request: Request,
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):

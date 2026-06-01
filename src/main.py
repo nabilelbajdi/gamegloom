@@ -2,9 +2,9 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from backend.app.api.v1.core.rate_limit import limiter
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from backend.app.api.db_setup import init_db
@@ -31,10 +31,6 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Rate limiter configuration (default: 60 requests per minute)
-RATE_LIMIT = os.getenv("RATE_LIMIT", "60/minute")
-limiter = Limiter(key_func=get_remote_address, default_limits=[RATE_LIMIT])
 
 # Ensure avatar directory exists
 os.makedirs("frontend/public/images/avatars", exist_ok=True)
