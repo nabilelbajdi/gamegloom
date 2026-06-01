@@ -64,7 +64,8 @@ const PrivacyPage = () => {
           </ul>
           <p>
             We do not sell your personal data. We do not use advertising tracking or
-            third-party marketing cookies.
+            third-party marketing cookies. We do not engage in automated decision-making
+            or profiling that produces legal or similarly significant effects on you.
           </p>
 
           <h2 className="text-white text-2xl font-semibold mt-8">4. Legal Basis for Processing (EU/EEA Users)</h2>

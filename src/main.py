@@ -91,10 +91,18 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=()"
+    # same-site lets gamegloom.com call api.gamegloom.com while blocking other origins from embedding API responses.
+    response.headers["Cross-Origin-Resource-Policy"] = "same-site"
     # Strict CSP for the JSON API; Swagger UI at /docs needs inline scripts + CDN, so skip there.
     if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
         response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
     return response
+
+
+@app.get("/health")
+async def health_check():
+    """Lightweight liveness check for uptime monitors and platform health probes."""
+    return {"status": "ok"}
 
 
 # Include the routers
