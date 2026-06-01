@@ -32,6 +32,19 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialise Sentry as early as possible so it can capture startup errors.
+# No-op when SENTRY_DSN isn't set (local dev).
+_sentry_dsn = os.getenv("SENTRY_DSN", "").strip()
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        traces_sample_rate=0,  # disable performance traces to preserve free-tier budget
+        send_default_pii=False,  # don't ship IPs, emails, headers
+    )
+    logger.info("Sentry initialised")
+
 # Ensure avatar directory exists
 os.makedirs("frontend/public/images/avatars", exist_ok=True)
 
