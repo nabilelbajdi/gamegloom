@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Auth and user-specific pages — no value in search results
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /settings
+Disallow: /library
+Disallow: /profile
+Disallow: /sync
+
+Sitemap: https://gamegloom.com/sitemap.xml
