@@ -729,6 +729,21 @@ export const updatePreferences = async (prefs) => {
 };
 
 /**
+ * Claim/change the current user's username.
+ * PUT /me/username — resolves to the updated user, throws on 409 (taken).
+ */
+export const changeUsername = async (username) => {
+  const response = await apiFetch(`/me/username`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  if (response.status === 409) throw new Error("That username is already taken");
+  if (!response.ok) throw new Error("Could not update username");
+  return response.json();
+};
+
+/**
  * Download a JSON export of all the current user's data.
  * GET /me/export
  */
