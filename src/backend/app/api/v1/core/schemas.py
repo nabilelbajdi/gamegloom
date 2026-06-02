@@ -1,4 +1,5 @@
 # schemas.py
+import re
 from datetime import datetime
 from typing import Optional, List, Dict
 from enum import Enum
@@ -331,6 +332,36 @@ class UserProfileUpdate(BaseModel):
     bio: Optional[str] = Field(None, max_length=500)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserPreferenceUpdate(BaseModel):
+    """Partial update of onboarding/personalization preferences."""
+    favorite_genres: Optional[List[str]] = None
+    favorite_themes: Optional[List[str]] = None
+    playstyles: Optional[List[str]] = None
+    theme_key: Optional[str] = Field(None, max_length=40)
+    mark_onboarded: Optional[bool] = None
+
+
+class UserPreferenceResponse(BaseModel):
+    """Personalization preferences with a derived `onboarded` flag."""
+    favorite_genres: List[str] = []
+    favorite_themes: List[str] = []
+    playstyles: List[str] = []
+    theme_key: str = "obsidian"
+    onboarded: bool = False
+
+
+class UsernameUpdate(BaseModel):
+    """Schema for claiming/changing a username."""
+    username: str = Field(..., min_length=3, max_length=50)
+
+    @field_validator("username")
+    @classmethod
+    def valid_username(cls, v: str) -> str:
+        if not re.match(r"^[A-Za-z0-9_-]+$", v):
+            raise ValueError("Username may only contain letters, numbers, underscores, and hyphens")
+        return v
 
 class UserStats(BaseModel):
     """Schema for user statistics."""
