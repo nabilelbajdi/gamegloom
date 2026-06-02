@@ -23,6 +23,7 @@ from httpx import AsyncClient, ASGITransport
 from fastapi import FastAPI
 
 from app.api.db_setup import Base, get_db
+from app.api.v1.core.security import csrf_protect_middleware
 from app.api.v1.routers.games import router as games_router
 from app.api.v1.routers.auth import router as auth_router
 from app.api.v1.routers.user_games import router as user_games_router
@@ -34,6 +35,8 @@ from app.api.v1.models.user_platform_link import UserPlatformLink  # noqa: F401
 
 # Create a minimal test app (avoids importing scheduler from main.py)
 test_app = FastAPI()
+# Mirror production: enforce CSRF on cookie-authenticated state-changing requests.
+test_app.middleware("http")(csrf_protect_middleware)
 test_app.include_router(auth_router, prefix="/api/v1")
 test_app.include_router(games_router, prefix="/api/v1")
 test_app.include_router(user_games_router, prefix="/api/v1")

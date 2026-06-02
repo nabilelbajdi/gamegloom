@@ -24,6 +24,7 @@ from backend.app.api.v1.models.password_reset_token import PasswordResetToken
 from backend.app.api.v1.models.email_verification import EmailVerification
 from scripts.scheduler.scheduler import init_scheduler
 from backend.app.api.v1.core.logging_config import configure_logging, request_id_ctx
+from backend.app.api.v1.core.security import csrf_protect_middleware
 import logging
 import os
 import uuid
@@ -104,6 +105,10 @@ async def add_request_id(request: Request, call_next):
         request_id_ctx.reset(token)
     response.headers["X-Request-ID"] = request_id
     return response
+
+
+# Double-submit CSRF protection for cookie-authenticated state-changing requests.
+app.middleware("http")(csrf_protect_middleware)
 
 
 @app.middleware("http")

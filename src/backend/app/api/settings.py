@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     # Must remain false in production.
     SKIP_EMAIL_VERIFICATION: bool = os.getenv("SKIP_EMAIL_VERIFICATION", "false").lower() == "true"
 
+    # Auth cookie settings: the auth token lives in an HttpOnly cookie.
+    # Dev defaults work over http://localhost. In production set COOKIE_SECURE=true
+    # and COOKIE_DOMAIN=.gamegloom.com so the cookie is shared with api.gamegloom.com.
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    COOKIE_DOMAIN: str = os.getenv("COOKIE_DOMAIN", "")  # empty = host-only cookie
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
+
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL must be set in environment variables")

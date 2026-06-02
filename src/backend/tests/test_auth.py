@@ -134,3 +134,48 @@ class TestMe:
             headers={"Authorization": "Bearer invalid-token-here"}
         )
         assert response.status_code == 401  # Invalid token returns 401
+
+
+class TestCookieAuth:
+    """Tests for HttpOnly cookie authentication and double-submit CSRF protection."""
+
+    async def _register_and_login(self, client, test_user_data):
+        await client.post("/api/v1/register", json=test_user_data)
+        return await client.post("/api/v1/login", json={
+            "username": test_user_data["username"],
+            "password": test_user_data["password"],
+        })
+
+    async def test_login_sets_auth_cookies(self, client, test_user_data):
+        """Login sets an HttpOnly access_token cookie and a readable csrf_token cookie."""
+        response = await self._register_and_login(client, test_user_data)
+        assert response.status_code == 200
+        assert response.cookies.get("access_token") is not None
+        assert response.cookies.get("csrf_token") is not None
+        # The access token cookie must be HttpOnly so JS can't read it.
+        set_cookie = " ".join(response.headers.get_list("set-cookie"))
+        assert "HttpOnly" in set_cookie
+
+    async def test_me_via_cookie_without_bearer(self, client, test_user_data):
+        """Authentication works from the cookie jar with no Authorization header."""
+        await self._register_and_login(client, test_user_data)
+        response = await client.get("/api/v1/me")  # no Authorization header
+        assert response.status_code == 200
+        assert response.json()["username"] == test_user_data["username"]
+
+    async def test_unsafe_request_without_csrf_rejected(self, client, test_user_data):
+        """A cookie-authenticated state change without an X-CSRF-Token is blocked."""
+        await self._register_and_login(client, test_user_data)
+        response = await client.post("/api/v1/logout")  # cookie present, no CSRF header
+        assert response.status_code == 403
+        assert "csrf" in response.json()["detail"].lower()
+
+    async def test_unsafe_request_with_csrf_succeeds_and_clears_cookies(self, client, test_user_data):
+        """A valid X-CSRF-Token allows the state change; logout clears the cookies."""
+        await self._register_and_login(client, test_user_data)
+        csrf = client.cookies.get("csrf_token")
+        response = await client.post("/api/v1/logout", headers={"X-CSRF-Token": csrf})
+        assert response.status_code == 204
+        # Cookies cleared -> subsequent cookie-auth request is unauthorized.
+        me = await client.get("/api/v1/me")
+        assert me.status_code in [401, 403]

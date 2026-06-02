@@ -1,6 +1,5 @@
 # routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Response, Request
-from fastapi.security import HTTPAuthorizationCredentials
 import csv
 import io
 import zipfile
@@ -108,8 +107,8 @@ async def register(request: Request, user_data: schemas.UserCreate, db: Session 
         )
 
 @router.post("/login", response_model=schemas.TokenResponse)
-async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
-    """Login and get an access token."""
+async def login(credentials: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):
+    """Login and get an access token. Also sets the auth token as an HttpOnly cookie."""
     now = datetime.now(UTC).replace(tzinfo=None)
 
     # Check lockout before hitting the DB
@@ -145,6 +144,10 @@ async def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
         _login_attempts.pop(credentials.username, None)
 
     token = security.create_token(db, user.id)
+    # Set the token in an HttpOnly cookie + a readable CSRF cookie. The token is
+    # still returned in the body for backward compatibility during the migration.
+    csrf_value = security.generate_csrf_token()
+    security.set_auth_cookies(response, token.token, csrf_value)
     return token
 
 @router.get("/me", response_model=schemas.UserResponse)
@@ -155,12 +158,16 @@ async def get_current_user_info(current_user: User = Depends(security.get_curren
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    credentials: HTTPAuthorizationCredentials = Depends(security.security),
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
 ):
-    """Revoke the current auth token. Idempotent: returns 204 whether the token existed or not."""
-    db.query(Token).filter(Token.token == credentials.credentials).delete()
-    db.commit()
+    """Revoke the current auth token and clear the auth cookies. Idempotent: returns 204 whether the token existed or not."""
+    token = security.get_token_from_request(request)
+    if token:
+        db.query(Token).filter(Token.token == token).delete()
+        db.commit()
+    security.clear_auth_cookies(response)
 
 def _iso(dt):
     """ISO 8601 string, or empty string if None."""
@@ -397,6 +404,7 @@ async def export_user_data(
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_account(
     request: schemas.DeleteAccountRequest,
+    response: Response,
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -461,6 +469,7 @@ async def delete_account(
 
     db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
     db.commit()
+    security.clear_auth_cookies(response)
     logger.info(f"Account deleted: user_id={user_id}")
 
 

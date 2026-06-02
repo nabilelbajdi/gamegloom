@@ -38,6 +38,9 @@ async def auth_headers(client, test_user_data):
         "password": test_user_data["password"]
     })
     token = response.json()["token"]
+    # These tests authenticate via the Bearer header; clear the cookie jar so the
+    # auth cookie set by login doesn't trip the CSRF middleware on a later login.
+    client.cookies.clear()
     return {"Authorization": f"Bearer {token}"}
 
 
