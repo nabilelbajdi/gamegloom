@@ -11,7 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..core import schemas, security
+from ..core import schemas, security, cache
 from ..models.user import User
 from ..models.user_preference import UserPreference
 from ...db_setup import get_db
@@ -64,6 +64,9 @@ async def update_preferences(
 
     db.commit()
     db.refresh(pref)
+
+    # Taste changed -> drop the user's cached recommendations so they refresh.
+    await cache.invalidate(f"recs:user:{current_user.id}")
     return _pref_response(pref)
 
 

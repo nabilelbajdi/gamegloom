@@ -31,6 +31,7 @@ from app.api.v1.routers.reviews import router as reviews_router
 from app.api.v1.routers.user_lists import router as user_lists_router
 from app.api.v1.routers.oauth import router as oauth_router
 from app.api.v1.routers.preferences import router as preferences_router
+from app.api.v1.routers.recommendations import router as recommendations_router
 
 # Import models to ensure SQLAlchemy can resolve relationships
 from app.api.v1.models.user_platform_link import UserPlatformLink  # noqa: F401
@@ -48,6 +49,7 @@ test_app.include_router(reviews_router, prefix="/api/v1")
 test_app.include_router(user_lists_router, prefix="/api/v1")
 test_app.include_router(oauth_router, prefix="/api/v1")
 test_app.include_router(preferences_router, prefix="/api/v1")
+test_app.include_router(recommendations_router, prefix="/api/v1")
 
 # Create test database engine (SQLite in-memory)
 TEST_DATABASE_URL = "sqlite:///:memory:"
