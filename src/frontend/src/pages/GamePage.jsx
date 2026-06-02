@@ -11,6 +11,7 @@ import SimilarGames from "../components/GamePage/SimilarGames";
 import RelatedContent from "../components/GamePage/RelatedContent";
 import ReviewList from "../components/reviews/ReviewList";
 import { hasConsent, readFunctional, writeFunctional } from "../utils/consent";
+import { useAuth } from "../context/AuthContext";
 
 // Loading Skeleton Component
 const GamePageSkeleton = () => {
@@ -146,7 +147,8 @@ const GamePage = () => {
   const { gameId } = useParams();
   const { gameDetails, fetchGameDetails } = useGameStore();
   const { fetchCollection, collection } = useUserGameStore();
-  const isLoggedIn = localStorage.getItem("token") !== null;
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const isNumericId = !isNaN(gameId);
   const game = isNumericId

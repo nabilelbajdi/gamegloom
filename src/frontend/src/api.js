@@ -3,10 +3,37 @@ import { normalizeGameData, normalizeGamesData } from './utils/gameUtils';
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+// Read a non-HttpOnly cookie value by name (used for the CSRF token).
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+// Central fetch wrapper. Sends the auth cookie via credentials and, for
+// state-changing methods, echoes the CSRF cookie back in the X-CSRF-Token header
+// (double-submit). `path` is relative to BASE_URL and starts with "/".
+function apiFetch(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = { ...(options.headers || {}) };
+
+  if (UNSAFE_METHODS.has(method)) {
+    const csrf = getCookie("csrf_token");
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+  }
+
+  return fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+}
+
 // Centralized Fetch Games
 async function fetchGames(endpoint) {
   try {
-    const response = await fetch(`${BASE_URL}/${endpoint}`);
+    const response = await apiFetch(`/${endpoint}`);
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
     }
@@ -35,7 +62,7 @@ export const fetchGamesByTheme = (themeSlug, limit = 50, offset = 0) =>
 export const fetchGameCount = async (categoryType, filter) => {
   try {
     const param = categoryType === "genre" ? "genre" : "theme";
-    const response = await fetch(`${BASE_URL}/games/count?${param}=${filter}`);
+    const response = await apiFetch(`/games/count?${param}=${filter}`);
     if (!response.ok) return 0;
     const data = await response.json();
     return data.total || 0;
@@ -48,7 +75,7 @@ export const fetchGameCount = async (categoryType, filter) => {
 // Fetch all games with pagination and sorting
 export const fetchAllGames = async (limit = 50, offset = 0, sort = "rating") => {
   try {
-    const response = await fetch(`${BASE_URL}/all-games?limit=${limit}&offset=${offset}&sort=${sort}`);
+    const response = await apiFetch(`/all-games?limit=${limit}&offset=${offset}&sort=${sort}`);
     if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
     const data = await response.json();
     return normalizeGamesData(data);
@@ -61,7 +88,7 @@ export const fetchAllGames = async (limit = 50, offset = 0, sort = "rating") => 
 // Fetch total count of all games
 export const fetchAllGamesCount = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/all-games/count`);
+    const response = await apiFetch(`/all-games/count`);
     if (!response.ok) return 0;
     const data = await response.json();
     return data.total || 0;
@@ -82,14 +109,7 @@ export const fetchGameDetails = (identifier) => fetchGames(`games/${identifier}`
 
 // User Game Collection API Functions
 export const fetchUserCollection = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-games/collection`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/user-games/collection`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch collection");
@@ -99,15 +119,9 @@ export const fetchUserCollection = async () => {
 };
 
 export const addGameToCollection = async (gameId, status) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-games`, {
+  const response = await apiFetch(`/user-games`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       game_id: gameId,
       status: status
@@ -122,15 +136,9 @@ export const addGameToCollection = async (gameId, status) => {
 };
 
 export const updateGameStatus = async (gameId, newStatus) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-games/${gameId}`, {
+  const response = await apiFetch(`/user-games/${gameId}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       status: newStatus
     })
@@ -144,14 +152,8 @@ export const updateGameStatus = async (gameId, newStatus) => {
 };
 
 export const removeGameFromCollection = async (gameId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-games/${gameId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/user-games/${gameId}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -163,15 +165,9 @@ export const removeGameFromCollection = async (gameId) => {
 
 // Review API Functions
 export const createReview = async (gameId, rating, content, advancedFields = {}) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews`, {
+  const response = await apiFetch(`/reviews`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       game_id: gameId,
       rating,
@@ -199,15 +195,9 @@ export const createReview = async (gameId, rating, content, advancedFields = {})
 };
 
 export const updateReview = async (reviewId, rating, content, advancedFields = {}) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
+  const response = await apiFetch(`/reviews/${reviewId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       rating,
       content,
@@ -233,14 +223,8 @@ export const updateReview = async (reviewId, rating, content, advancedFields = {
 };
 
 export const deleteReview = async (reviewId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/reviews/${reviewId}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -250,13 +234,8 @@ export const deleteReview = async (reviewId) => {
 };
 
 export const getGameReviews = async (gameId) => {
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
   try {
-    const response = await fetch(`${BASE_URL}/reviews/game/${gameId}`, {
-      headers
-    });
+    const response = await apiFetch(`/reviews/game/${gameId}`);
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -271,15 +250,8 @@ export const getGameReviews = async (gameId) => {
 };
 
 export const getUserReviewForGame = async (gameId) => {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-
   try {
-    const response = await fetch(`${BASE_URL}/reviews/user/game/${gameId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const response = await apiFetch(`/reviews/user/game/${gameId}`);
 
     if (response.status === 404) {
       return null;
@@ -297,14 +269,8 @@ export const getUserReviewForGame = async (gameId) => {
 };
 
 export const toggleReviewLike = async (reviewId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/like`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/reviews/${reviewId}/like`, {
+    method: "POST"
   });
 
   if (!response.ok) {
@@ -315,15 +281,9 @@ export const toggleReviewLike = async (reviewId) => {
 };
 
 export const addReviewComment = async (reviewId, content) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments`, {
+  const response = await apiFetch(`/reviews/${reviewId}/comments`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content })
   });
 
@@ -335,15 +295,9 @@ export const addReviewComment = async (reviewId, content) => {
 };
 
 export const updateComment = async (reviewId, commentId, content) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments/${commentId}`, {
+  const response = await apiFetch(`/reviews/${reviewId}/comments/${commentId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content })
   });
 
@@ -356,14 +310,8 @@ export const updateComment = async (reviewId, commentId, content) => {
 };
 
 export const deleteComment = async (reviewId, commentId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments/${commentId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/reviews/${reviewId}/comments/${commentId}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -373,7 +321,7 @@ export const deleteComment = async (reviewId, commentId) => {
 };
 
 export const getReviewComments = async (reviewId) => {
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}/comments`);
+  const response = await apiFetch(`/reviews/${reviewId}/comments`);
   if (!response.ok) {
     throw new Error("Failed to fetch comments");
   }
@@ -382,7 +330,7 @@ export const getReviewComments = async (reviewId) => {
 
 export const getRecentReviews = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/reviews/recent`);
+    const response = await apiFetch(`/reviews/recent`);
     if (!response.ok) {
       throw new Error("Failed to fetch recent reviews");
     }
@@ -394,12 +342,7 @@ export const getRecentReviews = async () => {
 };
 
 export const getReview = async (reviewId) => {
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const response = await fetch(`${BASE_URL}/reviews/${reviewId}`, {
-    headers
-  });
+  const response = await apiFetch(`/reviews/${reviewId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch review");
@@ -414,14 +357,7 @@ export const getGame = async (gameId) => {
 
 // Fetch Recommendations
 export const fetchRecommendations = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/recommendations/games`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/recommendations/games`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch recommendations");
@@ -432,15 +368,9 @@ export const fetchRecommendations = async () => {
 
 // User Profile Functions
 export const updateUserProfile = async (userData) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/me/profile`, {
+  const response = await apiFetch(`/me/profile`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData)
   });
 
@@ -452,14 +382,9 @@ export const updateUserProfile = async (userData) => {
 };
 
 export const uploadAvatar = async (formData) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/me/avatar`, {
+  // No Content-Type header: the browser sets the multipart boundary for FormData.
+  const response = await apiFetch(`/me/avatar`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
     body: formData
   });
 
@@ -471,15 +396,8 @@ export const uploadAvatar = async (formData) => {
 };
 
 export const fetchUserStats = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
   try {
-    const response = await fetch(`${BASE_URL}/users/stats`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const response = await apiFetch(`/users/stats`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch user stats");
@@ -501,15 +419,8 @@ export const fetchUserStats = async () => {
 };
 
 export const fetchUserActivities = async (limit = 10) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
   try {
-    const response = await fetch(`${BASE_URL}/users/activities?limit=${limit}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const response = await apiFetch(`/users/activities?limit=${limit}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch user activities");
@@ -524,15 +435,9 @@ export const fetchUserActivities = async (limit = 10) => {
 
 // User List API Functions
 export const createUserList = async (name, description = null, isPublic = false) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists`, {
+  const response = await apiFetch(`/user-lists`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name,
       description,
@@ -548,14 +453,7 @@ export const createUserList = async (name, description = null, isPublic = false)
 };
 
 export const getUserLists = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/user-lists`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch lists");
@@ -565,14 +463,7 @@ export const getUserLists = async () => {
 };
 
 export const getUserList = async (listId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/user-lists/${listId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch list");
@@ -582,20 +473,14 @@ export const getUserList = async (listId) => {
 };
 
 export const updateUserList = async (listId, name = null, description = null, isPublic = null) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
   const body = { name, description };
   if (isPublic !== null) {
     body.is_public = isPublic;
   }
 
-  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
+  const response = await apiFetch(`/user-lists/${listId}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
 
@@ -607,14 +492,8 @@ export const updateUserList = async (listId, name = null, description = null, is
 };
 
 export const deleteUserList = async (listId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists/${listId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/user-lists/${listId}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -625,15 +504,9 @@ export const deleteUserList = async (listId) => {
 };
 
 export const addGameToList = async (listId, gameId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists/${listId}/games`, {
+  const response = await apiFetch(`/user-lists/${listId}/games`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       game_id: gameId
     })
@@ -647,14 +520,8 @@ export const addGameToList = async (listId, gameId) => {
 };
 
 export const removeGameFromList = async (listId, gameId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-lists/${listId}/games/${gameId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/user-lists/${listId}/games/${gameId}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -697,7 +564,7 @@ export const searchGames = async (query, category = "all", limit = 50, offset = 
       }
     }
 
-    const response = await fetch(`${BASE_URL}/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}&offset=${offset}`);
+    const response = await apiFetch(`/search?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&limit=${limit}&offset=${offset}`);
 
     if (!response.ok) {
       throw new Error(`HTTP Error! Status: ${response.status}`);
@@ -713,7 +580,7 @@ export const searchGames = async (query, category = "all", limit = 50, offset = 
 
 export const searchCount = async (query, category = "all") => {
   try {
-    const response = await fetch(`${BASE_URL}/search/count?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`);
+    const response = await apiFetch(`/search/count?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`);
     if (!response.ok) return 0;
     const data = await response.json();
     return data.total || 0;
@@ -732,14 +599,7 @@ export const searchCount = async (query, category = "all") => {
  * GET /integrations/status
  */
 export const fetchIntegrationStatus = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/status`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/status`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch integration status");
@@ -753,14 +613,8 @@ export const fetchIntegrationStatus = async () => {
  * DELETE /integrations/{platform}/unlink
  */
 export const unlinkPlatform = async (platform) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/${platform}/unlink`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/${platform}/unlink`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -775,15 +629,8 @@ export const unlinkPlatform = async (platform) => {
  * GET /integrations/steam/auth-url
  */
 export const getSteamAuthUrl = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
   const returnUrl = `${window.location.origin}/settings?tab=integrations&steam_callback=true`;
-  const response = await fetch(`${BASE_URL}/integrations/steam/auth-url?return_url=${encodeURIComponent(returnUrl)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/steam/auth-url?return_url=${encodeURIComponent(returnUrl)}`);
 
   if (!response.ok) {
     throw new Error("Failed to get Steam auth URL");
@@ -797,15 +644,9 @@ export const getSteamAuthUrl = async () => {
  * POST /integrations/steam/link
  */
 export const linkSteamAccount = async (openidParams) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/link`, {
+  const response = await apiFetch(`/integrations/steam/link`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(openidParams)
   });
 
@@ -822,15 +663,9 @@ export const linkSteamAccount = async (openidParams) => {
  * POST /integrations/psn/link
  */
 export const linkPSNAccount = async (username) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/link`, {
+  const response = await apiFetch(`/integrations/psn/link`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username })
   });
 
@@ -846,14 +681,7 @@ export const linkPSNAccount = async (username) => {
  * Preview a PSN profile before linking
  */
 export const previewPSNProfile = async (username) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/preview/${encodeURIComponent(username)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/psn/preview/${encodeURIComponent(username)}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -864,19 +692,13 @@ export const previewPSNProfile = async (username) => {
 };
 
 /**
- * Revoke the current auth token server-side.
+ * Revoke the current auth token server-side and clear the auth cookies.
  * POST /logout
  */
 export const logoutApi = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  // Best-effort: even if this fails (network down, etc.) we still clear the local token.
+  // Best-effort: even if this fails (network down, etc.) we still clear local user state.
   try {
-    await fetch(`${BASE_URL}/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await apiFetch(`/logout`, { method: "POST" });
   } catch (e) {
     // swallow — local logout will still happen
   }
@@ -887,12 +709,7 @@ export const logoutApi = async () => {
  * GET /me/export
  */
 export const exportMyData = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/me/export`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await apiFetch(`/me/export`);
 
   if (!response.ok) {
     throw new Error("Failed to export data");
@@ -918,15 +735,9 @@ export const exportMyData = async () => {
  * DELETE /me
  */
 export const deleteAccount = async (password) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/me`, {
+  const response = await apiFetch(`/me`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
   });
 
@@ -941,14 +752,8 @@ export const deleteAccount = async (password) => {
  * DELETE /user-games/all
  */
 export const clearAllGames = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/user-games/all`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/user-games/all`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -963,14 +768,8 @@ export const clearAllGames = async () => {
  * DELETE /integrations/psn/cache
  */
 export const clearPsnCache = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/cache`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/psn/cache`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -986,14 +785,8 @@ export const clearPsnCache = async () => {
  * DELETE /integrations/steam/cache
  */
 export const clearSteamCache = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/cache`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/steam/cache`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -1013,14 +806,7 @@ export const clearSteamCache = async () => {
  * Get PSN library (cached)
  */
 export const getPSNLibrary = async (includeHidden = false) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/library?include_hidden=${includeHidden}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/psn/library?include_hidden=${includeHidden}`);
 
   if (!response.ok) {
     // Get actual error detail from backend (e.g., "No PSN account linked")
@@ -1035,14 +821,8 @@ export const getPSNLibrary = async (includeHidden = false) => {
  * Sync PSN library from PSN API
  */
 export const syncPSNLibrary = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/sync`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/psn/sync`, {
+    method: "POST"
   });
 
   if (!response.ok) {
@@ -1057,15 +837,9 @@ export const syncPSNLibrary = async () => {
  * Import PSN games to library
  */
 export const importPSNGames = async (games) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/import`, {
+  const response = await apiFetch(`/integrations/psn/import`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ games })
   });
 
@@ -1081,15 +855,9 @@ export const importPSNGames = async (games) => {
  * Hide a PSN game
  */
 export const skipPSNGame = async (platformId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/skip`, {
+  const response = await apiFetch(`/integrations/psn/preferences/skip`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ platform_id: platformId })
   });
 
@@ -1101,15 +869,9 @@ export const skipPSNGame = async (platformId) => {
  * Manually match a PSN game
  */
 export const fixPSNMatch = async (platformId, igdbId, igdbName = null, igdbCoverUrl = null) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/match`, {
+  const response = await apiFetch(`/integrations/psn/preferences/match`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       platform_id: platformId,
       igdb_id: igdbId,
@@ -1126,14 +888,8 @@ export const fixPSNMatch = async (platformId, igdbId, igdbName = null, igdbCover
  * Restore a hidden PSN game
  */
 export const restorePSNGame = async (platformId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/psn/preferences/${encodeURIComponent(platformId)}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/psn/preferences/${encodeURIComponent(platformId)}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) throw new Error("Failed to restore game");
@@ -1145,14 +901,7 @@ export const restorePSNGame = async (platformId) => {
  * GET /integrations/steam/preview/{identifier}
  */
 export const previewSteamProfile = async (identifier) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/preview/${encodeURIComponent(identifier)}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/steam/preview/${encodeURIComponent(identifier)}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -1167,14 +916,7 @@ export const previewSteamProfile = async (identifier) => {
  */
 
 export const getSteamLibrary = async (includeHidden = false) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/library?include_hidden=${includeHidden}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  const response = await apiFetch(`/integrations/steam/library?include_hidden=${includeHidden}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -1188,14 +930,8 @@ export const getSteamLibrary = async (includeHidden = false) => {
  * Sync Steam library from Steam API
  */
 export const syncSteamLibrary = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/sync`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/steam/sync`, {
+    method: "POST"
   });
 
   if (!response.ok) {
@@ -1210,15 +946,9 @@ export const syncSteamLibrary = async () => {
  * Import Steam games directly to library
  */
 export const importSteamGames = async (games) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/import`, {
+  const response = await apiFetch(`/integrations/steam/import`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ games })
   });
 
@@ -1234,15 +964,9 @@ export const importSteamGames = async (games) => {
  * Hide a Steam game
  */
 export const skipSteamGame = async (platformId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/skip`, {
+  const response = await apiFetch(`/integrations/steam/preferences/skip`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ platform_id: platformId })
   });
 
@@ -1254,15 +978,9 @@ export const skipSteamGame = async (platformId) => {
  * Manually match a Steam game
  */
 export const fixSteamMatch = async (platformId, igdbId, igdbName = null, igdbCoverUrl = null) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/match`, {
+  const response = await apiFetch(`/integrations/steam/preferences/match`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       platform_id: platformId,
       igdb_id: igdbId,
@@ -1279,14 +997,8 @@ export const fixSteamMatch = async (platformId, igdbId, igdbName = null, igdbCov
  * Restore a hidden Steam game
  */
 export const restoreSteamGame = async (platformId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/preferences/${encodeURIComponent(platformId)}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/integrations/steam/preferences/${encodeURIComponent(platformId)}`, {
+    method: "DELETE"
   });
 
   if (!response.ok) throw new Error("Failed to restore game");
@@ -1297,15 +1009,9 @@ export const restoreSteamGame = async (platformId) => {
  * Link Steam account manually via ID, URL or vanity name
  */
 export const linkSteamManual = async (identifier) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
-
-  const response = await fetch(`${BASE_URL}/integrations/steam/link-manual`, {
+  const response = await apiFetch(`/integrations/steam/link-manual`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier })
   });
 
@@ -1326,15 +1032,12 @@ export const linkSteamManual = async (identifier) => {
  * GET /lists?page=1&per_page=20&sort=popular&search=query
  */
 export const getPublicLists = async (page = 1, perPage = 20, sort = "popular", search = null) => {
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-  let url = `${BASE_URL}/lists?page=${page}&per_page=${perPage}&sort=${sort}`;
+  let path = `/lists?page=${page}&per_page=${perPage}&sort=${sort}`;
   if (search) {
-    url += `&search=${encodeURIComponent(search)}`;
+    path += `&search=${encodeURIComponent(search)}`;
   }
 
-  const response = await fetch(url, { headers });
+  const response = await apiFetch(path);
 
   if (!response.ok) {
     throw new Error("Failed to fetch public lists");
@@ -1348,13 +1051,7 @@ export const getPublicLists = async (page = 1, perPage = 20, sort = "popular", s
  * GET /lists/featured?limit=10
  */
 export const getFeaturedLists = async (limit = 10) => {
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const response = await fetch(
-    `${BASE_URL}/lists/featured?limit=${limit}`,
-    { headers }
-  );
+  const response = await apiFetch(`/lists/featured?limit=${limit}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch featured lists");
@@ -1368,10 +1065,7 @@ export const getFeaturedLists = async (limit = 10) => {
  * GET /lists/{listId}
  */
 export const getPublicList = async (listId) => {
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const response = await fetch(`${BASE_URL}/lists/${listId}`, { headers });
+  const response = await apiFetch(`/lists/${listId}`);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -1388,14 +1082,8 @@ export const getPublicList = async (listId) => {
  * POST /lists/{listId}/like
  */
 export const likeList = async (listId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Must be logged in to like");
-
-  const response = await fetch(`${BASE_URL}/lists/${listId}/like`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/lists/${listId}/like`, {
+    method: "POST"
   });
 
   if (!response.ok) {
@@ -1411,14 +1099,8 @@ export const likeList = async (listId) => {
  * DELETE /lists/{listId}/like
  */
 export const unlikeList = async (listId) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Must be logged in to unlike");
-
-  const response = await fetch(`${BASE_URL}/lists/${listId}/like`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  const response = await apiFetch(`/lists/${listId}/like`, {
+    method: "DELETE"
   });
 
   if (!response.ok) {
@@ -1441,10 +1123,8 @@ export const toggleListLike = async (listId, currentlyLiked) => {
 };
 
 export const resendVerificationEmail = async () => {
-  const token = localStorage.getItem("token");
-  const response = await fetch(`${BASE_URL}/resend-verification`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+  const response = await apiFetch(`/resend-verification`, {
+    method: "POST"
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

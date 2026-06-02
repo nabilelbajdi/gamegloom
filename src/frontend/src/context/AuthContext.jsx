@@ -19,38 +19,35 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check authentication status
+  // Check authentication status. The auth token is in an HttpOnly cookie, so we
+  // simply ask /me with credentials and trust the response.
   const checkAuth = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      setLoading(false);
-      return;
-    }
 
-    // Add retry logic
+    // Retry only transient/network failures; a 401 is a definitive "logged out".
     let attempts = 0;
     const maxAttempts = 3;
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     while (attempts < maxAttempts) {
       try {
-        const res = await fetch(`${API_URL}/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
+        const res = await fetch(`${API_URL}/me`, { credentials: "include" });
+
+        if (res.status === 401 || res.status === 403) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         if (!res.ok) throw new Error();
-        
-        const userData = await res.json();
-        setUser(userData);
+
+        setUser(await res.json());
         setLoading(false);
         return;
       } catch (error) {
         attempts++;
         if (attempts === maxAttempts) {
           console.error("Auth check failed after retries:", error);
-          localStorage.removeItem("token");
           setUser(null);
           setLoading(false);
           return;
@@ -61,33 +58,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Login function
-  const login = async (token, userData) => {
-    try {
-      // First save the token
-      localStorage.setItem("token", token);
-      
-      // Then fetch complete user data
-      const res = await fetch(`${API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (!res.ok) throw new Error("Failed to fetch user data");
-      
-      const completeUserData = await res.json();
-      setUser(completeUserData);
-    } catch (error) {
-      // If anything fails, clean up and rethrow
-      localStorage.removeItem("token");
-      setUser(null);
-      throw error;
-    }
+  // Login: the /login request already set the auth cookie, so just load the user.
+  const login = async () => {
+    const res = await fetch(`${API_URL}/me`, { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to fetch user data");
+    setUser(await res.json());
   };
 
-  // Logout function: revoke token server-side, then clear locally.
+  // Logout: revoke the token + clear cookies server-side, then clear local state.
   const logout = async () => {
     await logoutApi();
-    localStorage.removeItem("token");
     setUser(null);
   };
 
@@ -110,4 +90,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-} 
+}

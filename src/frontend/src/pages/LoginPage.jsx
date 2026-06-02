@@ -58,6 +58,7 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // store the HttpOnly auth cookie set by the server
         body: JSON.stringify(formData),
       });
 
@@ -79,8 +80,8 @@ const LoginPage = () => {
       // Clean up any old password storage from previous versions
       removeFunctional('rememberedPassword');
 
-      const data = await response.json();
-      await login(data.token, data);
+      // The auth cookie is now set; load the current user from it.
+      await login();
       loadingBar.complete();
       navigate("/");
     } catch (err) {
