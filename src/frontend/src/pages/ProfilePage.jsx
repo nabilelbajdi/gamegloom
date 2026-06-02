@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PageMeta from '../components/common/PageMeta';
-import { fetchUserStats, fetchUserActivities } from '../api';
+import { fetchUserStats, fetchUserActivities, fetchPreferences } from '../api';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileBio from '../components/profile/ProfileBio';
 import ActivityFeed from '../components/profile/ActivityFeed';
@@ -25,6 +25,15 @@ const ProfilePage = () => {
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const [displayedActivities, setDisplayedActivities] = useState(4);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [backdrop, setBackdrop] = useState(null);
+
+  // Load the user's chosen profile backdrop (best-effort; absence = no backdrop).
+  useEffect(() => {
+    if (!user) return;
+    fetchPreferences()
+      .then((prefs) => setBackdrop(prefs.backdrop_image || null))
+      .catch(() => setBackdrop(null));
+  }, [user]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -81,12 +90,28 @@ const ProfilePage = () => {
   return (
     <div className="mt-14 bg-[var(--bg-base)]">
       <PageMeta title={`${user.username}'s Profile`} />
-      <ProfileHeader
-        user={user}
-        stats={stats}
-        isLoadingStats={isLoadingStats}
-        onProfileUpdate={(updatedUser) => checkAuth()}
-      />
+
+      {/* Personalized backdrop: art from the user's chosen game, fading into the
+          base background so the Obsidian UI stays clean on top. */}
+      <div className="relative">
+        {backdrop && (
+          <div className="absolute inset-x-0 top-0 h-80 overflow-hidden pointer-events-none">
+            <img
+              src={backdrop}
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover opacity-40"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-base)]/30 via-[var(--bg-base)]/70 to-[var(--bg-base)]" />
+          </div>
+        )}
+        <ProfileHeader
+          user={user}
+          stats={stats}
+          isLoadingStats={isLoadingStats}
+          onProfileUpdate={(updatedUser) => checkAuth()}
+        />
+      </div>
 
       {/* Content Container */}
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative">

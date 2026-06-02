@@ -22,6 +22,10 @@ class UserPreference(Base):
     playstyles: Mapped[list | None] = mapped_column(JSON, nullable=True)        # e.g. ["story", "cozy"]
     theme_key: Mapped[str] = mapped_column(String(40), nullable=False, default="obsidian", server_default="obsidian")
 
+    # Profile backdrop: art from a game the user loves, shown behind their profile.
+    backdrop_image: Mapped[str | None] = mapped_column(String(500), nullable=True)   # resolved artwork/screenshot URL
+    backdrop_game_id: Mapped[int | None] = mapped_column(Integer, nullable=True)      # IGDB id the art came from
+
     onboarded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(

@@ -705,6 +705,30 @@ export const logoutApi = async () => {
 };
 
 /**
+ * Get the current user's onboarding/personalization preferences.
+ * GET /me/preferences
+ */
+export const fetchPreferences = async () => {
+  const response = await apiFetch(`/me/preferences`);
+  if (!response.ok) throw new Error("Failed to fetch preferences");
+  return response.json();
+};
+
+/**
+ * Upsert personalization preferences (genres, themes, backdrop, onboarded flag).
+ * PUT /me/preferences
+ */
+export const updatePreferences = async (prefs) => {
+  const response = await apiFetch(`/me/preferences`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(prefs),
+  });
+  if (!response.ok) throw new Error("Failed to update preferences");
+  return response.json();
+};
+
+/**
  * Download a JSON export of all the current user's data.
  * GET /me/export
  */

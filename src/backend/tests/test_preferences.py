@@ -49,8 +49,29 @@ async def test_default_preferences(client, auth_headers):
         "favorite_themes": [],
         "playstyles": [],
         "theme_key": "obsidian",
+        "backdrop_image": None,
+        "backdrop_game_id": None,
         "onboarded": False,
     }
+
+
+async def test_set_and_clear_backdrop(client, auth_headers):
+    # Set a backdrop.
+    res = await client.put("/api/v1/me/preferences", headers=auth_headers, json={
+        "backdrop_image": "https://example.com/bloodborne.jpg",
+        "backdrop_game_id": 7334,
+    })
+    data = res.json()
+    assert data["backdrop_image"] == "https://example.com/bloodborne.jpg"
+    assert data["backdrop_game_id"] == 7334
+
+    # Explicitly clear it (null is allowed for backdrop fields).
+    res2 = await client.put("/api/v1/me/preferences", headers=auth_headers, json={
+        "backdrop_image": None,
+        "backdrop_game_id": None,
+    })
+    assert res2.json()["backdrop_image"] is None
+    assert res2.json()["backdrop_game_id"] is None
 
 
 async def test_update_preferences_and_mark_onboarded(client, auth_headers):

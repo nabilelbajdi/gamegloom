@@ -29,6 +29,8 @@ def _pref_response(pref: UserPreference | None) -> schemas.UserPreferenceRespons
         favorite_themes=pref.favorite_themes or [],
         playstyles=pref.playstyles or [],
         theme_key=pref.theme_key or "obsidian",
+        backdrop_image=pref.backdrop_image,
+        backdrop_game_id=pref.backdrop_game_id,
         onboarded=pref.onboarded_at is not None,
     )
 
@@ -57,6 +59,11 @@ async def update_preferences(
 
     for field in ("favorite_genres", "favorite_themes", "playstyles", "theme_key"):
         if field in data and data[field] is not None:
+            setattr(pref, field, data[field])
+
+    # Backdrop fields may be explicitly set to null to clear them.
+    for field in ("backdrop_image", "backdrop_game_id"):
+        if field in data:
             setattr(pref, field, data[field])
 
     if data.get("mark_onboarded"):

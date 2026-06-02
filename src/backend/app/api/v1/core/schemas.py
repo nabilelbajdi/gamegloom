@@ -340,6 +340,8 @@ class UserPreferenceUpdate(BaseModel):
     favorite_themes: Optional[List[str]] = None
     playstyles: Optional[List[str]] = None
     theme_key: Optional[str] = Field(None, max_length=40)
+    backdrop_image: Optional[str] = Field(None, max_length=500)
+    backdrop_game_id: Optional[int] = None
     mark_onboarded: Optional[bool] = None
 
 
@@ -349,6 +351,8 @@ class UserPreferenceResponse(BaseModel):
     favorite_themes: List[str] = []
     playstyles: List[str] = []
     theme_key: str = "obsidian"
+    backdrop_image: Optional[str] = None
+    backdrop_game_id: Optional[int] = None
     onboarded: bool = False
 
 
