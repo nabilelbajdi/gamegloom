@@ -50,6 +50,17 @@ class Settings(BaseSettings):
     COOKIE_DOMAIN: str = os.getenv("COOKIE_DOMAIN", "")  # empty = host-only cookie
     COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
 
+    # OAuth social login (optional): leave a provider's client id/secret empty to
+    # disable that provider — its endpoints 404 and the frontend hides the button.
+    # OAUTH_SESSION_SECRET signs the short-lived cookie that carries OAuth state/PKCE
+    # across the provider redirect. Callbacks redirect back to FRONTEND_URL.
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    OAUTH_SESSION_SECRET: str = os.getenv("OAUTH_SESSION_SECRET", "")
+    # Base URL the provider redirects back to; the callback path is appended.
+    # Must exactly match the redirect URI registered in the provider console.
+    OAUTH_REDIRECT_BASE: str = os.getenv("OAUTH_REDIRECT_BASE", "http://localhost:8000/api/v1")
+
     # Discovery cache (optional): caches the four discovery list endpoints in Redis.
     # Leave REDIS_URL empty to disable — the cache layer becomes a pass-through and
     # endpoints query the database exactly as before. Set to an Upstash rediss:// URL

@@ -10,7 +10,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    hashed_password: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar: Mapped[str] = mapped_column(String(255), nullable=False, default="/images/default-avatar.svg")
     bio: Mapped[str] = mapped_column(Text, nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default='false')
@@ -20,6 +20,7 @@ class User(Base):
     # Relationships
     user_games = relationship("UserGame", backref="user", cascade="all, delete-orphan")
     platform_links = relationship("UserPlatformLink", back_populates="user", cascade="all, delete-orphan")
+    oauth_accounts = relationship("UserOAuthAccount", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"

@@ -17,14 +17,18 @@ from backend.app.api.v1.routers.webhooks import router as webhooks_router
 from backend.app.api.v1.routers.user_lists import router as user_lists_router
 from backend.app.api.v1.routers.integrations import router as integrations_router
 from backend.app.api.v1.routers.public_lists import router as public_lists_router
+from backend.app.api.v1.routers.oauth import router as oauth_router
 
 # Import models to ensure SQLAlchemy can resolve relationships
 from backend.app.api.v1.models.user_platform_link import UserPlatformLink
 from backend.app.api.v1.models.password_reset_token import PasswordResetToken
 from backend.app.api.v1.models.email_verification import EmailVerification
+from backend.app.api.v1.models.user_oauth_account import UserOAuthAccount
 from scripts.scheduler.scheduler import init_scheduler
 from backend.app.api.v1.core.logging_config import configure_logging, request_id_ctx
 from backend.app.api.v1.core.security import csrf_protect_middleware
+from backend.app.api.settings import settings
+from starlette.middleware.sessions import SessionMiddleware
 import logging
 import os
 import uuid
@@ -94,6 +98,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Session cookie used only to carry transient OAuth state/PKCE across the provider
+# redirect. Added only when OAuth is configured; otherwise the login endpoints 404.
+if settings.OAUTH_SESSION_SECRET:
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.OAUTH_SESSION_SECRET,
+        same_site="lax",
+        https_only=settings.COOKIE_SECURE,
+        max_age=600,  # OAuth round-trip is short-lived
+    )
+
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
@@ -143,6 +158,7 @@ app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(user_lists_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
 app.include_router(public_lists_router, prefix="/api/v1")
+app.include_router(oauth_router, prefix="/api/v1")
 
 
 # Mount static files
