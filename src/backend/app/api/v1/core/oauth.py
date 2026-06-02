@@ -20,6 +20,19 @@ if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
         client_kwargs={"scope": "openid email profile"},
     )
 
+# GitHub — plain OAuth2 (not OIDC). Needs user:email scope to read the verified
+# primary email, which /user often returns as null for privacy.
+if settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET:
+    oauth.register(
+        name="github",
+        client_id=settings.GITHUB_CLIENT_ID,
+        client_secret=settings.GITHUB_CLIENT_SECRET,
+        access_token_url="https://github.com/login/oauth/access_token",
+        authorize_url="https://github.com/login/oauth/authorize",
+        api_base_url="https://api.github.com/",
+        client_kwargs={"scope": "read:user user:email"},
+    )
+
 
 def enabled_providers() -> list[str]:
     """Names of providers that have credentials configured."""

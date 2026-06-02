@@ -45,6 +45,18 @@ async def _extract_identity(provider: str, client, token: dict) -> dict:
             "email_verified": bool(info.get("email_verified")),
             "display_name": info.get("name"),
         }
+    if provider == "github":
+        # GitHub /user can return a null email (private), so read the verified
+        # primary address from /user/emails explicitly.
+        profile = (await client.get("user", token=token)).json()
+        emails = (await client.get("user/emails", token=token)).json()
+        primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
+        return {
+            "provider_account_id": str(profile["id"]),
+            "email": primary["email"] if primary else None,
+            "email_verified": bool(primary),
+            "display_name": profile.get("name") or profile.get("login"),
+        }
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported provider")
 
 

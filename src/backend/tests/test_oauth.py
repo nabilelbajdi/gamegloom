@@ -123,3 +123,58 @@ async def test_login_404_for_unknown_provider(client):
     # An unregistered provider name is always disabled, regardless of config.
     res = await client.get("/api/v1/auth/nonexistent/login")
     assert res.status_code == 404
+
+
+# --- GitHub identity extraction (the /user/emails private-email handling) ---
+
+class _FakeResp:
+    def __init__(self, data):
+        self._data = data
+
+    def json(self):
+        return self._data
+
+
+class _FakeGitHubClient:
+    """Stand-in for the Authlib GitHub client's async .get()."""
+    def __init__(self, profile, emails):
+        self._profile = profile
+        self._emails = emails
+
+    async def get(self, path, token=None):
+        if path == "user":
+            return _FakeResp(self._profile)
+        if path == "user/emails":
+            return _FakeResp(self._emails)
+        raise AssertionError(f"unexpected path {path}")
+
+
+@pytest.mark.asyncio
+async def test_github_extracts_verified_primary_email():
+    from app.api.v1.routers.oauth import _extract_identity
+    client = _FakeGitHubClient(
+        profile={"id": 123, "login": "octocat", "name": "The Octocat"},
+        emails=[
+            {"email": "secondary@example.com", "primary": False, "verified": True},
+            {"email": "octo@example.com", "primary": True, "verified": True},
+            {"email": "old@example.com", "primary": False, "verified": False},
+        ],
+    )
+    identity = await _extract_identity("github", client, token={"access_token": "x"})
+    assert identity["provider_account_id"] == "123"
+    assert identity["email"] == "octo@example.com"
+    assert identity["email_verified"] is True
+    assert identity["display_name"] == "The Octocat"
+
+
+@pytest.mark.asyncio
+async def test_github_no_verified_primary_yields_no_email():
+    from app.api.v1.routers.oauth import _extract_identity
+    client = _FakeGitHubClient(
+        profile={"id": 9, "login": "ghost", "name": None},
+        emails=[{"email": "hidden@example.com", "primary": True, "verified": False}],
+    )
+    identity = await _extract_identity("github", client, token={})
+    assert identity["email"] is None
+    assert identity["email_verified"] is False
+    assert identity["display_name"] == "ghost"  # falls back to login when name is null

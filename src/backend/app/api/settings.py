@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     # across the provider redirect. Callbacks redirect back to FRONTEND_URL.
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GITHUB_CLIENT_ID: str = os.getenv("GITHUB_CLIENT_ID", "")
+    GITHUB_CLIENT_SECRET: str = os.getenv("GITHUB_CLIENT_SECRET", "")
     OAUTH_SESSION_SECRET: str = os.getenv("OAUTH_SESSION_SECRET", "")
     # Base URL the provider redirects back to; the callback path is appended.
     # Must exactly match the redirect URI registered in the provider console.
