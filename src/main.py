@@ -90,13 +90,10 @@ origins = [
 ]
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# NOTE: CORSMiddleware is registered last (further below) so it ends up as the
+# OUTERMOST middleware. That way error responses from inner middleware (e.g. a
+# CSRF 403) still receive CORS headers, instead of surfacing in the browser as a
+# misleading "No Access-Control-Allow-Origin" error that hides the real status.
 
 # Session cookie used only to carry transient OAuth state/PKCE across the provider
 # redirect. Added only when OAuth is configured; otherwise the login endpoints 404.
@@ -140,6 +137,17 @@ async def add_security_headers(request: Request, call_next):
     if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
         response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
     return response
+
+
+# Registered last == outermost: CORS headers are applied to every response,
+# including early error returns from inner middleware (e.g. the CSRF 403).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
