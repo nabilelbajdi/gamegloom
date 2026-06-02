@@ -61,6 +61,18 @@ class ResetPasswordRequest(BaseModel):
     def _check_password(cls, v: str) -> str:
         return _validate_password_strength(v)
 
+class ChangePasswordRequest(BaseModel):
+    """Set or change a password. current_password is required only when the
+    account already has one (OAuth-only users set their first password freely)."""
+    current_password: Optional[str] = None
+    new_password: str = Field(..., min_length=10, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_password(cls, v: str) -> str:
+        return _validate_password_strength(v)
+
+
 class UserLogin(BaseModel):
     """Schema for login credentials."""
     username: str

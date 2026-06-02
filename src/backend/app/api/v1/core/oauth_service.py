@@ -39,6 +39,28 @@ def _unique_username(db: Session, seed: str) -> str:
     raise HTTPException(status_code=500, detail="Could not allocate a username")
 
 
+def link_provider(db: Session, user_id: int, provider: str, provider_account_id: str) -> str:
+    """Attach an OAuth identity to an already-authenticated user.
+
+    Returns "linked" (newly attached), "already_linked" (this same user already
+    has it), or "conflict" (the identity belongs to a different account).
+    """
+    existing = (
+        db.query(UserOAuthAccount)
+        .filter(
+            UserOAuthAccount.provider == provider,
+            UserOAuthAccount.provider_account_id == provider_account_id,
+        )
+        .first()
+    )
+    if existing:
+        return "already_linked" if existing.user_id == user_id else "conflict"
+
+    db.add(UserOAuthAccount(user_id=user_id, provider=provider, provider_account_id=provider_account_id))
+    db.commit()
+    return "linked"
+
+
 def find_or_create_user(
     db: Session,
     *,

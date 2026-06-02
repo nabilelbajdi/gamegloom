@@ -32,6 +32,8 @@ from ..models.user_psn_preference import UserPsnPreference
 from ..models.game import Game
 from ..models.password_reset_token import PasswordResetToken
 from ..models.token import Token
+from ..models.user_oauth_account import UserOAuthAccount
+from ..models.user_preference import UserPreference
 from ...db_setup import get_db
 from ...settings import settings
 
@@ -409,11 +411,15 @@ async def delete_account(
     db: Session = Depends(get_db),
 ):
     """Permanently delete the current user's account and all associated data."""
-    if not security.verify_password(request.password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password",
-        )
+    # Password-based accounts must confirm with their password. OAuth-only
+    # accounts have no password, so confirmation is skipped (they got here via a
+    # valid session already).
+    if current_user.hashed_password:
+        if not security.verify_password(request.password, current_user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect password",
+            )
 
     user_id = current_user.id
     avatar_url = current_user.avatar
@@ -426,6 +432,8 @@ async def delete_account(
     db.query(Token).filter(Token.user_id == user_id).delete(synchronize_session=False)
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
     db.query(EmailVerification).filter(EmailVerification.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserOAuthAccount).filter(UserOAuthAccount.user_id == user_id).delete(synchronize_session=False)
+    db.query(UserPreference).filter(UserPreference.user_id == user_id).delete(synchronize_session=False)
 
     # Lists: likes the user gave, then their owned lists (clearing likes-on-them + association rows first)
     db.query(ListLike).filter(ListLike.user_id == user_id).delete(synchronize_session=False)
@@ -471,6 +479,30 @@ async def delete_account(
     db.commit()
     security.clear_auth_cookies(response)
     logger.info(f"Account deleted: user_id={user_id}")
+
+
+@router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    payload: schemas.ChangePasswordRequest,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set a first password (OAuth-only users) or change an existing one.
+
+    When the account already has a password, the correct current password must
+    be supplied. Passwordless accounts can set one without it.
+    """
+    if current_user.hashed_password:
+        if not payload.current_password or not security.verify_password(
+            payload.current_password, current_user.hashed_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect",
+            )
+
+    current_user.hashed_password = security.get_password_hash(payload.new_password)
+    db.commit()
 
 
 @router.patch("/me/profile", response_model=schemas.UserResponse)

@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 
 from ..core import security, oauth as oauth_module, oauth_service
+from ..models.user import User
+from ..models.user_oauth_account import UserOAuthAccount
 from ...db_setup import get_db
 from ...settings import settings
 
@@ -66,11 +68,68 @@ async def list_providers():
     return {"providers": oauth_module.enabled_providers()}
 
 
+@router.get("/me/connections")
+async def list_connections(
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """The current user's linked OAuth providers + whether they have a password."""
+    providers = [
+        a.provider
+        for a in db.query(UserOAuthAccount).filter(UserOAuthAccount.user_id == current_user.id).all()
+    ]
+    return {"has_password": current_user.hashed_password is not None, "providers": providers}
+
+
+@router.delete("/me/connections/{provider}", status_code=status.HTTP_204_NO_CONTENT)
+async def unlink_connection(
+    provider: str,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Unlink a provider, refusing to remove the user's only remaining sign-in method."""
+    providers = {
+        a.provider
+        for a in db.query(UserOAuthAccount).filter(UserOAuthAccount.user_id == current_user.id).all()
+    }
+    if provider not in providers:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not linked")
+
+    has_password = current_user.hashed_password is not None
+    if not has_password and len(providers) == 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set a password before removing your only sign-in method.",
+        )
+
+    db.query(UserOAuthAccount).filter(
+        UserOAuthAccount.user_id == current_user.id,
+        UserOAuthAccount.provider == provider,
+    ).delete()
+    db.commit()
+
+
 @router.get("/auth/{provider}/login")
 async def oauth_login(provider: str, request: Request):
     """Kick off the OAuth flow by redirecting to the provider."""
     if not oauth_module.is_enabled(provider):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not enabled")
+    request.session.pop("oauth_link_user_id", None)  # ensure this is a login, not a link
+    client = getattr(oauth_module.oauth, provider)
+    return await client.authorize_redirect(request, _redirect_uri(provider))
+
+
+@router.get("/auth/{provider}/link")
+async def oauth_link(
+    provider: str,
+    request: Request,
+    current_user: User = Depends(security.get_current_user),
+):
+    """Link a provider to the *currently logged-in* user (vs. logging in as it)."""
+    if not oauth_module.is_enabled(provider):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not enabled")
+    # Remember whose account to attach the identity to when the callback returns.
+    request.session["oauth_link_user_id"] = current_user.id
     client = getattr(oauth_module.oauth, provider)
     return await client.authorize_redirect(request, _redirect_uri(provider))
 
@@ -90,6 +149,17 @@ async def oauth_callback(provider: str, request: Request, db: Session = Depends(
     except Exception as e:
         logger.warning(f"OAuth callback failed for {provider}: {e}")
         return _frontend_redirect(success=False)
+
+    # Link flow: attach this identity to the already-logged-in user instead of
+    # logging in as whoever owns it. Keeps the current session untouched.
+    link_user_id = request.session.pop("oauth_link_user_id", None)
+    if link_user_id:
+        result = oauth_service.link_provider(db, link_user_id, provider, identity["provider_account_id"])
+        query = "error=already_linked" if result == "conflict" else f"linked={provider}"
+        return RedirectResponse(
+            f"{settings.FRONTEND_URL}/settings?{query}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     try:
         user = oauth_service.find_or_create_user(

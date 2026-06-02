@@ -125,6 +125,38 @@ async def test_login_404_for_unknown_provider(client):
     assert res.status_code == 404
 
 
+# --- link_provider (connecting a provider to the current account) ---------
+
+def _bare_user(db, username, email):
+    u = User(username=username, email=email, hashed_password=None, is_verified=True)
+    db.add(u)
+    db.commit()
+    db.refresh(u)
+    return u
+
+
+def test_link_provider_new(db_session):
+    user = _bare_user(db_session, "linker", "linker@example.com")
+    assert oauth_service.link_provider(db_session, user.id, "google", "gid-1") == "linked"
+    assert db_session.query(UserOAuthAccount).filter_by(user_id=user.id, provider="google").count() == 1
+
+
+def test_link_provider_already_linked_to_self(db_session):
+    user = _bare_user(db_session, "selflink", "self@example.com")
+    db_session.add(UserOAuthAccount(user_id=user.id, provider="google", provider_account_id="gid-2"))
+    db_session.commit()
+    assert oauth_service.link_provider(db_session, user.id, "google", "gid-2") == "already_linked"
+
+
+def test_link_provider_conflict_with_other_account(db_session):
+    owner = _bare_user(db_session, "owner", "owner@example.com")
+    other = _bare_user(db_session, "intruder", "intruder@example.com")
+    db_session.add(UserOAuthAccount(user_id=owner.id, provider="google", provider_account_id="gid-3"))
+    db_session.commit()
+    # The identity belongs to `owner`; `other` must not be able to grab it.
+    assert oauth_service.link_provider(db_session, other.id, "google", "gid-3") == "conflict"
+
+
 # --- GitHub identity extraction (the /user/emails private-email handling) ---
 
 class _FakeResp:

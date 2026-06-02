@@ -744,6 +744,42 @@ export const changeUsername = async (username) => {
 };
 
 /**
+ * Set a first password (OAuth-only users) or change an existing one.
+ * POST /me/password
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await apiFetch(`/me/password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ current_password: currentPassword || null, new_password: newPassword }),
+  });
+  if (response.ok) return;
+  const data = await response.json().catch(() => ({}));
+  const msg = Array.isArray(data.detail) ? data.detail[0]?.msg : data.detail;
+  throw new Error(msg || "Could not update password");
+};
+
+/**
+ * List the user's linked OAuth providers + whether they have a password.
+ * GET /me/connections
+ */
+export const fetchConnections = async () => {
+  const response = await apiFetch(`/me/connections`);
+  if (!response.ok) throw new Error("Failed to load connections");
+  return response.json();
+};
+
+/**
+ * Unlink an OAuth provider (refused if it's the only sign-in method).
+ * DELETE /me/connections/:provider
+ */
+export const unlinkConnection = async (provider) => {
+  const response = await apiFetch(`/me/connections/${provider}`, { method: "DELETE" });
+  if (response.status === 400) throw new Error("Set a password before removing your only sign-in method");
+  if (!response.ok) throw new Error("Could not unlink account");
+};
+
+/**
  * Download a JSON export of all the current user's data.
  * GET /me/export
  */

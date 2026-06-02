@@ -9,6 +9,7 @@ import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
 import SteamConnectModal from '../components/settings/SteamConnectModal';
 import AvatarUpload from '../components/profile/AvatarUpload';
+import AccountSection from '../components/settings/AccountSection';
 import useToastStore from '../store/useToastStore';
 import useUserGameStore from '../store/useUserGameStore';
 import { formatDistanceToNow } from 'date-fns';
@@ -539,6 +540,8 @@ const SettingsPage = () => {
                         )}
                     </div>
                 </section>
+
+                <AccountSection />
 
                 {/* Danger zone */}
                 <section className="settings-card">
