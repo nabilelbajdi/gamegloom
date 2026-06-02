@@ -30,6 +30,9 @@ httpx>=0.28.0
 # Scheduling
 APScheduler>=3.10.0
 
+# Caching (optional - set REDIS_URL to enable; ships disabled by default)
+redis>=5.0
+
 # Image handling
 pillow>=11.1.0
 cloudinary>=1.36.0

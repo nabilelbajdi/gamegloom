@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     COOKIE_DOMAIN: str = os.getenv("COOKIE_DOMAIN", "")  # empty = host-only cookie
     COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")
 
+    # Discovery cache (optional): caches the four discovery list endpoints in Redis.
+    # Leave REDIS_URL empty to disable — the cache layer becomes a pass-through and
+    # endpoints query the database exactly as before. Set to an Upstash rediss:// URL
+    # in production to enable.
+    REDIS_URL: str = os.getenv("REDIS_URL", "")
+    DISCOVERY_CACHE_TTL: int = int(os.getenv("DISCOVERY_CACHE_TTL", "600"))
+
     def validate(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL must be set in environment variables")

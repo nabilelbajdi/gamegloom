@@ -7,8 +7,9 @@ import asyncio
 import logging
 
 from ..models import game
-from ..core import services, schemas
+from ..core import services, schemas, cache
 from ...db_setup import get_db
+from ...settings import settings
 
 router = APIRouter(tags=["games"])
 
@@ -172,75 +173,81 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
 @router.get("/trending-games", response_model=List[schemas.Game])
 async def get_trending_games(db: Session = Depends(get_db)):
     """Get trending games based on popularity and ratings"""
-    try:
+    async def producer():
         # First try to get recent trending games from our database
         db_games = services.get_trending_games(db)
-        
-        if len(db_games) >= 20:
-            return db_games
-            
-        # Otherwise, sync with IGDB
-        time_6_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
-        time_now = int(datetime.now().timestamp())
-        
-        popularity_query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_6_months_ago} & first_release_date <= {time_now} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
-        
-        # Fetch and sync the trending games
-        await services.sync_games_from_igdb(db, popularity_query)
-        
-        # Get the updated trending games from the database
-        return services.get_trending_games(db)
-        
+
+        if len(db_games) < 20:
+            # Otherwise, sync with IGDB
+            time_6_months_ago = int((datetime.now() - timedelta(days=180)).timestamp())
+            time_now = int(datetime.now().timestamp())
+
+            popularity_query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_6_months_ago} & first_release_date <= {time_now} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
+
+            # Fetch and sync the trending games
+            await services.sync_games_from_igdb(db, popularity_query)
+
+            # Get the updated trending games from the database
+            db_games = services.get_trending_games(db)
+
+        return [schemas.Game.model_validate(g).model_dump(mode="json") for g in db_games]
+
+    try:
+        return await cache.cached_json("discovery:trending", settings.DISCOVERY_CACHE_TTL, producer)
     except Exception as e:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Error fetching trending games: {str(e)}"
         )
 
 @router.get("/anticipated-games", response_model=List[schemas.Game])
 async def get_anticipated_games(db: Session = Depends(get_db)):
     """Get anticipated games"""
-    try:
+    async def producer():
         # First try to get recent anticipated games from the database
         db_games = services.get_anticipated_games(db)
-        
-        if len(db_games) >= 20:
-            return db_games
-            
-        # Otherwise, sync with IGDB
-        current_timestamp = int(datetime.now().timestamp())
-        one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
-        
-        query = f"{services.IGDB_GAME_FIELDS} where first_release_date > {current_timestamp} & first_release_date < {one_year_future} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
-        
-        # Fetch and sync the anticipated games
-        await services.sync_games_from_igdb(db, query)
-        
-        # Get the updated anticipated games from our database
-        return services.get_anticipated_games(db)
-        
+
+        if len(db_games) < 20:
+            # Otherwise, sync with IGDB
+            current_timestamp = int(datetime.now().timestamp())
+            one_year_future = current_timestamp + (365 * 24 * 60 * 60)  # 1 year from now
+
+            query = f"{services.IGDB_GAME_FIELDS} where first_release_date > {current_timestamp} & first_release_date < {one_year_future} & hypes > 0 & cover != null; sort hypes desc; limit 100;"
+
+            # Fetch and sync the anticipated games
+            await services.sync_games_from_igdb(db, query)
+
+            # Get the updated anticipated games from our database
+            db_games = services.get_anticipated_games(db)
+
+        return [schemas.Game.model_validate(g).model_dump(mode="json") for g in db_games]
+
+    try:
+        return await cache.cached_json("discovery:anticipated", settings.DISCOVERY_CACHE_TTL, producer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching anticipated games: {str(e)}")
 
 @router.get("/highly-rated-games", response_model=List[schemas.Game])
 async def get_highly_rated_games(db: Session = Depends(get_db)):
     """Get highly rated games"""
-    try:
+    async def producer():
         # First try to get recent highly rated games from our database
         db_games = services.get_highly_rated_games(db)
-        
-        if len(db_games) >= 20:
-            return db_games
-            
-        # Otherwise, sync with IGDB
-        query = f"{services.IGDB_GAME_FIELDS} where total_rating_count > 50 & total_rating > 85 & cover != null; sort total_rating desc; limit 100;"
-        
-        # Fetch and sync the highly rated games
-        await services.sync_games_from_igdb(db, query)
-        
-        # Get the updated highly rated games from our database
-        return services.get_highly_rated_games(db)
-        
+
+        if len(db_games) < 20:
+            # Otherwise, sync with IGDB
+            query = f"{services.IGDB_GAME_FIELDS} where total_rating_count > 50 & total_rating > 85 & cover != null; sort total_rating desc; limit 100;"
+
+            # Fetch and sync the highly rated games
+            await services.sync_games_from_igdb(db, query)
+
+            # Get the updated highly rated games from our database
+            db_games = services.get_highly_rated_games(db)
+
+        return [schemas.Game.model_validate(g).model_dump(mode="json") for g in db_games]
+
+    try:
+        return await cache.cached_json("discovery:highly_rated", settings.DISCOVERY_CACHE_TTL, producer)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -250,25 +257,27 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
 @router.get("/latest-games", response_model=List[schemas.Game])
 async def get_latest_games(db: Session = Depends(get_db)):
     """Get latest released games"""
-    try:
+    async def producer():
         # First try to get recent latest games from our database
         db_games = services.get_latest_games(db)
-        
-        if len(db_games) >= 20:
-            return db_games
-            
-        # Otherwise, sync with IGDB
-        time_3_months_ago = int((datetime.now() - timedelta(days=90)).timestamp())
-        time_now = int(datetime.now().timestamp())
-        
-        query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_3_months_ago} & first_release_date <= {time_now} & cover != null; sort first_release_date desc; limit 100;"
-        
-        # Fetch and sync the latest games
-        await services.sync_games_from_igdb(db, query)
-        
-        # Get the updated latest games from our database
-        return services.get_latest_games(db)
-        
+
+        if len(db_games) < 20:
+            # Otherwise, sync with IGDB
+            time_3_months_ago = int((datetime.now() - timedelta(days=90)).timestamp())
+            time_now = int(datetime.now().timestamp())
+
+            query = f"{services.IGDB_GAME_FIELDS} where first_release_date >= {time_3_months_ago} & first_release_date <= {time_now} & cover != null; sort first_release_date desc; limit 100;"
+
+            # Fetch and sync the latest games
+            await services.sync_games_from_igdb(db, query)
+
+            # Get the updated latest games from our database
+            db_games = services.get_latest_games(db)
+
+        return [schemas.Game.model_validate(g).model_dump(mode="json") for g in db_games]
+
+    try:
+        return await cache.cached_json("discovery:latest", settings.DISCOVERY_CACHE_TTL, producer)
     except Exception as e:
         raise HTTPException(
             status_code=500,
