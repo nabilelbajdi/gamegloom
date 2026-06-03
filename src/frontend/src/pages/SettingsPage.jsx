@@ -3,7 +3,7 @@ import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail, Download } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount, exportMyData } from '../api';
+import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount, exportMyData, fetchConnections } from '../api';
 import { format } from 'date-fns';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
@@ -32,6 +32,7 @@ const SettingsPage = () => {
     const [isDeleteConfirming, setIsDeleteConfirming] = useState(false);
     const [deletePassword, setDeletePassword] = useState('');
     const [deleteError, setDeleteError] = useState('');
+    const [hasPassword, setHasPassword] = useState(true);
     const callbackProcessed = useRef(false);
 
     const [resendLoading, setResendLoading] = useState(false);
@@ -70,9 +71,16 @@ const SettingsPage = () => {
         }
     };
 
+    const loadHasPassword = () => {
+        fetchConnections()
+            .then((c) => setHasPassword(c.has_password))
+            .catch(() => {});
+    };
+
     useEffect(() => {
         loadStatus();
         handleSteamCallback();
+        loadHasPassword();
     }, []);
 
     useEffect(() => {
@@ -169,7 +177,7 @@ const SettingsPage = () => {
     };
 
     const handleDeleteAccount = async () => {
-        if (!deletePassword) return;
+        if (hasPassword && !deletePassword) return;
         setDeleteError('');
         try {
             setActionLoading('delete-account');
@@ -541,7 +549,7 @@ const SettingsPage = () => {
                     </div>
                 </section>
 
-                <AccountSection />
+                <AccountSection onPasswordChange={loadHasPassword} />
 
                 {/* Danger zone */}
                 <section className="settings-card">
@@ -560,7 +568,9 @@ const SettingsPage = () => {
                             </div>
                             <div className="clear-row-content">
                                 <p className="clear-row-title">
-                                    {isDeleteConfirming ? 'Confirm with your password' : 'Delete account'}
+                                    {isDeleteConfirming
+                                        ? (hasPassword ? 'Confirm with your password' : 'Confirm account deletion')
+                                        : 'Delete account'}
                                 </p>
                                 <p className="clear-row-meta">
                                     {isDeleteConfirming
@@ -573,15 +583,17 @@ const SettingsPage = () => {
 
                         {isDeleteConfirming && (
                             <div className="clear-confirm-panel">
-                                <input
-                                    type="password"
-                                    value={deletePassword}
-                                    onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
-                                    placeholder="Your password"
-                                    className="clear-confirm-input"
-                                    autoComplete="current-password"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleDeleteAccount()}
-                                />
+                                {hasPassword && (
+                                    <input
+                                        type="password"
+                                        value={deletePassword}
+                                        onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+                                        placeholder="Your password"
+                                        className="clear-confirm-input"
+                                        autoComplete="current-password"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleDeleteAccount()}
+                                    />
+                                )}
                                 {deleteError && (
                                     <p className="text-red-400 text-sm mt-2">{deleteError}</p>
                                 )}
@@ -592,7 +604,7 @@ const SettingsPage = () => {
                                     <button
                                         className="clear-confirm-btn confirm"
                                         onClick={handleDeleteAccount}
-                                        disabled={!deletePassword || actionLoading === 'delete-account'}
+                                        disabled={(hasPassword && !deletePassword) || actionLoading === 'delete-account'}
                                     >
                                         {actionLoading === 'delete-account' ? (
                                             <Loader2 size={14} className="animate-spin" />

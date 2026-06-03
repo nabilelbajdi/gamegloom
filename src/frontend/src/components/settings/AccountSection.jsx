@@ -13,12 +13,13 @@ import useToastStore from "../../store/useToastStore";
 
 const PROVIDER_LABELS = { google: "Google", github: "GitHub" };
 
-const AccountSection = () => {
+const AccountSection = ({ onPasswordChange }) => {
   const { user, checkAuth } = useAuth();
   const navigate = useNavigate();
   const toast = useToastStore();
 
   const [connections, setConnections] = useState({ has_password: false, providers: [] });
+  const [loaded, setLoaded] = useState(false);
   const [enabledProviders, setEnabledProviders] = useState([]);
   const [busy, setBusy] = useState(null);
 
@@ -32,7 +33,10 @@ const AccountSection = () => {
   const [newPw, setNewPw] = useState("");
 
   const loadConnections = () => {
-    fetchConnections().then(setConnections).catch(() => {});
+    fetchConnections()
+      .then(setConnections)
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   };
 
   useEffect(() => {
@@ -78,6 +82,7 @@ const AccountSection = () => {
       setCurrentPw("");
       setNewPw("");
       loadConnections();
+      onPasswordChange?.();  // let the parent (delete section) refresh has_password
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -141,6 +146,7 @@ const AccountSection = () => {
       </div>
 
       {/* Password */}
+      {loaded && (
       <div className={`clear-row-wrapper ${pwOpen ? "confirming" : ""}`}>
         <div className="clear-row" style={{ cursor: "default" }}>
           <div className="clear-row-icon"><Lock size={18} /></div>
@@ -182,6 +188,7 @@ const AccountSection = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* Connected accounts */}
       <div className="settings-subheader">Connected accounts</div>
