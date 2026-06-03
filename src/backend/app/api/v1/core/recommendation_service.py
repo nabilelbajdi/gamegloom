@@ -9,7 +9,7 @@ SQL + Python, so it runs comfortably on free-tier infra and is fully cacheable.
 Content-based scoring also handles the cold-start case well: a brand-new user
 who just picked a few genres in onboarding gets a real feed immediately.
 """
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from ..models.game import Game
 from ..models.user_game import UserGame
@@ -64,10 +64,18 @@ def score_game(game: Game, genre_terms: set[str], theme_terms: set[str], similar
     return score
 
 
+# Only the columns scoring needs — a Game row carries ~20 fat JSON columns we
+# never touch while ranking, so we load the thin set for the pool/library and
+# hydrate full rows for just the winners. Keeps Neon egress proportional to the
+# result size instead of the 500-row candidate pool.
+_SCORE_COLUMNS = (Game.id, Game.igdb_id, Game.genres, Game.themes, Game.similar_games, Game.total_rating)
+
+
 def recommend_games(db: Session, user_id: int, prefs, limit: int = 50, pool_size: int = 500) -> list[Game]:
     """Return up to `limit` recommended games, excluding the user's library."""
     library = (
         db.query(Game)
+        .options(load_only(*_SCORE_COLUMNS))
         .join(UserGame, UserGame.game_id == Game.id)
         .filter(UserGame.user_id == user_id)
         .all()
@@ -76,17 +84,29 @@ def recommend_games(db: Session, user_id: int, prefs, limit: int = 50, pool_size
     genre_terms, theme_terms, similar_ids = _collect_taste(prefs, library)
 
     # Bounded candidate pool: rated games with a cover, not already in the library.
-    q = db.query(Game).filter(Game.cover_image.isnot(None), Game.total_rating.isnot(None))
+    q = (
+        db.query(Game)
+        .options(load_only(*_SCORE_COLUMNS))
+        .filter(Game.cover_image.isnot(None), Game.total_rating.isnot(None))
+    )
     if library_ids:
         q = q.filter(~Game.id.in_(library_ids))
     candidates = q.order_by(Game.total_rating.desc()).limit(pool_size).all()
 
     # No taste signal at all (no prefs, empty library) -> quality-ranked fallback.
     if not (genre_terms or theme_terms or similar_ids):
-        return candidates[:limit]
+        winners = candidates[:limit]
+    else:
+        candidates.sort(
+            key=lambda g: score_game(g, genre_terms, theme_terms, similar_ids),
+            reverse=True,
+        )
+        winners = candidates[:limit]
 
-    candidates.sort(
-        key=lambda g: score_game(g, genre_terms, theme_terms, similar_ids),
-        reverse=True,
-    )
-    return candidates[:limit]
+    # Hydrate full rows for only the winners (the response serializes every field),
+    # preserving the ranked order.
+    winner_ids = [g.id for g in winners]
+    if not winner_ids:
+        return []
+    by_id = {g.id: g for g in db.query(Game).filter(Game.id.in_(winner_ids)).all()}
+    return [by_id[i] for i in winner_ids if i in by_id]
