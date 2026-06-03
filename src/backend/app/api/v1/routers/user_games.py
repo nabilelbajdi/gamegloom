@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List
 
-from ..core import schemas
+from ..core import schemas, cache
 from ..models.user_game import UserGame, GameStatus
 from ..models.game import Game
 from ..models.user import User
@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.post("", response_model=schemas.UserGame)
-def add_game_to_collection(
+async def add_game_to_collection(
     game_data: schemas.UserGameCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -54,6 +54,10 @@ def add_game_to_collection(
     db.add(db_user_game)
     db.commit()
     db.refresh(db_user_game)
+
+    # Library is a recommendation taste signal (and recs exclude owned games),
+    # so drop the cached recommendations to reflect the change.
+    await cache.invalidate(f"recs:user:{current_user.id}")
     return db_user_game
 
 @router.get("/collection", response_model=schemas.UserGameResponse)
@@ -74,6 +78,11 @@ def get_user_collection(
     collection = schemas.UserGameResponse()
     
     for user_game, game in user_games:
+        # Blended overall rating (IGDB + GameGloom), shown on a 5-point scale.
+        overall = schemas.blend_overall_rating(
+            game.total_rating, game.total_rating_count,
+            game.community_rating, game.community_rating_count,
+        )
         game_info = schemas.GameBasicInfo(
             id=game.igdb_id,
             igdb_id=game.igdb_id,
@@ -85,7 +94,7 @@ def get_user_collection(
             platforms=game.platforms,
             game_modes=game.game_modes,
             player_perspectives=game.player_perspectives,
-            rating="N/A" if not game.total_rating else format(float(game.total_rating) / 20, ".1f"),
+            rating="N/A" if not overall else format(overall / 20, ".1f"),
             first_release_date=game.first_release_date,
             added_at=user_game.added_at,
             updated_at=user_game.updated_at,
@@ -138,7 +147,7 @@ def update_game_status(
     return user_game
 
 @router.delete("/all", status_code=status.HTTP_200_OK)
-def clear_all_games(
+async def clear_all_games(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -146,13 +155,14 @@ def clear_all_games(
     deleted_count = db.query(UserGame).filter(
         UserGame.user_id == current_user.id
     ).delete()
-    
+
     db.commit()
+    await cache.invalidate(f"recs:user:{current_user.id}")
     return {"message": f"Cleared {deleted_count} games from your library", "count": deleted_count}
 
 
 @router.delete("/{igdb_id}", status_code=status.HTTP_200_OK)
-def remove_game_from_collection(
+async def remove_game_from_collection(
     igdb_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -179,8 +189,9 @@ def remove_game_from_collection(
         )
     
     db.delete(user_game)
-    
+
     # Keep platform cache as-is; re-sync will reset to pending if needed
 
     db.commit()
-    return {"message": "Game successfully removed from collection"} 
+    await cache.invalidate(f"recs:user:{current_user.id}")
+    return {"message": "Game successfully removed from collection"}
