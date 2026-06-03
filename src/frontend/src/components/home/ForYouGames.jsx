@@ -6,7 +6,7 @@ import GameCarousel from "../common/GameCarousel";
 
 const ForYouGames = () => {
   const { user } = useAuth();
-  const { recommendedGames, fetchGames } = useGameStore();
+  const { recommendedGames, fetchGames, categoryStatus } = useGameStore();
 
   useEffect(() => {
     if (user) {
@@ -22,6 +22,8 @@ const ForYouGames = () => {
       games={recommendedGames}
       maxGames={24}
       slidesToShow={6}
+      status={categoryStatus["recommendations"]}
+      onRetry={() => fetchGames("recommendations")}
     />
   );
 };

@@ -42,7 +42,7 @@ const LoadingCarousel = ({ slidesToShow }) => {
 };
 
 const TrendingGames = () => {
-  const { trendingGames, fetchGames } = useGameStore();
+  const { trendingGames, fetchGames, categoryStatus } = useGameStore();
   const [loading, setLoading] = useState(true);
   const [currentBatch, setCurrentBatch] = useState(0);
   const slidesToShow = 5;
@@ -80,6 +80,8 @@ const TrendingGames = () => {
       maxGames={maxGames}
       slidesToShow={slidesToShow}
       onSlideChange={handleSlideChange}
+      status={categoryStatus["trending"]}
+      onRetry={() => fetchGames("trending")}
     />
   );
 };

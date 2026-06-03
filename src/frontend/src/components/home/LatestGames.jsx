@@ -4,7 +4,7 @@ import useGameStore from "../../store/useGameStore";
 import GameCarousel from "../common/GameCarousel";
 
 const LatestGames = () => {
-  const { latestGames, fetchGames } = useGameStore();
+  const { latestGames, fetchGames, categoryStatus } = useGameStore();
 
   useEffect(() => {
     fetchGames("latest");
@@ -17,6 +17,8 @@ const LatestGames = () => {
       games={latestGames}
       maxGames={24}
       slidesToShow={6}
+      status={categoryStatus["latest"]}
+      onRetry={() => fetchGames("latest")}
     />
   );
 };

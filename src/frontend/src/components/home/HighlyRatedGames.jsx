@@ -4,7 +4,7 @@ import useGameStore from "../../store/useGameStore";
 import GameCarousel from "../common/GameCarousel";
 
 const HighlyRatedGames = () => {
-  const { highlyRatedGames, fetchGames } = useGameStore();
+  const { highlyRatedGames, fetchGames, categoryStatus } = useGameStore();
 
   useEffect(() => {
     fetchGames("highlyRated");
@@ -17,6 +17,8 @@ const HighlyRatedGames = () => {
       games={highlyRatedGames}
       maxGames={24}
       slidesToShow={6}
+      status={categoryStatus["highlyRated"]}
+      onRetry={() => fetchGames("highlyRated")}
     />
   );
 };

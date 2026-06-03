@@ -1,6 +1,6 @@
 // src/components/common/GameCarousel.jsx
 import React, { useRef, useState, useEffect, memo } from "react";
-import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp, RotateCw } from "lucide-react";
 import GridGameCard from "../game/GridGameCard";
 import SectionHeader from "./SectionHeader";
 import { Link } from "react-router-dom";
@@ -11,7 +11,9 @@ const GameCarousel = memo(({
   viewAllLink,
   maxGames = 24,
   slidesToShow = 6,
-  onSlideChange
+  onSlideChange,
+  status,
+  onRetry
 }) => {
   const scrollContainerRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -116,6 +118,27 @@ const GameCarousel = memo(({
   const cardWidth = `calc(${100 / slidesToShow}% - ${(slidesToShow - 1) * 8 / slidesToShow}px)`;
 
   if (displayedGames.length === 0) {
+    // Surface a retry when the fetch failed, instead of silently hiding the row.
+    if (status === "error") {
+      return (
+        <section className={title === "Trending Now" ? "mt-4" : "mt-10"}>
+          <div className="flex justify-between items-center mb-2">
+            <SectionHeader title={title} viewAllLink={viewAllLink} icon={sectionIcon} showGradient={true} />
+          </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-10 rounded-lg bg-surface-dark/40 text-center">
+            <p className="text-gray-400 text-sm">Couldn't load {title.toLowerCase()}.</p>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors text-sm font-medium cursor-pointer"
+              >
+                <RotateCw size={16} /> Retry
+              </button>
+            )}
+          </div>
+        </section>
+      );
+    }
     return null;
   }
 
