@@ -3,6 +3,7 @@ import React from "react";
 import { useAuth } from "../context/AuthContext";
 import PageMeta from "../components/common/PageMeta";
 import Hero from "../components/home/HeroSection";
+import ForYouGames from "../components/home/ForYouGames";
 import AnticipatedGames from "../components/home/AnticipatedGames";
 import ReviewedGames from "../components/home/ReviewedGames";
 import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGames";
@@ -42,6 +43,7 @@ const HomePage = () => {
             <div className="bg-[var(--bg-base)]">
                 <FeaturedAnticipatedGames />
                 <div className="container mx-auto px-4 py-6">
+                    <ForYouGames />
                     <TrendingGames />
                 </div>
                 <ReviewedGames />
