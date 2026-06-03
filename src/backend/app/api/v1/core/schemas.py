@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import Optional, List, Dict
 from enum import Enum
-from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator, computed_field
 from ..models.user_game import GameStatus
 
 # A short blocklist of the worst-offender passwords. Lowercase + stripped at compare time.
@@ -114,6 +114,26 @@ class SimilarGame(BaseModel):
     rating: Optional[float] = None
     genres: Optional[str] = None
 
+def blend_overall_rating(total_rating, total_count, community_rating, community_count) -> Optional[float]:
+    """Vote-weighted blend (0-100) of every available rating source.
+
+    Each source contributes its rating weighted by its vote count, so a game with
+    thousands of IGDB votes barely shifts from a few GameGloom reviews, while a
+    niche game leans more on its community ratings. More sources (e.g. Steam) drop
+    in as extra (rating, count) terms. Returns None when nothing has any votes.
+    """
+    sources = [
+        (total_rating, total_count or 0),
+        (community_rating, community_count or 0),
+    ]
+    weighted = [(r, c) for r, c in sources if r is not None and c > 0]
+    if not weighted:
+        return next((r for r, _ in sources if r is not None), None)
+    total = sum(r * c for r, c in weighted)
+    count = sum(c for _, c in weighted)
+    return total / count
+
+
 class GameBase(BaseModel):
     """Base schema for game models."""
     igdb_id: int
@@ -197,6 +217,27 @@ class Game(GameBase):
     created_at: datetime
     updated_at: datetime
     is_deleted: bool = False
+
+    # GameGloom's own community rating, kept separate from IGDB's so syncs can't
+    # wipe it. Read-only here — never part of the create/update input schemas.
+    community_rating: Optional[float] = None
+    community_rating_count: Optional[int] = None
+
+    @computed_field
+    @property
+    def overall_rating(self) -> Optional[float]:
+        """Vote-weighted blend (0-100) of IGDB's total_rating + GameGloom's
+        community_rating. See blend_overall_rating for the formula."""
+        return blend_overall_rating(
+            self.total_rating, self.total_rating_count,
+            self.community_rating, self.community_rating_count,
+        )
+
+    @computed_field
+    @property
+    def overall_rating_count(self) -> int:
+        """Total number of votes behind overall_rating, across all sources."""
+        return (self.total_rating_count or 0) + (self.community_rating_count or 0)
 
     model_config = ConfigDict(from_attributes=True)
 

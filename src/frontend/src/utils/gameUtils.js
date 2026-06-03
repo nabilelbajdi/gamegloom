@@ -122,7 +122,7 @@ export const normalizeGameData = (game) => {
     id: game.igdb_id || game.id,
     igdb_id: game.igdb_id || game.id,
     coverImage: game.coverImage || game.cover_image || game.cover,
-    rating: formatRating(game.rating || game.total_rating || "N/A"),
+    rating: formatRating(game.overall_rating || game.rating || game.total_rating || "N/A"),
     releaseDate: game.releaseDate || game.first_release_date || game.release_date,
     genres: game.genres || "Unknown Genre",
     platforms: game.platforms || "",

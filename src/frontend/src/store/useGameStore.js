@@ -17,6 +17,10 @@ const useGameStore = create((set, get) => ({
   genreGames: {},
   themeGames: {},
   recommendedGames: [],
+  // Per-section load status keyed by category ("trending", "genre:rpg", ...):
+  // "loading" | "success" | "error". Lets carousels show a retry instead of a
+  // silent blank when a fetch fails.
+  categoryStatus: {},
 
   fetchTopGamesForGenre: async (genreSlug, limit = 3) => {
     try {
@@ -77,6 +81,10 @@ const useGameStore = create((set, get) => ({
   },
 
   fetchGames: async (categoryType, filter = null) => {
+    const statusKey = filter ? `${categoryType}:${filter}` : categoryType;
+    const setStatus = (s) =>
+      set((state) => ({ categoryStatus: { ...state.categoryStatus, [statusKey]: s } }));
+    setStatus("loading");
     try {
       let data;
       switch (categoryType) {
@@ -105,7 +113,13 @@ const useGameStore = create((set, get) => ({
           data = [];
       }
 
-      if (data && data.length > 0) {
+      // api returns null on a real failure (vs [] for an empty-but-successful result).
+      if (data === null || data === undefined) {
+        setStatus("error");
+        return null;
+      }
+
+      if (data.length > 0) {
         const transformedGames = data.map(transformGameData);
 
         set((state) => {
@@ -138,13 +152,14 @@ const useGameStore = create((set, get) => ({
               return state;
           }
         });
-
-        return data.length; // Return count for hasMore check
       }
-      return 0;
+
+      setStatus("success");
+      return data.length; // Return count for hasMore check
     } catch (error) {
       console.error(`Error fetching ${categoryType} games:`, error);
-      return 0;
+      setStatus("error");
+      return null;
     }
   },
 
@@ -199,18 +214,21 @@ const useGameStore = create((set, get) => ({
     }
   },
 
-  // Fetch Single Game Details
-  fetchGameDetails: async (identifier) => {
+  // Fetch Single Game Details. Pass forceRefresh to bypass the cache (e.g. after
+  // a review changes the game's blended rating).
+  fetchGameDetails: async (identifier, forceRefresh = false) => {
     const gameDetails = get().gameDetails;
 
-    // If identifier is a number (IGDB ID), check if we already have it
-    if (!isNaN(identifier)) {
-      const numericId = parseInt(identifier);
-      if (gameDetails[numericId]) return;
-    } else {
-      // If identifier is a slug, check if we have any game with this slug
-      const foundGame = Object.values(gameDetails).find(g => g.slug === identifier);
-      if (foundGame) return;
+    if (!forceRefresh) {
+      // If identifier is a number (IGDB ID), check if we already have it
+      if (!isNaN(identifier)) {
+        const numericId = parseInt(identifier);
+        if (gameDetails[numericId]) return;
+      } else {
+        // If identifier is a slug, check if we have any game with this slug
+        const foundGame = Object.values(gameDetails).find(g => g.slug === identifier);
+        if (foundGame) return;
+      }
     }
 
     try {

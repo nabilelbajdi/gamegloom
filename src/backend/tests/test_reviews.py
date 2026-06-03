@@ -109,12 +109,16 @@ class TestCreateReview:
         response = await _create_review(client, auth_headers, sample_game.igdb_id, rating=9)
         assert response.status_code == 422
 
-    async def test_create_review_updates_game_rating(self, client, auth_headers, sample_game, db_session):
-        """Test that creating a review recalculates the game's aggregate rating."""
+    async def test_create_review_updates_community_rating(self, client, auth_headers, sample_game, db_session):
+        """A review feeds the GameGloom community rating and leaves IGDB's untouched."""
         await _create_review(client, auth_headers, sample_game.igdb_id, rating=5)
         db_session.refresh(sample_game)
-        # 5/5 converts to 100; aggregate count grows from 10 to 11
-        assert sample_game.total_rating_count == 11
+        # 5/5 stars -> 100 on the 0-100 scale, one community vote.
+        assert sample_game.community_rating == 100
+        assert sample_game.community_rating_count == 1
+        # IGDB's aggregate is never mutated by reviews.
+        assert sample_game.total_rating == 80.0
+        assert sample_game.total_rating_count == 10
 
 
 class TestReadReview:

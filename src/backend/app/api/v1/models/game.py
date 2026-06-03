@@ -21,6 +21,10 @@ class Game(Base):
     aggregated_rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
     total_rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # GameGloom's own community rating (0-100 scale), kept separate from IGDB's
+    # total_rating so IGDB re-syncs never wipe it. Derived from the reviews table.
+    community_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
+    community_rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
     hypes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     genres: Mapped[str | None] = mapped_column(String, nullable=True)

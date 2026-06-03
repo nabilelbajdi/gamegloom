@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 import sqlalchemy as sa
 from typing import List, Optional
 from datetime import datetime, UTC
@@ -16,6 +16,26 @@ router = APIRouter(
     prefix="/reviews",
     tags=["reviews"]
 )
+
+
+def _recompute_community_rating(db: Session, game: Game) -> None:
+    """Recompute a game's GameGloom community rating from the reviews table.
+
+    Source of truth is the reviews themselves, so the value can never drift and
+    is never touched by IGDB syncs. Stars (1-5) are stored on a 0-100 scale to
+    match IGDB's total_rating for blending. Call after the review change is
+    flushed so the aggregate reflects it.
+    """
+    db.flush()
+    avg_stars, count = db.query(func.avg(Review.rating), func.count(Review.id)).filter(
+        Review.game_id == game.id
+    ).one()
+    if count and count > 0:
+        game.community_rating = (float(avg_stars) / 5) * 100
+        game.community_rating_count = count
+    else:
+        game.community_rating = None
+        game.community_rating_count = 0
 
 @router.post("", response_model=schemas.Review)
 async def create_review(
@@ -76,21 +96,8 @@ async def create_review(
         )
         
         db.add(db_review)
-        
-        user_rating_converted = (review_data.rating / 5) * 100
-        
-        if game.total_rating is not None and game.total_rating_count is not None:
-            current_total = game.total_rating * game.total_rating_count
-            new_total = current_total + user_rating_converted
-            new_count = game.total_rating_count + 1
-            new_rating = new_total / new_count
-            
-            game.total_rating = new_rating
-            game.total_rating_count = new_count
-        else:
-            game.total_rating = user_rating_converted
-            game.total_rating_count = 1
-        
+        _recompute_community_rating(db, game)
+
         db.commit()
         db.refresh(db_review)
         return db_review
@@ -207,21 +214,18 @@ async def update_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Game not found"
         )
-    
-    if "rating" in review_data.model_dump(exclude_unset=True) and review_data.rating != review.rating:
-        old_rating_converted = (review.rating / 5) * 100
-        new_rating_converted = (review_data.rating / 5) * 100
-        
-        if game.total_rating is not None and game.total_rating_count is not None:
-            current_total = game.total_rating * game.total_rating_count
-            adjusted_total = current_total - old_rating_converted + new_rating_converted
-            new_rating = adjusted_total / game.total_rating_count
-            
-            game.total_rating = new_rating
-    
+
+    rating_changed = (
+        "rating" in review_data.model_dump(exclude_unset=True)
+        and review_data.rating != review.rating
+    )
+
     for key, value in review_data.model_dump(exclude_unset=True).items():
         setattr(review, key, value)
-    
+
+    if rating_changed:
+        _recompute_community_rating(db, game)
+
     db.commit()
     db.refresh(review)
     return review
@@ -247,21 +251,10 @@ def delete_review(
         )
 
     game = db.query(Game).filter(Game.id == review.game_id).first()
-    if game and game.total_rating is not None and game.total_rating_count is not None and game.total_rating_count > 0:
-        user_rating_converted = (review.rating / 5) * 100
-        current_total = game.total_rating * game.total_rating_count
-        new_count = game.total_rating_count - 1
-        
-        if new_count > 0:
-            new_total = current_total - user_rating_converted
-            new_rating = new_total / new_count
-            game.total_rating = new_rating
-            game.total_rating_count = new_count
-        else:
-            game.total_rating = None
-            game.total_rating_count = 0
-    
+
     db.delete(review)
+    if game:
+        _recompute_community_rating(db, game)
     db.commit()
     return None
 

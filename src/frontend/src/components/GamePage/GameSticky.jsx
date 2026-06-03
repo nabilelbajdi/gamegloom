@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import useUserGameStore from "../../store/useUserGameStore";
 import useReviewStore from "../../store/useReviewStore";
 import useUserListStore from "../../store/useUserListStore";
+import useGameStore from "../../store/useGameStore";
 import GameCover from "../game/GameCover";
 import ListSelectionModal from "../game/ListSelectionModal";
 import ReviewFormModal from "../reviews/ReviewFormModal";
@@ -29,6 +30,10 @@ const GameSticky = ({ game }) => {
   const { getGameStatus } = useUserGameStore();
   const { addReview, fetchUserReviewForGame, userReviews, updateReview, deleteReview } = useReviewStore();
   const { lists, fetchLists } = useUserListStore();
+  const { fetchGameDetails } = useGameStore();
+
+  // Pull the game's freshly blended rating after a review changes it.
+  const refreshGameRating = () => fetchGameDetails(game.igdb_id, true);
 
   const gameStatus = getGameStatus(game.id);
 
@@ -112,6 +117,7 @@ const GameSticky = ({ game }) => {
       await addReview(game.igdb_id, rating, "");
       setUserRating(rating);
       setHasUserReview(true);
+      await refreshGameRating();
 
     } catch (error) {
       setError(error.message);
@@ -139,6 +145,7 @@ const GameSticky = ({ game }) => {
         await deleteReview(userReview.id);
         setUserRating(0);
         setHasUserReview(false);
+        await refreshGameRating();
       }
 
       setShowDeleteConfirm(false);
@@ -166,6 +173,7 @@ const GameSticky = ({ game }) => {
         await addReview(game.igdb_id, userRating, content);
         setHasUserReview(true);
       }
+      await refreshGameRating();
 
       setShowReviewModal(false);
     } catch (error) {

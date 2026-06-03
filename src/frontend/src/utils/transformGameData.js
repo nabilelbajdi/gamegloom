@@ -4,8 +4,13 @@
 export const transformGameData = (game) => {
     if (!game) return null;
     
+    // Prefer the blended overall rating (IGDB + GameGloom community); fall back to
+    // raw IGDB values for anything not yet carrying overall_rating.
     let rating = "N/A";
-    if (game.total_rating) {
+    if (game.overall_rating) {
+      rating = (game.overall_rating / 20).toFixed(1);
+    }
+    else if (game.total_rating) {
       rating = (game.total_rating / 20).toFixed(1);
     }
     else if (game.rating) {
@@ -59,6 +64,8 @@ export const transformGameData = (game) => {
       playerPerspectives: game.player_perspectives || game.playerPerspectives,
       themes: game.themes,
       totalRatingCount: game.total_rating_count || game.totalRatingCount,
+      // Blended IGDB + GameGloom vote count, so the rating count reflects community reviews.
+      overallRatingCount: game.overall_rating_count || game.overallRatingCount || game.total_rating_count || game.totalRatingCount,
       aggregatedRatingCount: game.aggregated_rating_count || game.aggregatedRatingCount,
       time_to_beat: game.time_to_beat,
       game_type_name: game.game_type_name,

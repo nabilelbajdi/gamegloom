@@ -90,7 +90,7 @@ const GameDetails = ({ game, trailer }) => {
 
         {/* Rating Section */}
         <div className="flex-shrink-0">
-          <StarRating rating={game.rating} totalRatingCount={game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} firstReleaseDate={game.firstReleaseDate} />
+          <StarRating rating={game.rating} totalRatingCount={game.overallRatingCount || game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} firstReleaseDate={game.firstReleaseDate} />
         </div>
       </div>
 
