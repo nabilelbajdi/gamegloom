@@ -13,7 +13,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import datetime
 
 from ..core import security
@@ -111,7 +111,7 @@ class ImportGameRequest(BaseModel):
     """Single game import request."""
     platform_id: str
     igdb_id: int
-    list_type: str = "played"
+    list_type: Literal["want_to_play", "playing", "played"] = "played"
 
 
 
