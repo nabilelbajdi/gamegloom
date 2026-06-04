@@ -10,6 +10,8 @@ Both flows sync the platform library into the user_platform_games cache table
 (matched to IGDB), then the user reviews matches and imports into their library.
 """
 import logging
+import threading
+from contextlib import contextmanager
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
@@ -28,6 +30,28 @@ from ..services import steam_service, psn_service, platform_sync_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
+
+# In-flight library syncs, keyed by (user_id, platform).
+_active_syncs: set = set()
+_active_syncs_lock = threading.Lock()
+
+
+@contextmanager
+def _sync_guard(user_id: int, platform: str):
+    """Hold a per-user, per-platform sync slot; reject a second concurrent sync with 409."""
+    key = (user_id, platform)
+    with _active_syncs_lock:
+        if key in _active_syncs:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A {platform.upper()} sync is already in progress. Please wait for it to finish."
+            )
+        _active_syncs.add(key)
+    try:
+        yield
+    finally:
+        with _active_syncs_lock:
+            _active_syncs.discard(key)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -405,39 +429,40 @@ def sync_steam_library(
             detail="No Steam account linked"
         )
     
-    try:
-        # Get existing IGDB IDs for 'imported' status evaluation
-        from ..models.user_game import UserGame
-        existing_igdb_ids = set(
-            igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
-                UserGame, UserGame.game_id == GameModel.id
-            ).filter(UserGame.user_id == current_user.id).all()
-        )
-        
-        result = platform_sync_service.sync_steam_library(
-            db=db,
-            user_id=current_user.id,
-            steam_id=link.platform_user_id,
-            existing_igdb_ids=existing_igdb_ids
-        )
-        
-        return SyncResponse(
-            new_count=result["new_count"],
-            updated_count=result["updated_count"],
-            total_count=result["total_count"],
-            message=f"Synced {result['total_count']} games from Steam ({result['new_count']} new)"
-        )
-    except steam_service.SteamServiceError as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(e)
-        )
-    except Exception:
-        logger.exception("Steam sync error")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal sync error"
-        )
+    with _sync_guard(current_user.id, "steam"):
+        try:
+            # Get existing IGDB IDs for 'imported' status evaluation
+            from ..models.user_game import UserGame
+            existing_igdb_ids = set(
+                igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
+                    UserGame, UserGame.game_id == GameModel.id
+                ).filter(UserGame.user_id == current_user.id).all()
+            )
+
+            result = platform_sync_service.sync_steam_library(
+                db=db,
+                user_id=current_user.id,
+                steam_id=link.platform_user_id,
+                existing_igdb_ids=existing_igdb_ids
+            )
+
+            return SyncResponse(
+                new_count=result["new_count"],
+                updated_count=result["updated_count"],
+                total_count=result["total_count"],
+                message=f"Synced {result['total_count']} games from Steam ({result['new_count']} new)"
+            )
+        except steam_service.SteamServiceError as e:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=str(e)
+            )
+        except Exception:
+            logger.exception("Steam sync error")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal sync error"
+            )
 
 
 @router.post("/steam/import", response_model=ImportResponse)
@@ -784,40 +809,41 @@ def sync_psn_library(
             detail="No PSN account linked. Go to Settings to link your PSN."
         )
     
-    try:
-        # Get user's existing library igdb_ids for filtering
-        existing_igdb_ids = set(
-            igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
-                UserGame, UserGame.game_id == GameModel.id
-            ).filter(UserGame.user_id == current_user.id).all()
-        )
-        
-        # Migrate any old preferences first
-        platform_sync_service.migrate_preferences(db, current_user.id)
-        
-        # Sync with PSN
-        result = platform_sync_service.sync_psn_library(
-            db=db,
-            user_id=current_user.id,
-            username=link.platform_username,
-            existing_igdb_ids=existing_igdb_ids
-        )
-        
-        # Update last synced timestamp
-        psn_service.update_last_synced(db, current_user.id)
-        
-        return SyncResponse(
-            new_count=result["new_count"],
-            updated_count=result["updated_count"],
-            total_count=result["total_count"],
-            message=f"Synced {result['total_count']} games from PlayStation ({result['new_count']} new)"
-        )
-        
-    except psn_service.PSNServiceError as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=str(e)
-        )
+    with _sync_guard(current_user.id, "psn"):
+        try:
+            # Get user's existing library igdb_ids for filtering
+            existing_igdb_ids = set(
+                igdb_id for (igdb_id,) in db.query(GameModel.igdb_id).join(
+                    UserGame, UserGame.game_id == GameModel.id
+                ).filter(UserGame.user_id == current_user.id).all()
+            )
+
+            # Migrate any old preferences first
+            platform_sync_service.migrate_preferences(db, current_user.id)
+
+            # Sync with PSN
+            result = platform_sync_service.sync_psn_library(
+                db=db,
+                user_id=current_user.id,
+                username=link.platform_username,
+                existing_igdb_ids=existing_igdb_ids
+            )
+
+            # Update last synced timestamp
+            psn_service.update_last_synced(db, current_user.id)
+
+            return SyncResponse(
+                new_count=result["new_count"],
+                updated_count=result["updated_count"],
+                total_count=result["total_count"],
+                message=f"Synced {result['total_count']} games from PlayStation ({result['new_count']} new)"
+            )
+
+        except psn_service.PSNServiceError as e:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=str(e)
+            )
 
 
 @router.delete("/psn/cache")
