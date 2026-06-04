@@ -136,7 +136,7 @@ def get_steam_user_summary(steam_id: str) -> dict:
             raise SteamServiceError("Steam user not found")
         
         return players[0]
-    except httpx.RequestError as e:
+    except httpx.HTTPError as e:
         raise SteamServiceError(f"Failed to get Steam user summary: {e}")
 
 
@@ -168,7 +168,7 @@ def resolve_vanity_url(vanity_url: str) -> Optional[str]:
         if res.get("success") == 1:
             return res.get("steamid")
         return None
-    except httpx.RequestError as e:
+    except httpx.HTTPError as e:
         logger.error(f"[Steam] Failed to resolve vanity URL '{vanity_url}': {e}")
         return None
 
@@ -237,7 +237,7 @@ def get_owned_games(steam_id: str, include_free_games: bool = True) -> list[dict
         data = response.json()
         
         return data.get("response", {}).get("games", [])
-    except httpx.RequestError as e:
+    except httpx.HTTPError as e:
         raise SteamServiceError(f"Failed to get owned games: {e}")
 
 
