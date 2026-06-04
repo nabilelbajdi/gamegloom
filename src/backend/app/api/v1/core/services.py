@@ -56,8 +56,6 @@ from .discovery_service import (
     count_games_by_genre,
     get_games_by_theme,
     count_games_by_theme,
-    get_genre_id_by_slug,
-    get_theme_id_by_slug,
 )
 
 # SWR Service - Data freshness
@@ -111,8 +109,6 @@ __all__ = [
     "count_games_by_genre",
     "get_games_by_theme",
     "count_games_by_theme",
-    "get_genre_id_by_slug",
-    "get_theme_id_by_slug",
     # SWR Service
     "is_stale",
     "refresh_game_async",
