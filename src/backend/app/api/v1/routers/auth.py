@@ -142,9 +142,16 @@ async def login(credentials: schemas.UserLogin, response: Response, db: Session 
         with _attempts_lock:
             data = _login_attempts.setdefault(credentials.username, {"count": 0, "locked_until": None})
             data["count"] += 1
-            if data["count"] >= _MAX_LOGIN_ATTEMPTS:
+            just_locked = data["count"] >= _MAX_LOGIN_ATTEMPTS
+            if just_locked:
                 data["locked_until"] = now + timedelta(minutes=_LOCKOUT_MINUTES)
                 logger.warning(f"Account locked after {_MAX_LOGIN_ATTEMPTS} failed attempts: {credentials.username}")
+        if just_locked:
+            # Surface the lockout on the attempt that triggers it, not the next one.
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many failed attempts. Try again in {_LOCKOUT_MINUTES} minute(s)."
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"

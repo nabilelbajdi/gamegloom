@@ -114,10 +114,14 @@ class TestLogin:
     async def test_lockout_applies_to_nonexistent_user(self, client):
         """A nonexistent username also gets locked out, so a 429 can't confirm an account exists."""
         creds = {"username": "ghost_lockout_user", "password": "wrongpassword"}
-        for _ in range(5):
+        # First 4 failures are plain 401s
+        for _ in range(4):
             resp = await client.post("/api/v1/login", json=creds)
             assert resp.status_code == 401
-        # 6th attempt is now rate-limited just like a real account would be
+        # The 5th failure trips the lockout and surfaces the 429 immediately
+        resp = await client.post("/api/v1/login", json=creds)
+        assert resp.status_code == 429
+        # Still locked out on subsequent attempts
         resp = await client.post("/api/v1/login", json=creds)
         assert resp.status_code == 429
 
