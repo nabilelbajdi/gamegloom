@@ -304,3 +304,28 @@ class TestReviewComments:
         assert response.status_code == 204
         comments = await client.get(f"/api/v1/reviews/{review_id}/comments")
         assert comments.json() == []
+
+    async def test_comments_count_tracks_actual_comments(self, client, auth_headers, other_auth_headers, sample_game):
+        """The stored comments_count stays in sync with the comment rows after add and delete."""
+        created = await _create_review(client, auth_headers, sample_game.igdb_id)
+        review_id = created.json()["id"]
+
+        first = await client.post(
+            f"/api/v1/reviews/{review_id}/comments",
+            json={"content": "One"},
+            headers=other_auth_headers
+        )
+        await client.post(
+            f"/api/v1/reviews/{review_id}/comments",
+            json={"content": "Two"},
+            headers=auth_headers
+        )
+        review = await client.get(f"/api/v1/reviews/{review_id}")
+        assert review.json()["comments_count"] == 2
+
+        await client.delete(
+            f"/api/v1/reviews/{review_id}/comments/{first.json()['id']}",
+            headers=other_auth_headers
+        )
+        review = await client.get(f"/api/v1/reviews/{review_id}")
+        assert review.json()["comments_count"] == 1

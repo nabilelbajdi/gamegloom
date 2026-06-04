@@ -265,12 +265,15 @@ async def like_list(
         list_id=list_id
     )
     db.add(new_like)
-    
-    # Increment likes count
-    user_list.likes_count += 1
-    
+
+    # Recompute from the like rows so the counter can't drift
+    db.flush()
+    user_list.likes_count = db.query(func.count(ListLike.id)).filter(
+        ListLike.list_id == list_id
+    ).scalar() or 0
+
     db.commit()
-    
+
     return schemas.ListLikeResponse(
         liked=True,
         likes_count=user_list.likes_count
@@ -309,10 +312,13 @@ async def unlike_list(
     
     # Remove like
     db.delete(existing_like)
-    
-    # Decrement likes count (ensure it doesn't go below 0)
-    user_list.likes_count = max(0, user_list.likes_count - 1)
-    
+
+    # Recompute from the like rows so the counter can't drift
+    db.flush()
+    user_list.likes_count = db.query(func.count(ListLike.id)).filter(
+        ListLike.list_id == list_id
+    ).scalar() or 0
+
     db.commit()
     
     return schemas.ListLikeResponse(

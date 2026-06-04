@@ -37,6 +37,22 @@ def _recompute_community_rating(db: Session, game: Game) -> None:
         game.community_rating = None
         game.community_rating_count = 0
 
+
+def _recompute_review_counts(db: Session, review: Review) -> None:
+    """Recompute a review's like/comment counters from the actual rows.
+
+    Source of truth is the review_likes / review_comments tables, so the counts
+    can never drift from concurrent toggles or partial updates. Call after the
+    row change is flushed so the aggregate reflects it.
+    """
+    db.flush()
+    review.likes_count = db.query(func.count(ReviewLike.id)).filter(
+        ReviewLike.review_id == review.id
+    ).scalar() or 0
+    review.comments_count = db.query(func.count(ReviewComment.id)).filter(
+        ReviewComment.review_id == review.id
+    ).scalar() or 0
+
 @router.post("", response_model=schemas.Review)
 async def create_review(
     review_data: schemas.ReviewCreate,
@@ -281,17 +297,16 @@ async def like_review(
     
     if existing_like:
         db.delete(existing_like)
-        review.likes_count -= 1
-        db.commit()
     else:
         like = ReviewLike(
             user_id=current_user.id,
             review_id=review_id
         )
         db.add(like)
-        review.likes_count += 1
-        db.commit()
-    
+
+    _recompute_review_counts(db, review)
+    db.commit()
+
     return {"message": "Review like status updated successfully"}
 
 @router.post("/{review_id}/comments", response_model=schemas.ReviewComment)
@@ -316,7 +331,7 @@ async def add_comment(
     )
     
     db.add(comment)
-    review.comments_count += 1
+    _recompute_review_counts(db, review)
     db.commit()
     db.refresh(comment)
     return comment
@@ -381,11 +396,10 @@ def delete_comment(
             detail="Not authorized to delete this comment"
         )
     
-    review = db.query(Review).filter(Review.id == review_id).first()
-    if review:
-        review.comments_count -= 1
-    
+    review = db.query(Review).filter(Review.id == comment.review_id).first()
     db.delete(comment)
+    if review:
+        _recompute_review_counts(db, review)
     db.commit()
     return None
 
