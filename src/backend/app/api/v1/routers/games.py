@@ -357,19 +357,21 @@ async def search_games(
     # Only fetch from IGDB if we have NO results and it's a game/all search (first page only)
     if len(db_games) == 0 and (category.lower() == "all" or category.lower() == "games"):
         try:
+            # Escape backslashes and quotes so the search term can't break the IGDB query syntax
+            safe_query = query.replace("\\", "\\\\").replace('"', '\\"')
             search_query = f"""
                 {services.IGDB_GAME_FIELDS}
-                search "{query}";
+                search "{safe_query}";
                 where version_parent = null & cover != null;
                 limit {limit};
             """
-            
+
             await services.sync_games_from_igdb(db, search_query)
-            
+
             # Search again after importing from IGDB
             db_games = services.search_games_in_db(db, query, category=category, limit=limit, offset=0)
         except Exception as e:
-            print(f"Error fetching from IGDB: {str(e)}")
+            logger.exception("Error fetching from IGDB during search")
     
     return db_games
 
@@ -384,7 +386,10 @@ async def get_games(
 ):
     """Get games with optional filtering by genre, theme, or IDs. Supports pagination."""
     if ids:
-        game_ids = [int(id) for id in ids.split(",")]
+        try:
+            game_ids = [int(id) for id in ids.split(",") if id.strip()]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid game IDs; expected comma-separated integers")
         return services.get_games_by_ids(db, game_ids)
     
     if genre:
