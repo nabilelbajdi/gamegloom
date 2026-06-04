@@ -13,7 +13,6 @@ import logging
 import unicodedata
 from datetime import datetime, timezone
 from typing import Optional
-from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.orm import Session
 
 from ...settings import settings

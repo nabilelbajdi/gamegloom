@@ -3,11 +3,11 @@
 Platform integrations router for Steam and PSN.
 
 Endpoints:
-- Steam: OAuth linking, game fetching
+- Steam: OpenID linking, library sync, import
 - PSN: Username linking, library sync, import
 
-The PSN flow is ephemeral - games are matched on-the-fly, not stored in a 
-sync table. Users review matches and import directly to their library.
+Both flows sync the platform library into the user_platform_games cache table
+(matched to IGDB), then the user reviews matches and imports into their library.
 """
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -879,11 +879,6 @@ def import_psn_games(
 def psn_health():
     """Check if PSN integration is healthy (NPSSO token valid)."""
     return psn_service.check_psn_health()
-
-
-# ═══════════════════════════════════════════════════════════════════
-# PSN Endpoints
-# ═══════════════════════════════════════════════════════════════════
 
 
 @router.post("/psn/preferences/skip")

@@ -13,12 +13,7 @@ from sqlalchemy.orm import Session
 
 from ...settings import settings
 from ..models.user_platform_link import UserPlatformLink, PlatformType
-from ..models.game import Game
 from ..core.igdb_service import fetch_from_igdb
-from ..core.matching_utils import (
-    clean_name, clean_platform_name, generate_slug, 
-    slug_with_roman_numerals, pick_best_match
-)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,47 +22,6 @@ logger = logging.getLogger(__name__)
 # Steam OpenID constants
 STEAM_OPENID_URL = "https://steamcommunity.com/openid/login"
 STEAM_API_BASE = "https://api.steampowered.com"
-
-# Rate limit: Steam allows 100,000 requests/day
-MAX_RETRIES = 3
-RETRY_DELAY_BASE = 1.0  # seconds
-
-
-def _request_with_retry(method: str, url: str, max_retries: int = MAX_RETRIES, **kwargs) -> httpx.Response:
-    """
-    Make an HTTP request with exponential backoff retry for rate limits.
-    
-    Handles 403 (rate limit) and 429 (too many requests) with retries.
-    """
-    last_error = None
-    for attempt in range(max_retries):
-        try:
-            if method.lower() == "get":
-                response = httpx.get(url, **kwargs)
-            else:
-                response = httpx.post(url, **kwargs)
-            
-            # If rate limited, wait and retry
-            if response.status_code in (403, 429):
-                delay = RETRY_DELAY_BASE * (2 ** attempt)
-                logger.warning(f"[Steam] Rate limited (attempt {attempt + 1}/{max_retries}), waiting {delay}s...")
-                time.sleep(delay)
-                continue
-            
-            return response
-            
-        except httpx.RequestError as e:
-            last_error = e
-            if attempt < max_retries - 1:
-                delay = RETRY_DELAY_BASE * (2 ** attempt)
-                logger.warning(f"[Steam] Request failed (attempt {attempt + 1}/{max_retries}): {e}, retrying in {delay}s...")
-                time.sleep(delay)
-            else:
-                raise
-    
-    # If we exhausted retries due to rate limiting, raise with last response
-    raise SteamServiceError(f"Rate limited after {max_retries} retries")
-
 
 class SteamServiceError(Exception):
     """Custom exception for Steam service errors."""
@@ -363,90 +317,6 @@ def get_steam_link(db: Session, user_id: int) -> Optional[UserPlatformLink]:
         UserPlatformLink.user_id == user_id,
         UserPlatformLink.platform == PlatformType.STEAM.value
     ).first()
-
-
-def match_game_to_igdb(
-    db: Session,
-    platform_id: str,
-    platform_name: str
-) -> tuple:
-    """
-    Match a Steam game to IGDB.
-    
-    Matching strategy:
-    1. IGDB external_games lookup (via Steam AppID) -> ~99% accuracy
-    2. Slug match with IGDB disambiguation suffixes
-    3. Roman numeral conversion (3→iii)
-    4. Partial name prefix match
-    
-    Returns:
-        (igdb_id, igdb_name, cover_url, confidence, method)
-    """
-    try:
-        app_id = int(platform_id)
-        
-        # Step 1: IGDB external_games lookup
-        # category 1 is Steam
-        query = f"fields game.id, game.name, game.cover.image_id; where category = 1 & uid = \"{app_id}\";"
-        external_data = fetch_from_igdb(query=query, endpoint="external_games")
-        
-        if external_data:
-            ext = external_data[0]
-            igdb_game = ext.get("game")
-            if igdb_game:
-                igdb_id = igdb_game["id"]
-                name = igdb_game["name"]
-                cover_id = igdb_game.get("cover", {}).get("image_id")
-                cover_url = f"https://images.igdb.com/igdb/image/upload/t_cover_big_2x/{cover_id}.jpg" if cover_id else None
-                
-                logger.debug(f"[Steam Match] {platform_name} ({app_id}) → {name} (appid)")
-                return (igdb_id, name, cover_url, 0.99, "appid")
-
-        # Step 2: Slug matching (fallback)
-        slug = generate_slug(platform_name)
-        candidates = db.query(Game).filter(
-            (Game.slug == slug) | 
-            (Game.slug.like(f"{slug}--%"))
-        ).all()
-        
-        if candidates:
-            game = pick_best_match(candidates)
-            if game:
-                confidence = 0.85 if game.slug == slug else 0.80
-                logger.debug(f"[Steam Match] {platform_name} → {game.name} (slug)")
-                return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
-
-        # Step 3: Roman numeral conversion
-        roman_slug = slug_with_roman_numerals(slug)
-        if roman_slug != slug:
-            candidates = db.query(Game).filter(
-                (Game.slug == roman_slug) | 
-                (Game.slug.like(f"{roman_slug}--%"))
-            ).all()
-            
-            if candidates:
-                game = pick_best_match(candidates)
-                if game:
-                    logger.debug(f"[Steam Match] {platform_name} → {game.name} (slug_roman)")
-                    return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
-
-        # Step 4: Partial name search
-        c_name = clean_name(platform_name)
-        if len(c_name) >= 5:
-            candidates = db.query(Game).filter(
-                Game.name.ilike(f"{c_name}%")
-            ).order_by(Game.igdb_id).limit(5).all()
-            
-            if candidates:
-                game = candidates[0]
-                logger.debug(f"[Steam Match] {platform_name} → {game.name} (partial)")
-                return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
-
-        return None, None, None, None, None
-
-    except Exception as e:
-        logger.error(f"[Steam Match] Error matching {platform_name}: {e}")
-        return None, None, None, None, None
 
 
 # Batch size for IGDB queries - IGDB returns max 500 results per query

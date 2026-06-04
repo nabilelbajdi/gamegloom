@@ -21,9 +21,10 @@ class UserPlatformLink(Base):
     platform_user_id: Mapped[str] = mapped_column(String(100), nullable=False)  # Steam64 ID or PSN ID
     platform_username: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Display name
     
-    # Token storage (primarily for PSN - Steam uses OpenID so no persistent token needed)
-    access_token: Mapped[str | None] = mapped_column(Text, nullable=True)  # Encrypted
-    refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)  # Encrypted
+    # Reserved for future per-user OAuth tokens. Currently unused: PSN auth uses a
+    # single server-side NPSSO token and Steam uses OpenID, so no per-user tokens are stored.
+    access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     
     # Sync tracking
