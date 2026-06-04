@@ -14,7 +14,7 @@ import threading
 from contextlib import contextmanager
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Literal
 from datetime import datetime
 
@@ -66,8 +66,7 @@ class PlatformLinkResponse(BaseModel):
     last_synced_at: Optional[datetime] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IntegrationStatusResponse(BaseModel):
