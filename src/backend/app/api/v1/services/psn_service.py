@@ -161,7 +161,7 @@ def match_game_to_igdb(
     
     candidates = db.query(Game).filter(
         (Game.slug == slug) | 
-        (Game.slug.like(f"{slug}--_"))  # Match --1, --2, etc.
+        (Game.slug.like(f"{slug}--%"))  # Match --1, --2, etc.
     ).all()
     
     if candidates:
@@ -176,7 +176,7 @@ def match_game_to_igdb(
     if roman_slug != slug:
         candidates = db.query(Game).filter(
             (Game.slug == roman_slug) | 
-            (Game.slug.like(f"{roman_slug}--_"))
+            (Game.slug.like(f"{roman_slug}--%"))
         ).all()
         
         if candidates:
