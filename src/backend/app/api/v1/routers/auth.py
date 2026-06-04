@@ -626,10 +626,11 @@ async def upload_avatar(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        logger.exception("Failed to upload avatar")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload avatar: {str(e)}"
+            detail="Failed to upload avatar"
         )
 
 @router.get("/users/stats", response_model=schemas.UserStats)

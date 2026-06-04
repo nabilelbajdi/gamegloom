@@ -187,10 +187,11 @@ def get_steam_auth_url(
     try:
         url = steam_service.construct_steam_login_url(return_url)
         return {"auth_url": url}
-    except Exception as e:
+    except Exception:
+        logger.exception("Failed to generate Steam auth URL")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate Steam auth URL: {e}"
+            detail="Failed to generate Steam auth URL"
         )
 
 
@@ -431,11 +432,11 @@ def sync_steam_library(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=str(e)
         )
-    except Exception as e:
-        logger.error(f"Steam sync error: {e}")
+    except Exception:
+        logger.exception("Steam sync error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal sync error: {e}"
+            detail="Internal sync error"
         )
 
 
@@ -465,9 +466,9 @@ def import_steam_games(
             skipped=skipped,
             message=f"Imported {imported} games to library"
         )
-    except Exception as e:
-        logger.error(f"[Steam Import] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("[Steam Import] Error")
+        raise HTTPException(status_code=500, detail="Failed to import games from Steam")
 
 
 @router.post("/steam/preferences/skip")
@@ -869,9 +870,9 @@ def import_psn_games(
             skipped=skipped,
             message=f"Imported {imported} games to library"
         )
-    except Exception as e:
-        logger.error(f"[PSN Import] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("[PSN Import] Error")
+        raise HTTPException(status_code=500, detail="Failed to import games from PlayStation")
 
 
 @router.get("/psn/health")

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 import sqlalchemy as sa
+import logging
 from typing import List, Optional
 from datetime import datetime, UTC
 
@@ -16,6 +17,8 @@ router = APIRouter(
     prefix="/reviews",
     tags=["reviews"]
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _recompute_community_rating(db: Session, game: Game) -> None:
@@ -119,10 +122,12 @@ async def create_review(
         return db_review
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        db.rollback()
+        logger.exception("Error creating review")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while creating the review: {str(e)}"
+            detail="An error occurred while creating the review"
         )
 
 @router.get("/recent", response_model=List[schemas.Review])

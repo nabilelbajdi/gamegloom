@@ -67,9 +67,11 @@ async def process_igdb_webhook(
 
         return {"status": "success", "message": f"{event_type} webhook processed"}
 
-    except Exception as e:
-        logger.error(f"Error processing IGDB webhook: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Error processing IGDB webhook")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Webhook processing failed")
 
 
 ### GAME PROCESSING FUNCTIONS

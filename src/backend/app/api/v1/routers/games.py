@@ -92,8 +92,9 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
                     )
             except HTTPException:
                 raise
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+            except Exception:
+                logger.exception("Error fetching game by id")
+                raise HTTPException(status_code=500, detail="Failed to load game")
     else:
         slug = identifier
         db_game = services.get_game_by_slug(db, slug)
@@ -121,7 +122,8 @@ async def get_game(identifier: str, db: Session = Depends(get_db)):
             except Exception as e:
                 if "not found" in str(e).lower():
                     raise HTTPException(status_code=404, detail=f"Game with slug '{slug}' not found")
-                raise HTTPException(status_code=500, detail=str(e))
+                logger.exception("Error fetching game by slug")
+                raise HTTPException(status_code=500, detail="Failed to load game")
     
     # SWR Pattern: Check if game data is stale and needs background refresh
     if db_game and services.is_stale(db_game, max_age_hours=24):
@@ -194,11 +196,9 @@ async def get_trending_games(db: Session = Depends(get_db)):
 
     try:
         return await cache.cached_json("discovery:trending", settings.DISCOVERY_CACHE_TTL, producer)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching trending games: {str(e)}"
-        )
+    except Exception:
+        logger.exception("Error fetching trending games")
+        raise HTTPException(status_code=500, detail="Failed to load trending games")
 
 @router.get("/anticipated-games", response_model=List[schemas.Game])
 async def get_anticipated_games(db: Session = Depends(get_db)):
@@ -224,8 +224,9 @@ async def get_anticipated_games(db: Session = Depends(get_db)):
 
     try:
         return await cache.cached_json("discovery:anticipated", settings.DISCOVERY_CACHE_TTL, producer)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching anticipated games: {str(e)}")
+    except Exception:
+        logger.exception("Error fetching anticipated games")
+        raise HTTPException(status_code=500, detail="Failed to load anticipated games")
 
 @router.get("/highly-rated-games", response_model=List[schemas.Game])
 async def get_highly_rated_games(db: Session = Depends(get_db)):
@@ -248,11 +249,9 @@ async def get_highly_rated_games(db: Session = Depends(get_db)):
 
     try:
         return await cache.cached_json("discovery:highly_rated", settings.DISCOVERY_CACHE_TTL, producer)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching highly rated games: {str(e)}"
-        )
+    except Exception:
+        logger.exception("Error fetching highly rated games")
+        raise HTTPException(status_code=500, detail="Failed to load highly rated games")
 
 @router.get("/latest-games", response_model=List[schemas.Game])
 async def get_latest_games(db: Session = Depends(get_db)):
@@ -278,11 +277,9 @@ async def get_latest_games(db: Session = Depends(get_db)):
 
     try:
         return await cache.cached_json("discovery:latest", settings.DISCOVERY_CACHE_TTL, producer)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching latest games: {str(e)}"
-        )
+    except Exception:
+        logger.exception("Error fetching latest games")
+        raise HTTPException(status_code=500, detail="Failed to load latest games")
 
 @router.get("/update-similar-games")
 async def update_similar_games(db: Session = Depends(get_db)):
@@ -320,11 +317,9 @@ async def update_similar_games(db: Session = Depends(get_db)):
             }
         }
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error updating similar games: {str(e)}"
-        )
+    except Exception:
+        logger.exception("Error updating similar games")
+        raise HTTPException(status_code=500, detail="Failed to update similar games")
 
 @router.get("/search")
 async def search_games(
