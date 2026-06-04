@@ -67,6 +67,10 @@ _attempts_lock = threading.Lock()
 _MAX_LOGIN_ATTEMPTS = 5
 _LOCKOUT_MINUTES = 15
 
+# A throwaway hash used to verify against when no user is found, so a failed
+# login takes the same time whether or not the username exists (anti-enumeration).
+_DUMMY_PASSWORD_HASH = security.get_password_hash(secrets.token_urlsafe(32))
+
 # Reject avatar uploads above 5 MB to bound memory/Cloudinary usage.
 _MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
@@ -127,15 +131,20 @@ async def login(credentials: schemas.UserLogin, response: Response, db: Session 
                 _login_attempts.pop(credentials.username, None)
 
     user = db.query(User).filter(User.username == credentials.username).first()
-    if not user or not security.verify_password(credentials.password, user.hashed_password):
-        if user:
-            # Only count failures for real accounts to avoid enumeration via lockout
-            with _attempts_lock:
-                data = _login_attempts.setdefault(credentials.username, {"count": 0, "locked_until": None})
-                data["count"] += 1
-                if data["count"] >= _MAX_LOGIN_ATTEMPTS:
-                    data["locked_until"] = now + timedelta(minutes=_LOCKOUT_MINUTES)
-                    logger.warning(f"Account locked after {_MAX_LOGIN_ATTEMPTS} failed attempts: {credentials.username}")
+    # Always run one password verification (a dummy hash when the user is missing
+    # or has no password) so the response time can't reveal whether the account exists.
+    stored_hash = user.hashed_password if user and user.hashed_password else _DUMMY_PASSWORD_HASH
+    password_ok = security.verify_password(credentials.password, stored_hash)
+
+    if not user or not password_ok:
+        # Track failures for every username, real or not, so the lockout/429 response
+        # is identical regardless of whether the account exists (anti-enumeration).
+        with _attempts_lock:
+            data = _login_attempts.setdefault(credentials.username, {"count": 0, "locked_until": None})
+            data["count"] += 1
+            if data["count"] >= _MAX_LOGIN_ATTEMPTS:
+                data["locked_until"] = now + timedelta(minutes=_LOCKOUT_MINUTES)
+                logger.warning(f"Account locked after {_MAX_LOGIN_ATTEMPTS} failed attempts: {credentials.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"

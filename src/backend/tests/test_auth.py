@@ -98,6 +98,29 @@ class TestLogin:
         assert response.status_code == 401
         assert "invalid" in response.json()["detail"].lower()
 
+    async def test_login_failure_identical_for_real_and_fake_user(self, client, test_user_data):
+        """Wrong password and unknown username return the same status and message."""
+        await client.post("/api/v1/register", json=test_user_data)
+
+        wrong_pw = await client.post("/api/v1/login", json={
+            "username": test_user_data["username"], "password": "wrongpassword"
+        })
+        unknown = await client.post("/api/v1/login", json={
+            "username": "no_such_user", "password": "wrongpassword"
+        })
+        assert wrong_pw.status_code == unknown.status_code == 401
+        assert wrong_pw.json()["detail"] == unknown.json()["detail"]
+
+    async def test_lockout_applies_to_nonexistent_user(self, client):
+        """A nonexistent username also gets locked out, so a 429 can't confirm an account exists."""
+        creds = {"username": "ghost_lockout_user", "password": "wrongpassword"}
+        for _ in range(5):
+            resp = await client.post("/api/v1/login", json=creds)
+            assert resp.status_code == 401
+        # 6th attempt is now rate-limited just like a real account would be
+        resp = await client.post("/api/v1/login", json=creds)
+        assert resp.status_code == 429
+
 
 class TestMe:
     """Tests for GET /api/v1/me endpoint."""
