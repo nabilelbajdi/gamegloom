@@ -64,6 +64,45 @@ class TestFindIgdbMatch:
         assert find_igdb_match(db_session, "Totally Made Up Nonexistent Title Qwxyz") == (None, None, None, None, None)
 
 
+class TestIgdbFetchFallback:
+    """Last-resort live IGDB search for unmatched PSN names; conservative (strong matches only)."""
+
+    def test_adds_and_matches_strong_result(self, db_session, monkeypatch):
+        from app.api.v1.core import services as core_services
+        monkeypatch.setattr(core_services, "fetch_from_igdb",
+                            lambda query: [{"id": 99999, "name": "Kayak VR: Mirage"}])
+        igdb_id, name, _, conf, method = psn_service.match_via_igdb_search(db_session, "Kayak VR: Mirage")
+        assert igdb_id == 99999 and method == "igdb_fetch" and conf >= TRUSTED_CONFIDENCE
+        assert db_session.query(Game).filter(Game.igdb_id == 99999).first() is not None  # added to catalog
+
+    def test_ignores_fuzzy_result_and_adds_nothing(self, db_session, monkeypatch):
+        from app.api.v1.core import services as core_services
+        monkeypatch.setattr(core_services, "fetch_from_igdb",
+                            lambda query: [{"id": 1, "name": "Completely Different Game"}])
+        assert psn_service.match_via_igdb_search(db_session, "Kayak VR: Mirage") == (None, None, None, None, None)
+        assert db_session.query(Game).filter(Game.igdb_id == 1).first() is None
+
+    def test_skips_known_non_game_without_api_call(self, db_session, monkeypatch):
+        from app.api.v1.core import services as core_services
+        calls = {"n": 0}
+        def fake(query):
+            calls["n"] += 1
+            return []
+        monkeypatch.setattr(core_services, "fetch_from_igdb", fake)
+        assert psn_service.match_via_igdb_search(db_session, "Netflix") == (None, None, None, None, None)
+        assert calls["n"] == 0  # never hit IGDB for a known non-game
+
+    def test_match_game_to_igdb_uses_fallback_only_when_allowed(self, db_session, monkeypatch):
+        from app.api.v1.core import services as core_services
+        monkeypatch.setattr(core_services, "fetch_from_igdb",
+                            lambda query: [{"id": 88888, "name": "Into the Radius"}])
+        # Default: no fetch -> unmatched
+        assert psn_service.match_game_to_igdb(db_session, platform_id="P_00", platform_name="Into the Radius")[0] is None
+        # Allowed: fetch + add
+        res = psn_service.match_game_to_igdb(db_session, platform_id="P_00", platform_name="Into the Radius", allow_igdb_fetch=True)
+        assert res[0] == 88888 and res[4] == "igdb_fetch"
+
+
 class TestPsConceptBridge:
     """PSN concept_id (psn_title_lookup) -> Game.ps_concept_id exact bridge, ahead of name matching."""
 
@@ -85,6 +124,25 @@ class TestPsConceptBridge:
             db_session, platform_id="X_00", platform_name="Overwatch"
         )
         assert igdb_id == 8173 and method == "name"
+
+
+class TestAltNamesMatch:
+    """Platform name matches an alternative/regional/abbreviated name, not the primary."""
+
+    def test_matches_via_alt_name_when_primary_differs(self, db_session):
+        # PSN reports an abbreviation; primary name + slug won't match, but the alt does.
+        db_session.add(Game(igdb_id=133887, name="Tony Hawk's Pro Skater 1+2",
+                            slug="tony-hawks-pro-skater-1-plus-2",
+                            alt_names_search="|tonyhawksproskater12|thps12|"))
+        db_session.commit()
+        igdb_id, _, _, conf, method = find_igdb_match(db_session, "THPS 1+2")
+        assert igdb_id == 133887 and conf >= TRUSTED_CONFIDENCE and method == "alt_name"
+
+    def test_no_alt_match_returns_none(self, db_session):
+        db_session.add(Game(igdb_id=1, name="Hollow Knight", slug="hollow-knight",
+                            alt_names_search="|hollowknight|"))
+        db_session.commit()
+        assert find_igdb_match(db_session, "Totally Different Qwxyz") == (None, None, None, None, None)
 
 
 class TestReverseSubtitle:

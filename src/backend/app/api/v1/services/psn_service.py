@@ -20,7 +20,8 @@ from ..models.user_platform_link import UserPlatformLink, PlatformType
 from ..models.psn_title_lookup import PsnTitleLookup
 from ..models.game import Game
 from ..core.matching_utils import (
-    is_non_game, clean_platform_name, find_igdb_match, pick_best_match, NO_MATCH
+    is_non_game, clean_platform_name, find_igdb_match, pick_best_match,
+    normalize_for_match, NO_MATCH
 )
 
 logger = logging.getLogger(__name__)
@@ -109,11 +110,53 @@ def check_psn_health() -> dict:
 
 
 
+def match_via_igdb_search(db: Session, raw_name: str) -> tuple:
+    """
+    Last-resort match for an unmatched platform name: search IGDB live, and if a
+    result's name (or an alternative name) is an exact normalized match, add it to
+    the catalog and return it. Conservative — fuzzy results are ignored so the shared
+    catalog never gains a wrong game. Skips known non-games before spending an API call.
+    """
+    from ..core import services
+    from ..core.igdb_service import EXCLUDED_GAME_TYPES
+
+    cleaned = clean_platform_name(raw_name)
+    if not cleaned or is_non_game(cleaned):
+        return NO_MATCH
+    target = normalize_for_match(cleaned)
+    if not target or len(target) < 3:
+        return NO_MATCH
+
+    search_term = cleaned.replace('"', '').replace('\\', '').strip()
+    query = f'search "{search_term}"; {services.IGDB_GAME_FIELDS} where version_parent = null; limit 10;'
+    try:
+        results = services.fetch_from_igdb(query=query) or []
+        if not isinstance(results, list):
+            results = [results]
+    except Exception as e:
+        logger.warning(f"[IGDB Fetch] search failed for {raw_name}: {e}")
+        return NO_MATCH
+
+    for data in results:
+        if not data or not data.get("id") or not data.get("name"):
+            continue
+        processed = services.process_igdb_data(data)
+        if processed.game_type_id in EXCLUDED_GAME_TYPES or is_non_game(processed.name):
+            continue
+        candidate_names = [processed.name] + (processed.alternative_names or [])
+        if any(normalize_for_match(n) == target for n in candidate_names):
+            game = services.get_game_by_igdb_id(db, processed.igdb_id) or services.create_game(db, processed)
+            logger.debug(f"[IGDB Fetch] {raw_name} → {game.name} (added/matched)")
+            return (game.igdb_id, game.name, game.cover_image, 0.90, "igdb_fetch")
+    return NO_MATCH
+
+
 def match_game_to_igdb(
     db: Session,
     platform_id: str,
     platform_name: str,
-    first_played: datetime = None
+    first_played: datetime = None,
+    allow_igdb_fetch: bool = False
 ) -> tuple:
     """
     Match a PSN game to IGDB.
@@ -171,6 +214,13 @@ def match_game_to_igdb(
             return result
         if (result[3] or 0) > (best[3] or 0):
             best = result
+
+    # Final fallback: only when fully unmatched and explicitly allowed (initial sync,
+    # not the local-only re-sync retry), search IGDB live and add the game if found.
+    if best[0] is None and allow_igdb_fetch:
+        fetched = match_via_igdb_search(db, platform_name)
+        if fetched[0] is not None:
+            return fetched
 
     if best[0] is None:
         logger.debug(f"[Match] {platform_name} → UNMATCHED")

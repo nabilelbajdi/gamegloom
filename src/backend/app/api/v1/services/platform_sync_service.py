@@ -200,12 +200,14 @@ def sync_psn_library(
 
                 cached.last_synced_at = now
             else:
-                # New game - run IGDB matching
+                # New game - run IGDB matching (allow a live IGDB search fallback so
+                # games missing from the local catalog still resolve on first sync)
                 igdb_id, igdb_name, igdb_cover, confidence, method = psn_service.match_game_to_igdb(
                     db=db,
                     platform_id=platform_id,
                     platform_name=platform_name,
-                    first_played=first_played
+                    first_played=first_played,
+                    allow_igdb_fetch=True
                 )
                 
                 # Check if already in library
