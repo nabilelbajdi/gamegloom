@@ -36,6 +36,15 @@ class TestIsNonGame:
     def test_empty_is_not_non_game(self):
         assert is_non_game("") is False
 
+    def test_youtube_variants_are_non_game(self):
+        assert is_non_game("YouTube TV") is True
+        assert is_non_game("YouTube Kids") is True
+        assert is_non_game("YouTube") is True
+
+    def test_youtube_prefixed_real_titles_not_blocked(self):
+        # The pattern is a whole-word prefix, so this stays a game (defensive).
+        assert is_non_game("Never Alone") is False
+
 
 class TestCleanName:
     def test_strips_trademark_symbols(self):

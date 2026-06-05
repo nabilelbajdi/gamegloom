@@ -37,6 +37,8 @@ NON_GAME_TITLES = {
 }
 
 NON_GAME_PATTERNS = [
+    # Media-app brands with suffixed variants (YouTube, YouTube TV, YouTube Kids, ...)
+    r"^youtube\b",
     r"demo disc",
     r"playstation\s*vr demo",
     r"^\s*demo\s*$",
@@ -418,6 +420,17 @@ def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Option
             ).order_by(Game.igdb_id).limit(25).all():
                 if normalize_for_match(game.name) == target:
                     return (game, 0.88, "normalized")
+
+    # Reverse-subtitle: the platform reports the base title and IGDB appended a
+    # subtitle after a colon ("Never Alone" -> "Never Alone: Kisima Ingitchuna").
+    # The exact base-title-before-colon is specific enough to trust.
+    for candidate in (name, name_ns):
+        if len(candidate) >= 4:
+            games = db.query(Game).filter(
+                Game.name.ilike(f"{candidate}: %")
+            ).order_by(Game.igdb_id).all()
+            if games:
+                return (pick_best_match(games, first_played), 0.85, "subtitle_add")
 
     return None
 

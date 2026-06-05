@@ -64,6 +64,34 @@ class TestFindIgdbMatch:
         assert find_igdb_match(db_session, "Totally Made Up Nonexistent Title Qwxyz") == (None, None, None, None, None)
 
 
+class TestReverseSubtitle:
+    """Platform reports the base title; IGDB stores it with a colon subtitle
+    ('Never Alone' vs 'Never Alone: Kisima Ingitchuna')."""
+
+    def test_base_title_matches_subtitled_igdb_name_high_confidence(self, db_session):
+        db_session.add(Game(igdb_id=7618, name="Never Alone: Kisima Ingitchuna",
+                            slug="never-alone-kisima-ingitchuna"))
+        db_session.commit()
+        igdb_id, _, _, conf, method = find_igdb_match(db_session, "Never Alone")
+        assert igdb_id == 7618 and conf >= TRUSTED_CONFIDENCE and method == "subtitle_add"
+
+    def test_picks_base_over_dlc_when_multiple_subtitles(self, db_session):
+        db_session.add(Game(igdb_id=7618, name="Never Alone: Kisima Ingitchuna",
+                            slug="never-alone-kisima-ingitchuna"))
+        db_session.add(Game(igdb_id=14549, name="Never Alone: Foxtales", slug="never-alone-foxtales"))
+        db_session.commit()
+        igdb_id, _, _, _, _ = find_igdb_match(db_session, "Never Alone")
+        assert igdb_id == 7618
+
+    def test_exact_full_name_still_wins(self, db_session):
+        # When the platform reports the full name, the exact-name match wins, not reverse-subtitle.
+        db_session.add(Game(igdb_id=7618, name="Never Alone: Kisima Ingitchuna",
+                            slug="never-alone-kisima-ingitchuna"))
+        db_session.commit()
+        igdb_id, _, _, _, method = find_igdb_match(db_session, "Never Alone: Kisima Ingitchuna")
+        assert igdb_id == 7618 and method == "name"
+
+
 class TestSequelDisambiguation:
     """Two IGDB entries with a byte-identical name (Overwatch / Overwatch 2) routed by
     the sequel number in the disambiguation (Sony lookup) name."""
