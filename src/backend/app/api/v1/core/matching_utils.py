@@ -321,6 +321,20 @@ def normalize_for_match(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def _sequel_ordinal(disambig_name: Optional[str]) -> Optional[int]:
+    """
+    Ordinal used to pick among identically-named IGDB entries, read from a hint
+    name's trailing sequel number after edition/beta/platform markers are stripped.
+    "Overwatch 2" -> 2, "Overwatch 2 Beta" -> 2, "Overwatch: Origins Edition" -> 1.
+    Returns None when no hint is given (so no disambiguation happens).
+    """
+    if not disambig_name:
+        return None
+    cleaned = strip_platform_tags(strip_edition(clean_name(disambig_name, split_alnum=False)))
+    m = re.search(r"(\d+)\s*$", cleaned)
+    return int(m.group(1)) if m else 1
+
+
 # A name variant is a (display, slug-source) pair. The two differ only in
 # whether a space was inserted between letters and digits: the display form
 # matches IGDB names/slugs that keep the space ("LittleBigPlanet 3"), the
@@ -349,7 +363,8 @@ def _variant_pairs(base: str, base_ns: str) -> List[tuple]:
     return pairs
 
 
-def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Optional[datetime]):
+def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Optional[datetime],
+                      sequel_ordinal: Optional[int] = None):
     """Exact/slug/normalized lookup for one name (display + no-split forms). Returns (Game, confidence, method) or None."""
     # Exact name (case-insensitive), both spellings. When several IGDB entries
     # share a name (originals vs remakes: Resident Evil 4, Demon's Souls), let
@@ -357,6 +372,13 @@ def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Option
     for candidate in (name, name_ns):
         games = db.query(Game).filter(Game.name.ilike(candidate)).all()
         if games:
+            # Byte-identical names (Overwatch / Overwatch 2): if a sequel ordinal
+            # is in range, pick the Nth entry by release date instead of guessing
+            # by play date. Out-of-range or no ordinal falls back to pick_best_match.
+            if len(games) > 1 and sequel_ordinal and 1 <= sequel_ordinal <= len(games):
+                ordered = sorted(games, key=lambda g: (
+                    g.first_release_date is None, g.first_release_date or datetime.min, g.igdb_id))
+                return (ordered[sequel_ordinal - 1], 0.95, "name_sequel")
             return (pick_best_match(games, first_played), 0.95, "name")
 
     slugs = []
@@ -404,9 +426,14 @@ def find_igdb_match(
     db: Session,
     raw_name: str,
     first_played: Optional[datetime] = None,
+    disambig_name: Optional[str] = None,
 ) -> tuple:
     """
     Match a platform game name to an IGDB game.
+
+    disambig_name is a more specific source name (e.g. the Sony lookup name) used
+    only to split byte-identical IGDB entries by sequel number ("Overwatch 2" picks
+    the 2nd "Overwatch" by release). It changes nothing when names don't collide.
 
     Returns (igdb_id, igdb_name, cover_url, confidence, method); all None on no match.
     Confidence < TRUSTED_CONFIDENCE means it's a suggestion to confirm, not a sure match.
@@ -416,10 +443,11 @@ def find_igdb_match(
 
     base = clean_platform_name(raw_name)
     base_ns = clean_platform_name(raw_name, split_alnum=False)
+    sequel_ordinal = _sequel_ordinal(disambig_name)
 
     # 1. High-confidence: the name and its deterministically-stripped variants.
     for name, name_ns in _variant_pairs(base, base_ns):
-        result = _match_name_exact(db, name, name_ns, first_played)
+        result = _match_name_exact(db, name, name_ns, first_played, sequel_ordinal)
         if result:
             game, confidence, method = result
             return (game.igdb_id, game.name, game.cover_image, confidence, method)

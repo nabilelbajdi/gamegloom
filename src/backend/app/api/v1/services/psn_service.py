@@ -142,12 +142,15 @@ def match_game_to_igdb(
     lookup = db.query(PsnTitleLookup).filter(
         PsnTitleLookup.title_id == platform_id
     ).first()
-    if lookup and lookup.name and lookup.name not in names:
-        names.append(lookup.name)
+    lookup_name = lookup.name if lookup and lookup.name else None
+    if lookup_name and lookup_name not in names:
+        names.append(lookup_name)
 
     best = NO_MATCH
     for name in names:
-        result = find_igdb_match(db, name, first_played)
+        # The Sony lookup name carries the sequel number ("Overwatch 2") that the
+        # PSN platform_name ("Overwatch") lacks, so it disambiguates same-named entries.
+        result = find_igdb_match(db, name, first_played, disambig_name=lookup_name)
         if result[0] is None:
             continue
         # Stop early on a high-confidence hit; otherwise keep the best so far.

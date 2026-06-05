@@ -3,6 +3,8 @@
 DB-backed tests for the platform integration layer: IGDB matching cascade,
 cross-platform playtime aggregation on import, and the concurrent-sync guard.
 """
+from datetime import datetime
+
 import pytest
 from fastapi import HTTPException
 
@@ -12,6 +14,7 @@ from app.api.v1.routers.integrations import _sync_guard
 from app.api.v1.models.game import Game
 from app.api.v1.models.user_game import UserGame, GameStatus
 from app.api.v1.models.user_platform_game import UserPlatformGame
+from app.api.v1.models.psn_title_lookup import PsnTitleLookup
 
 
 class TestFindIgdbMatch:
@@ -59,6 +62,61 @@ class TestFindIgdbMatch:
         db_session.add(Game(igdb_id=7, name="Hollow Knight", slug="hollow-knight"))
         db_session.commit()
         assert find_igdb_match(db_session, "Totally Made Up Nonexistent Title Qwxyz") == (None, None, None, None, None)
+
+
+class TestSequelDisambiguation:
+    """Two IGDB entries with a byte-identical name (Overwatch / Overwatch 2) routed by
+    the sequel number in the disambiguation (Sony lookup) name."""
+
+    def _seed_two_overwatch(self, db):
+        # Both literally named "Overwatch"; only release date + id differ.
+        db.add(Game(igdb_id=8173, name="Overwatch", slug="overwatch",
+                    first_release_date=datetime(2016, 5, 24)))
+        db.add(Game(igdb_id=125174, name="Overwatch", slug="overwatch--1",
+                    first_release_date=datetime(2023, 8, 10)))
+        db.commit()
+
+    def test_hint_with_number_picks_newer(self, db_session):
+        self._seed_two_overwatch(db_session)
+        igdb_id, _, _, conf, method = find_igdb_match(db_session, "Overwatch", disambig_name="Overwatch 2")
+        assert igdb_id == 125174 and conf == 0.95 and method == "name_sequel"
+
+    def test_hint_without_number_picks_older(self, db_session):
+        self._seed_two_overwatch(db_session)
+        igdb_id, _, _, _, method = find_igdb_match(db_session, "Overwatch", disambig_name="Overwatch: Origins Edition")
+        assert igdb_id == 8173 and method == "name_sequel"
+
+    def test_beta_hint_routes_by_number(self, db_session):
+        self._seed_two_overwatch(db_session)
+        igdb_id, _, _, _, _ = find_igdb_match(db_session, "Overwatch", disambig_name="Overwatch 2 Beta")
+        assert igdb_id == 125174
+
+    def test_out_of_range_ordinal_falls_back(self, db_session):
+        # Hint says "5" but only 2 candidates -> fall back to pick_best_match (lowest id here).
+        self._seed_two_overwatch(db_session)
+        igdb_id, _, _, _, method = find_igdb_match(db_session, "Overwatch", disambig_name="Overwatch 5")
+        assert igdb_id == 8173 and method == "name"
+
+    def test_single_candidate_with_hint_unchanged(self, db_session):
+        db_session.add(Game(igdb_id=8173, name="Overwatch", slug="overwatch",
+                            first_release_date=datetime(2016, 5, 24)))
+        db_session.commit()
+        igdb_id, _, _, _, method = find_igdb_match(db_session, "Overwatch", disambig_name="Overwatch 2")
+        assert igdb_id == 8173 and method == "name"
+
+    def test_no_hint_unchanged(self, db_session):
+        self._seed_two_overwatch(db_session)
+        igdb_id, _, _, _, method = find_igdb_match(db_session, "Overwatch")
+        assert igdb_id == 8173 and method == "name"
+
+    def test_psn_lookup_name_drives_split(self, db_session):
+        self._seed_two_overwatch(db_session)
+        db_session.add(PsnTitleLookup(title_id="PPSA07821_00", name="Overwatch 2"))
+        db_session.commit()
+        igdb_id, _, _, _, _ = psn_service.match_game_to_igdb(
+            db_session, platform_id="PPSA07821_00", platform_name="Overwatch"
+        )
+        assert igdb_id == 125174
 
 
 class TestPsnMatching:
