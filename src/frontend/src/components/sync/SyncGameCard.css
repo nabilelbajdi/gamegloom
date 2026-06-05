@@ -131,6 +131,40 @@
     z-index: 5;
 }
 
+/* Low-confidence match flag (shown in the Needs Review tab) */
+.sync-card-suggested {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #1a1205;
+    background: rgba(245, 197, 66, 0.92);
+    border-radius: 3px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+}
+
+/* Unidentified game flag (shown in the Needs Review tab) */
+.sync-card-nomatch {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #fff;
+    background: rgba(198, 40, 40, 0.92);
+    border-radius: 3px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+}
+
 /* Selected checkmark */
 .sync-card-check {
     position: absolute;

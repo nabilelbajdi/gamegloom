@@ -7,6 +7,17 @@ import {
 import useUserGameStore from '../store/useUserGameStore';
 import useToastStore from '../store/useToastStore';
 
+// Matches at or above this confidence are trusted into "Ready to Import".
+// Lower-confidence guesses (e.g. subtitle/partial matches) carry a suggested
+// game but land in "Needs Review" so the user confirms before importing.
+// Mirrors TRUSTED_CONFIDENCE in backend matching_utils.py.
+const TRUSTED_CONFIDENCE = 0.75;
+
+// A game is import-ready when it has a match we trust. Legacy rows with a
+// match but no recorded confidence are treated as trusted.
+const isTrustedMatch = (g) =>
+    !!g.igdb_id && (g.match_confidence == null || g.match_confidence >= TRUSTED_CONFIDENCE);
+
 /**
  * Custom hook for PSN/Steam sync review.
  * Uses database-cached library data for fast loads.
@@ -382,7 +393,7 @@ export const useSyncReview = (platform) => {
 
     const handleImportAllReady = useCallback(async () => {
         const readyGames = games.filter(g =>
-            g.igdb_id && !importedIds.has(g.id) && !skippedIds.has(g.id) && g.status === 'pending'
+            isTrustedMatch(g) && !importedIds.has(g.id) && !skippedIds.has(g.id) && g.status === 'pending'
         );
 
         if (readyGames.length === 0) return;
@@ -499,8 +510,8 @@ export const useSyncReview = (platform) => {
 
         const selectableIds = visible
             .filter(g => {
-                if (activeTab === 'ready') return g.igdb_id && g.status === 'pending';
-                if (activeTab === 'unmatched') return !g.igdb_id && g.status === 'pending';
+                if (activeTab === 'ready') return isTrustedMatch(g) && g.status === 'pending';
+                if (activeTab === 'unmatched') return !isTrustedMatch(g) && g.status === 'pending';
                 return false;
             })
             .map(g => g.id);
@@ -552,21 +563,14 @@ export const useSyncReview = (platform) => {
     // ─────────────────────────────────────────────────────────────
 
     const filterByTab = useCallback((gamesList, tab) => {
+        const isActive = (g) =>
+            g.status !== 'imported' && g.status !== 'skipped' && g.status !== 'hidden';
         switch (tab) {
             case 'ready':
-                return gamesList.filter(g =>
-                    g.igdb_id &&
-                    g.status !== 'imported' &&
-                    g.status !== 'skipped' &&
-                    g.status !== 'hidden'
-                );
+                return gamesList.filter(g => isActive(g) && isTrustedMatch(g));
             case 'unmatched':
-                return gamesList.filter(g =>
-                    !g.igdb_id &&
-                    g.status !== 'imported' &&
-                    g.status !== 'skipped' &&
-                    g.status !== 'hidden'
-                );
+                // Unmatched games AND low-confidence suggestions to confirm.
+                return gamesList.filter(g => isActive(g) && !isTrustedMatch(g));
             case 'skipped':
                 // Games that are skipped or hidden (both mean skipped)
                 return gamesList.filter(g =>

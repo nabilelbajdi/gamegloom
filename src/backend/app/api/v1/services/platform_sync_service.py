@@ -71,59 +71,22 @@ def _match_by_slug_local(
     platform_name: str
 ) -> Tuple[Optional[int], Optional[str], Optional[str], Optional[float], Optional[str]]:
     """
-    Fast local slug-based matching without API calls.
-    
-    This matches games by looking up slugs in the local Game table.
-    Much faster than individual IGDB API calls - suitable for 1000+ games.
-    
+    Fast local matching against the Game table without API calls.
+
+    Used for Steam games that IGDB's external_games table has no AppID mapping
+    for. Runs the shared name matcher (slug/roman/normalized/suffix-stripping),
+    which is fast enough for 1000+ games.
+
     Returns:
         (igdb_id, igdb_name, cover_url, confidence, method)
     """
-    from ..core.matching_utils import generate_slug, slug_with_roman_numerals, clean_name, pick_best_match
-    
+    from ..core.matching_utils import find_igdb_match, NO_MATCH
+
     try:
-        # Step 1: Slug matching
-        slug = generate_slug(platform_name)
-        candidates = db.query(Game).filter(
-            (Game.slug == slug) | 
-            (Game.slug.like(f"{slug}--%"))
-        ).all()
-        
-        if candidates:
-            game = pick_best_match(candidates)
-            if game:
-                confidence = 0.85 if game.slug == slug else 0.80
-                return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
-
-        # Step 2: Roman numeral conversion
-        roman_slug = slug_with_roman_numerals(slug)
-        if roman_slug != slug:
-            candidates = db.query(Game).filter(
-                (Game.slug == roman_slug) | 
-                (Game.slug.like(f"{roman_slug}--%"))
-            ).all()
-            
-            if candidates:
-                game = pick_best_match(candidates)
-                if game:
-                    return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
-
-        # Step 3: Partial name search (only for longer names)
-        c_name = clean_name(platform_name)
-        if len(c_name) >= 5:
-            candidates = db.query(Game).filter(
-                Game.name.ilike(f"{c_name}%")
-            ).order_by(Game.igdb_id).limit(5).all()
-            
-            if candidates:
-                game = candidates[0]
-                return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
-
-        return None, None, None, None, None
-        
+        return find_igdb_match(db, platform_name)
     except Exception as e:
         logger.warning(f"[Slug Match] Error matching {platform_name}: {e}")
-        return None, None, None, None, None
+        return NO_MATCH
 
 
 def sync_psn_library(
@@ -212,13 +175,29 @@ def sync_psn_library(
                             cached.updated_at = now
                             updated_games.append(cached)
                 
+                # Retry matching for still-unmatched entries so matching
+                # improvements take effect on re-sync. Never overwrites an
+                # existing match (manual fixes included).
+                if cached.status != 'hidden' and cached.igdb_id is None:
+                    igdb_id, igdb_name, igdb_cover, confidence, method = psn_service.match_game_to_igdb(
+                        db=db, platform_id=platform_id,
+                        platform_name=platform_name, first_played=cached.first_played
+                    )
+                    if igdb_id:
+                        cached.igdb_id = igdb_id
+                        cached.igdb_name = igdb_name
+                        cached.igdb_cover_url = igdb_cover
+                        cached.match_confidence = confidence
+                        cached.match_method = method
+                        cached.updated_at = now
+
                 # Re-evaluate status based on library presence; preserve 'hidden'
                 if cached.status != 'hidden':
                     if cached.igdb_id and cached.igdb_id in existing_igdb_ids:
                         cached.status = 'imported'
                     else:
                         cached.status = 'pending'
-                
+
                 cached.last_synced_at = now
             else:
                 # New game - run IGDB matching
@@ -371,13 +350,28 @@ def sync_steam_library(
                             cached.updated_at = now
                             updated_games.append(cached)
                 
+                # Retry matching for still-unmatched entries so matching
+                # improvements take effect on re-sync. Uses the local matcher
+                # (no API call) and never overwrites an existing match.
+                if cached.status != 'hidden' and cached.igdb_id is None:
+                    igdb_id, igdb_name, igdb_cover, confidence, method = _match_by_slug_local(
+                        db=db, platform_name=platform_name
+                    )
+                    if igdb_id:
+                        cached.igdb_id = igdb_id
+                        cached.igdb_name = igdb_name
+                        cached.igdb_cover_url = igdb_cover
+                        cached.match_confidence = confidence
+                        cached.match_method = method
+                        cached.updated_at = now
+
                 # Re-evaluate status; preserve 'hidden'
                 if cached.status != 'hidden':
                     if cached.igdb_id and cached.igdb_id in existing_igdb_ids:
                         cached.status = 'imported'
                     else:
                         cached.status = 'pending'
-                
+
                 cached.last_synced_at = now
             else:
                 # Collect new game for batch processing

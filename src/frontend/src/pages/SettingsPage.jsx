@@ -151,7 +151,7 @@ const SettingsPage = () => {
             toast.success(`Cleared ${result.count} games`);
             setIsConfirming(false);
             setClearInput('');
-            fetchCollection();
+            fetchCollection(true);  // force past the cache so the count updates now
         } catch (error) {
             toast.error('Failed to clear library');
         } finally {

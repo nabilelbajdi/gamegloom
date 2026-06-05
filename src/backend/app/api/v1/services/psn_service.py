@@ -17,11 +17,9 @@ from sqlalchemy.orm import Session
 
 from ...settings import settings
 from ..models.user_platform_link import UserPlatformLink, PlatformType
-from ..models.game import Game
 from ..models.psn_title_lookup import PsnTitleLookup
 from ..core.matching_utils import (
-    is_non_game, clean_name, clean_platform_name, generate_slug, 
-    slug_with_roman_numerals, pick_best_match
+    is_non_game, clean_platform_name, find_igdb_match, NO_MATCH
 )
 
 logger = logging.getLogger(__name__)
@@ -118,89 +116,50 @@ def match_game_to_igdb(
 ) -> tuple:
     """
     Match a PSN game to IGDB.
-    
-    Matching strategy:
-    1. Sony title lookup table → exact name match
-    2. Slug match with IGDB disambiguation suffixes
-    3. Roman numeral conversion (3→iii)
-    4. Partial name prefix match
-    
+
+    Tries two source names through the shared matcher and keeps the most
+    confident result:
+    1. The name PSN reports for the game
+    2. The canonical name from the Sony title lookup table (title_id → name)
+
+    The PSN name is tried first because it's the title the user actually owns
+    and usually names the base game. The Sony lookup name is the full SKU name
+    and can carry an expansion/edition ("Monster Hunter World: Iceborne"), so
+    it's only a fallback for PSN names too mangled to match ("SOULCALIBURVI").
+
     Args:
         db: Database session
         platform_id: PSN title_id (e.g., "CUSA00634_00")
-        platform_name: Cleaned game name from PSN
+        platform_name: Game name from PSN
         first_played: When user first played (for disambiguation)
-    
+
     Returns:
         (igdb_id, igdb_name, cover_url, confidence, method) - any can be None
     """
-    # Step 1: Sony title lookup table
-    original_platform_name = platform_name
+    names = []
+    if platform_name:
+        names.append(platform_name)
     lookup = db.query(PsnTitleLookup).filter(
         PsnTitleLookup.title_id == platform_id
     ).first()
-    
-    if lookup:
-        c_name = clean_name(lookup.name)
-        
-        # Exact match
-        game = db.query(Game).filter(Game.name == c_name).first()
-        if game:
-            logger.debug(f"[Match] {platform_name} → {game.name} (exact)")
-            return (game.igdb_id, game.name, game.cover_image, 0.99, "exact")
-        
-        # Case-insensitive exact
-        game = db.query(Game).filter(Game.name.ilike(c_name)).first()
-        if game:
-            logger.debug(f"[Match] {platform_name} → {game.name} (iexact)")
-            return (game.igdb_id, game.name, game.cover_image, 0.95, "iexact")
-    
-    # Step 2: Slug matching -- try the PSN name first (often cleaner than Sony
-    # lookup names which may include "Beta", "Demo", trademark symbols, etc.)
-    slug = generate_slug(original_platform_name)
-    
-    candidates = db.query(Game).filter(
-        (Game.slug == slug) | 
-        (Game.slug.like(f"{slug}--%"))  # Match --1, --2, etc.
-    ).all()
-    
-    if candidates:
-        game = pick_best_match(candidates, first_played)
-        if game:
-            confidence = 0.85 if game.slug == slug else 0.80
-            logger.debug(f"[Match] {platform_name} → {game.name} (slug)")
-            return (game.igdb_id, game.name, game.cover_image, confidence, "slug")
-    
-    # Step 3: Roman numeral conversion
-    roman_slug = slug_with_roman_numerals(slug)
-    if roman_slug != slug:
-        candidates = db.query(Game).filter(
-            (Game.slug == roman_slug) | 
-            (Game.slug.like(f"{roman_slug}--%"))
-        ).all()
-        
-        if candidates:
-            game = pick_best_match(candidates, first_played)
-            if game:
-                logger.debug(f"[Match] {platform_name} → {game.name} (slug_roman)")
-                return (game.igdb_id, game.name, game.cover_image, 0.80, "slug_roman")
-    
-    # Step 4: Partial name search (prefix match, min 5 chars)
-    c_name = clean_name(platform_name)
-    if len(c_name) >= 5:
-        # Get all matching games, ordered by igdb_id (lower = original, not localized version)
-        candidates = db.query(Game).filter(
-            Game.name.ilike(f"{c_name}%")
-        ).order_by(Game.igdb_id).limit(5).all()
-        
-        if candidates:
-            game = candidates[0]  # Take lowest igdb_id (usually the original/English version)
-            logger.debug(f"[Match] {platform_name} → {game.name} (partial)")
-            return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
-    
-    # Step 5: No match
-    logger.debug(f"[Match] {platform_name} → UNMATCHED")
-    return (None, None, None, None, None)
+    if lookup and lookup.name and lookup.name not in names:
+        names.append(lookup.name)
+
+    best = NO_MATCH
+    for name in names:
+        result = find_igdb_match(db, name, first_played)
+        if result[0] is None:
+            continue
+        # Stop early on a high-confidence hit; otherwise keep the best so far.
+        if (result[3] or 0) >= 0.90:
+            logger.debug(f"[Match] {platform_name} → {result[1]} ({result[4]})")
+            return result
+        if (result[3] or 0) > (best[3] or 0):
+            best = result
+
+    if best[0] is None:
+        logger.debug(f"[Match] {platform_name} → UNMATCHED")
+    return best
 
 
 # ═══════════════════════════════════════════════════════════════════

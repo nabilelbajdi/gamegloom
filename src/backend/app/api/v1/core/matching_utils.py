@@ -86,16 +86,25 @@ def normalize_unicode(text: str) -> str:
     return ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
 
 
-def clean_name(name: str) -> str:
+def clean_name(name: str, split_alnum: bool = True) -> str:
     """
     Clean a game name for matching:
     - Remove trademark symbols (™®©)
     - Convert Unicode Roman numerals
     - Fix spacing around numbers
     - Normalize Unicode
+
+    split_alnum inserts a space between a letter and a following digit
+    (LittleBigPlanet3 -> LittleBigPlanet 3). Disable it for titles where the
+    letters and digits are one token (H1Z1, OlliOlli2) so we can also try the
+    un-split form when matching.
     """
     if not name:
         return ""
+
+    # Remove trademark symbols first so they don't sit between a letter and a
+    # following Roman numeral ("SOULCALIBUR™Ⅵ"), which would block the spacing below.
+    name = name.replace("™", "").replace("®", "").replace("©", "")
 
     # Unicode Roman numerals → ASCII equivalents
     roman_map = {
@@ -111,33 +120,33 @@ def clean_name(name: str) -> str:
         if unicode_char in name:
             name = re.sub(rf'([a-zA-Z])({re.escape(unicode_char)})', rf'\1 {ascii_equiv}', name)
             name = name.replace(unicode_char, ascii_equiv)
-    
-    # Remove trademark symbols
-    name = name.replace("™", "").replace("®", "").replace("©", "")
-    
+
     # Fix spacing around numbers (LittleBigPlanet3 → LittleBigPlanet 3)
-    name = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', name)
-    
+    if split_alnum:
+        name = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', name)
+
     return name.strip()
 
 
-def clean_platform_name(name: str) -> str:
+def clean_platform_name(name: str, split_alnum: bool = True) -> str:
     """
     Clean a platform game name for display and matching:
     - Removes season/edition suffixes
     - Removes trademark symbols
     - Fixes common franchise naming issues
+
+    split_alnum is forwarded to clean_name (see there).
     """
     if not name:
         return ""
-    
+
     # Remove edition suffixes like "– Season 20: Vendetta" or "Collectors Edition"
     # Note: We use " – " (en dash) as it's common in PSN titles
     if " – " in name:
         name = name.split(" – ")[0]
-    
+
     # General cleanup
-    name = clean_name(name)
+    name = clean_name(name, split_alnum=split_alnum)
     
     # Fix common franchise naming (add colons where IGDB expects them)
     franchise_fixes = {
@@ -162,9 +171,9 @@ def clean_platform_name(name: str) -> str:
     return " ".join(name.split()).strip()
 
 
-def generate_slug(name: str) -> str:
+def generate_slug(name: str, split_alnum: bool = True) -> str:
     """Generate IGDB-compatible slug from game name."""
-    name = clean_name(name)
+    name = clean_name(name, split_alnum=split_alnum)
     name = normalize_unicode(name)
     
     slug = name.lower()
@@ -226,12 +235,211 @@ def pick_best_match(candidates: List[Game], first_played: Optional[datetime] = N
             return rd.replace(tzinfo=None)
         return rd
     
-    valid = [g for g in candidates 
+    valid = [g for g in candidates
              if get_naive_release_date(g) and get_naive_release_date(g) <= cutoff]
-    
+
     if valid:
         # Pick the most recent valid release (closest to first_played but before cutoff)
         return max(valid, key=lambda g: get_naive_release_date(g))
-    
+
     # Fallback to lowest ID
     return min(candidates, key=lambda g: g.igdb_id)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Unified IGDB Matching
+# ═══════════════════════════════════════════════════════════════════
+
+# Matches at or above this confidence are trusted enough to land in the
+# "Ready to Import" tab. Anything below is a suggestion the user confirms in
+# the "Needs Review" tab before it touches their library.
+TRUSTED_CONFIDENCE = 0.75
+
+# An empty match result (igdb_id, igdb_name, cover_url, confidence, method).
+NO_MATCH = (None, None, None, None, None)
+
+# Edition / version / beta markers that platforms append but IGDB indexes the
+# base game without. Longest phrases first so "complete edition" wins over a
+# bare "edition". Order matters in the regex alternation.
+EDITION_MARKERS = [
+    "game of the year edition", "game of the year", "goty edition", "goty",
+    "definitive edition", "complete edition", "complete collection", "complete story",
+    "ultimate edition", "legendary edition", "collector's edition", "collectors edition",
+    "deluxe edition", "gold edition", "special edition", "enhanced edition",
+    "anniversary edition", "remastered edition", "digital edition", "standard edition",
+    "royal edition", "definitive", "remastered", "remaster",
+    "closed beta", "open beta", "beta version", "beta ver.", "beta ver", "beta", "demo",
+]
+
+_EDITION_RE = re.compile(
+    r"\s*[:\-–]?\s*(the\s+)?(" + "|".join(re.escape(m) for m in EDITION_MARKERS) + r")\s*$",
+    re.IGNORECASE,
+)
+
+# Platform tags PSN/Steam append to a title ("It Takes Two PS 4 & PS 5").
+_PLATFORM_TAG_RE = re.compile(
+    r"\s*[:\-–\(]?\s*((for\s+)?(ps\s?[345]|playstation\s?[345])(\s*[&/]\s*(ps\s?[345]|playstation\s?[345]))?)\)?\s*$",
+    re.IGNORECASE,
+)
+
+# Publisher prefixes IGDB drops from some (not all) titles, so these are only
+# tried as a fallback after the full name fails.
+PUBLISHER_PREFIXES = ["tom clancy's ", "tom clancys "]
+
+
+def strip_edition(name: str) -> str:
+    """Strip trailing edition/version/beta markers, repeatedly (e.g. 'X Remastered Deluxe Edition')."""
+    prev = None
+    while name and name != prev:
+        prev = name
+        name = _EDITION_RE.sub("", name).strip(" :-–")
+    return name
+
+
+def strip_platform_tags(name: str) -> str:
+    """Strip a trailing platform tag like 'PS4', 'PS5', 'PS 4 & PS 5'."""
+    return _PLATFORM_TAG_RE.sub("", name).strip(" :-–")
+
+
+def strip_publisher_prefix(name: str) -> str:
+    """Strip a known publisher prefix like 'Tom Clancy's'."""
+    low = name.lower()
+    for prefix in PUBLISHER_PREFIXES:
+        if low.startswith(prefix):
+            return name[len(prefix):].strip()
+    return name
+
+
+def drop_subtitle(name: str) -> str:
+    """Return the part before the first colon ('Fall Guys: Ultimate Knockout' -> 'Fall Guys')."""
+    return name.split(":", 1)[0].strip()
+
+
+def normalize_for_match(name: str) -> str:
+    """Reduce a name to lowercase alphanumerics for punctuation-insensitive comparison."""
+    name = normalize_unicode(clean_name(name, split_alnum=False))
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+# A name variant is a (display, slug-source) pair. The two differ only in
+# whether a space was inserted between letters and digits: the display form
+# matches IGDB names/slugs that keep the space ("LittleBigPlanet 3"), the
+# slug-source form matches those that don't ("H1Z1", "OlliOlli2"). Both are
+# tried so either spelling resolves.
+def _variant_pairs(base: str, base_ns: str) -> List[tuple]:
+    """Deterministic stripped (display, no-split) name pairs to try, in priority order."""
+    pairs = []
+    seen = set()
+
+    def add(display: str, no_split: str):
+        display, no_split = display.strip(), no_split.strip()
+        if display and display not in seen:
+            seen.add(display)
+            pairs.append((display, no_split))
+
+    add(base, base_ns)
+    add(strip_edition(base), strip_edition(base_ns))
+    add(strip_platform_tags(base), strip_platform_tags(base_ns))
+    add(strip_platform_tags(strip_edition(base)), strip_platform_tags(strip_edition(base_ns)))
+    add(strip_publisher_prefix(base), strip_publisher_prefix(base_ns))
+    add(
+        strip_publisher_prefix(strip_platform_tags(strip_edition(base))),
+        strip_publisher_prefix(strip_platform_tags(strip_edition(base_ns))),
+    )
+    return pairs
+
+
+def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Optional[datetime]):
+    """Exact/slug/normalized lookup for one name (display + no-split forms). Returns (Game, confidence, method) or None."""
+    # Exact name (case-insensitive), both spellings. When several IGDB entries
+    # share a name (originals vs remakes: Resident Evil 4, Demon's Souls), let
+    # pick_best_match choose by release date relative to when it was played.
+    for candidate in (name, name_ns):
+        games = db.query(Game).filter(Game.name.ilike(candidate)).all()
+        if games:
+            return (pick_best_match(games, first_played), 0.95, "name")
+
+    slugs = []
+    for slug in (generate_slug(name), generate_slug(name_ns, split_alnum=False)):
+        if slug and slug not in slugs:
+            slugs.append(slug)
+
+    # Exact slug, then IGDB disambiguation suffixes (game--1, game--2, ...)
+    for slug in slugs:
+        candidates = db.query(Game).filter(
+            (Game.slug == slug) | (Game.slug.like(f"{slug}--%"))
+        ).all()
+        if candidates:
+            game = pick_best_match(candidates, first_played)
+            if game:
+                return (game, 0.90 if game.slug == slug else 0.82, "slug")
+
+        # Roman-numeral form of the slug (final-fantasy-7 -> final-fantasy-vii)
+        roman_slug = slug_with_roman_numerals(slug)
+        if roman_slug != slug:
+            candidates = db.query(Game).filter(
+                (Game.slug == roman_slug) | (Game.slug.like(f"{roman_slug}--%"))
+            ).all()
+            if candidates:
+                game = pick_best_match(candidates, first_played)
+                if game:
+                    return (game, 0.80, "slug_roman")
+
+    # Punctuation-insensitive name match: pull a small candidate set by slug
+    # prefix, then require the normalized names to be identical. Catches IGDB
+    # names with punctuation we drop ("Plants vs. Zombies: Garden Warfare").
+    target = normalize_for_match(name_ns)
+    if target:
+        for slug in slugs:
+            for game in db.query(Game).filter(
+                Game.slug.like(f"{slug}%")
+            ).order_by(Game.igdb_id).limit(25).all():
+                if normalize_for_match(game.name) == target:
+                    return (game, 0.88, "normalized")
+
+    return None
+
+
+def find_igdb_match(
+    db: Session,
+    raw_name: str,
+    first_played: Optional[datetime] = None,
+) -> tuple:
+    """
+    Match a platform game name to an IGDB game.
+
+    Returns (igdb_id, igdb_name, cover_url, confidence, method); all None on no match.
+    Confidence < TRUSTED_CONFIDENCE means it's a suggestion to confirm, not a sure match.
+    """
+    if not raw_name:
+        return NO_MATCH
+
+    base = clean_platform_name(raw_name)
+    base_ns = clean_platform_name(raw_name, split_alnum=False)
+
+    # 1. High-confidence: the name and its deterministically-stripped variants.
+    for name, name_ns in _variant_pairs(base, base_ns):
+        result = _match_name_exact(db, name, name_ns, first_played)
+        if result:
+            game, confidence, method = result
+            return (game.igdb_id, game.name, game.cover_image, confidence, method)
+
+    # 2. Suggestion: drop a trailing subtitle ("H1Z1: Battle Royale" -> "H1Z1").
+    subtitle, subtitle_ns = drop_subtitle(base), drop_subtitle(base_ns)
+    if subtitle and subtitle != base:
+        result = _match_name_exact(db, subtitle, subtitle_ns, first_played)
+        if result:
+            game = result[0]
+            return (game.igdb_id, game.name, game.cover_image, 0.65, "subtitle")
+
+    # 3. Suggestion: partial prefix match on longer names.
+    c_name = clean_name(base)
+    if len(c_name) >= 5:
+        candidates = db.query(Game).filter(
+            Game.name.ilike(f"{c_name}%")
+        ).order_by(Game.igdb_id).limit(5).all()
+        if candidates:
+            game = candidates[0]
+            return (game.igdb_id, game.name, game.cover_image, 0.60, "partial")
+
+    return NO_MATCH

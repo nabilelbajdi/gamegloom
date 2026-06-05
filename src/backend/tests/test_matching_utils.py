@@ -12,6 +12,11 @@ from app.api.v1.core.matching_utils import (
     generate_slug,
     slug_with_roman_numerals,
     pick_best_match,
+    strip_edition,
+    strip_platform_tags,
+    strip_publisher_prefix,
+    drop_subtitle,
+    normalize_for_match,
 )
 from app.api.v1.models.game import Game
 
@@ -40,8 +45,43 @@ class TestCleanName:
     def test_adds_space_between_letter_and_number(self):
         assert clean_name("LittleBigPlanet3") == "LittleBigPlanet 3"
 
+    def test_no_split_keeps_alphanumeric_token(self):
+        assert clean_name("H1Z1", split_alnum=False) == "H1Z1"
+        assert clean_name("OlliOlli2", split_alnum=False) == "OlliOlli2"
+
     def test_converts_unicode_roman_numerals(self):
         assert clean_name("Final Fantasy Ⅶ") == "Final Fantasy VII"
+
+    def test_trademark_between_letter_and_roman_numeral(self):
+        # The ™ must be removed before the Roman numeral spacing runs.
+        assert clean_name("SOULCALIBUR™Ⅵ") == "SOULCALIBUR VI"
+
+
+class TestStripHelpers:
+    def test_strip_edition_hyphen_and_trailing(self):
+        assert strip_edition("Divinity: Original Sin 2 - Definitive Edition") == "Divinity: Original Sin 2"
+        assert strip_edition("Injustice: Gods Among Us Ultimate Edition") == "Injustice: Gods Among Us"
+        assert strip_edition("BioShock Infinite: The Complete Edition") == "BioShock Infinite"
+
+    def test_strip_edition_leaves_plain_name(self):
+        assert strip_edition("Hollow Knight") == "Hollow Knight"
+
+    def test_strip_platform_tags(self):
+        assert strip_platform_tags("It Takes Two PS 4 & PS 5") == "It Takes Two"
+        assert strip_platform_tags("Bloodborne PS4") == "Bloodborne"
+
+    def test_strip_publisher_prefix(self):
+        assert strip_publisher_prefix("Tom Clancy's Rainbow Six Siege") == "Rainbow Six Siege"
+        assert strip_publisher_prefix("Hades") == "Hades"
+
+    def test_drop_subtitle(self):
+        assert drop_subtitle("Fall Guys: Ultimate Knockout") == "Fall Guys"
+        assert drop_subtitle("Hades") == "Hades"
+
+    def test_normalize_for_match_is_punctuation_insensitive(self):
+        assert normalize_for_match("Plants vs. Zombies: Garden Warfare") == \
+            normalize_for_match("Plants vs Zombies Garden Warfare")
+        assert normalize_for_match("OlliOlli2") == normalize_for_match("OlliOlli 2")
 
 
 class TestCleanPlatformName:

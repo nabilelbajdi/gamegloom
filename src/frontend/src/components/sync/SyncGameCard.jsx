@@ -19,6 +19,9 @@ const SyncGameCard = ({
     showActions = true,
 }) => {
     const isMatched = !!game.igdb_id;
+    // A match we're not fully sure of: it carries a suggested game but should
+    // be confirmed before import (lands in the Needs Review tab).
+    const isSuggestion = isMatched && game.match_confidence != null && game.match_confidence < 0.75;
     const isImported = game.status === 'imported';
     const isSkipped = game.status === 'skipped';
     const isHidden = game.status === 'hidden';
@@ -103,6 +106,14 @@ const SyncGameCard = ({
                             : `${game.playtime_minutes}m`
                         }
                     </div>
+                )}
+
+                {/* Match-quality flag for the Needs Review tab */}
+                {isSuggestion && !isImported && !isInactive && (
+                    <div className="sync-card-suggested">Suggested</div>
+                )}
+                {!isMatched && !isImported && !isInactive && (
+                    <div className="sync-card-nomatch">No match</div>
                 )}
 
                 {/* Platform category badge (PS4/PS5) */}

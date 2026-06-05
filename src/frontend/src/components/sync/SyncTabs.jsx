@@ -12,8 +12,8 @@ const TAB_INFO = {
 
 
 const TAB_DESCRIPTIONS = {
-    ready: 'These games have been automatically matched. Please verify them before adding to your library.',
-    unmatched: "We couldn't automatically identify these games. Click Fix to search and match them manually.",
+    ready: 'These games matched with high confidence. Review them before adding to your library.',
+    unmatched: "Some of these have a suggested match to confirm — others we couldn't identify. Use Import to accept a suggestion, or Fix to search manually.",
     skipped: 'Games you chose to hide from import. You can restore them at any time.',
 };
 
