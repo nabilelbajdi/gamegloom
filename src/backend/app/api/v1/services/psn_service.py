@@ -21,7 +21,7 @@ from ..models.psn_title_lookup import PsnTitleLookup
 from ..models.game import Game
 from ..core.matching_utils import (
     is_non_game, clean_platform_name, find_igdb_match, pick_best_match,
-    normalize_for_match, NO_MATCH
+    normalize_for_match, TRUSTED_CONFIDENCE, NO_MATCH
 )
 
 logger = logging.getLogger(__name__)
@@ -215,9 +215,10 @@ def match_game_to_igdb(
         if (result[3] or 0) > (best[3] or 0):
             best = result
 
-    # Final fallback: only when fully unmatched and explicitly allowed (initial sync,
-    # not the local-only re-sync retry), search IGDB live and add the game if found.
-    if best[0] is None and allow_igdb_fetch:
+    # Final fallback: when there's no trusted local match (unmatched OR only a weak
+    # subtitle/partial guess) and it's allowed (initial sync, not the local-only
+    # re-sync retry), search IGDB live. An exact IGDB result beats a weak local guess.
+    if allow_igdb_fetch and (best[3] or 0) < TRUSTED_CONFIDENCE:
         fetched = match_via_igdb_search(db, platform_name)
         if fetched[0] is not None:
             return fetched

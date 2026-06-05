@@ -92,6 +92,19 @@ class TestIgdbFetchFallback:
         assert psn_service.match_via_igdb_search(db_session, "Netflix") == (None, None, None, None, None)
         assert calls["n"] == 0  # never hit IGDB for a known non-game
 
+    def test_fetch_overrides_weak_local_suggestion(self, db_session, monkeypatch):
+        from app.api.v1.core import services as core_services
+        # Local only yields a weak 0.65 subtitle guess ("Killing Floor")
+        db_session.add(Game(igdb_id=10, name="Killing Floor", slug="killing-floor"))
+        db_session.commit()
+        monkeypatch.setattr(core_services, "fetch_from_igdb",
+                            lambda query: [{"id": 555, "name": "Killing Floor: Incursion"}])
+        r0 = psn_service.match_game_to_igdb(db_session, platform_id="K_00", platform_name="Killing Floor: Incursion")
+        assert r0[0] == 10 and r0[3] < 0.75  # weak suggestion without fetch
+        r1 = psn_service.match_game_to_igdb(db_session, platform_id="K_00",
+                                            platform_name="Killing Floor: Incursion", allow_igdb_fetch=True)
+        assert r1[0] == 555 and r1[4] == "igdb_fetch"  # exact IGDB result beats the weak guess
+
     def test_match_game_to_igdb_uses_fallback_only_when_allowed(self, db_session, monkeypatch):
         from app.api.v1.core import services as core_services
         monkeypatch.setattr(core_services, "fetch_from_igdb",
