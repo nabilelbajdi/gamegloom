@@ -200,6 +200,7 @@ class GameBase(BaseModel):
     alternative_names: Optional[List[str]] = None
     keywords: Optional[List[str]] = None
     ps_concept_id: Optional[int] = None
+    alt_names_search: Optional[str] = None
     
     # Time to beat information
     time_to_beat: Optional[Dict] = None

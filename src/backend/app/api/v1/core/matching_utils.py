@@ -341,6 +341,20 @@ def extract_ps_concept_id(external_games) -> Optional[int]:
     return None
 
 
+def build_alt_names_search(alternative_names) -> Optional[str]:
+    """
+    Normalized alternative names joined as "|tok1|tok2|" for delimited LIKE matching
+    ("|" + ... + "|" so each token matches exactly via LIKE '%|tok|%'). None when there
+    are no usable names. Stored on Game.alt_names_search by the IGDB write path.
+    """
+    tokens = []
+    for nm in alternative_names or []:
+        norm = normalize_for_match(nm)
+        if norm and norm not in tokens:
+            tokens.append(norm)
+    return "|" + "|".join(tokens) + "|" if tokens else None
+
+
 def _sequel_ordinal(disambig_name: Optional[str]) -> Optional[int]:
     """
     Ordinal used to pick among identically-named IGDB entries, read from a hint
@@ -438,6 +452,15 @@ def _match_name_exact(db: Session, name: str, name_ns: str, first_played: Option
             ).order_by(Game.igdb_id).limit(25).all():
                 if normalize_for_match(game.name) == target:
                     return (game, 0.88, "normalized")
+
+    # Alternative names: the platform name matches a known alt/regional/abbreviated
+    # name (stored normalized as |tok| in alt_names_search) but not the primary name.
+    if target and len(target) >= 3:
+        game = db.query(Game).filter(
+            Game.alt_names_search.like(f"%|{target}|%")
+        ).order_by(Game.igdb_id).first()
+        if game:
+            return (game, 0.86, "alt_name")
 
     # Reverse-subtitle: the platform reports the base title and IGDB appended a
     # subtitle after a colon ("Never Alone" -> "Never Alone: Kisima Ingitchuna").

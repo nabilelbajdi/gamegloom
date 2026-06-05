@@ -96,6 +96,9 @@ class Game(Base):
     # Sony concept id (parsed from IGDB external_games PlayStation URL). Bridges a
     # PSN title_id -> psn_title_lookup.concept_id -> this -> game, exactly.
     ps_concept_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # Normalized alternative names joined as "|tok1|tok2|" for LIKE matching when a
+    # platform name matches an alt/regional/abbreviated name but not the primary.
+    alt_names_search: Mapped[str | None] = mapped_column(String, nullable=True)
     game_status_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game status ID")
     game_status_name: Mapped[str | None] = mapped_column(String, nullable=True, comment="Game status name (released, alpha, beta, etc)")
     game_type_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game type ID")

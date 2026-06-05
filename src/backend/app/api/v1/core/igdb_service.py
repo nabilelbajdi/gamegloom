@@ -9,7 +9,7 @@ import asyncio
 import httpx
 
 from . import schemas
-from .matching_utils import extract_ps_concept_id
+from .matching_utils import extract_ps_concept_id, build_alt_names_search
 from ...settings import settings
 
 logger = logging.getLogger(__name__)
@@ -490,6 +490,7 @@ def process_igdb_data(igdb_data: dict) -> schemas.GameCreate:
         version_title=version_title,
         slug=igdb_data.get('slug'),
         ps_concept_id=extract_ps_concept_id(igdb_data.get('external_games', [])),
+        alt_names_search=build_alt_names_search(alternative_names),
         game_status_id=game_status_id,
         game_status_name=game_status_name,
         game_type_id=game_type_id,

@@ -8,6 +8,7 @@ from datetime import datetime
 from app.api.v1.core.matching_utils import (
     is_non_game,
     extract_ps_concept_id,
+    build_alt_names_search,
     clean_name,
     clean_platform_name,
     generate_slug,
@@ -62,6 +63,20 @@ class TestExtractPsConceptId:
     def test_handles_empty_and_none(self):
         assert extract_ps_concept_id([]) is None
         assert extract_ps_concept_id(None) is None
+
+
+class TestBuildAltNamesSearch:
+    def test_builds_delimited_normalized_blob(self):
+        blob = build_alt_names_search(["Tony Hawk's Pro Skater 1 + 2", "THPS 1+2"])
+        assert blob == "|tonyhawksproskater12|thps12|"
+
+    def test_dedupes_and_skips_empty(self):
+        blob = build_alt_names_search(["Never Alone", "Never Alone", "  "])
+        assert blob == "|neveralone|"
+
+    def test_empty_and_none(self):
+        assert build_alt_names_search([]) is None
+        assert build_alt_names_search(None) is None
 
 
 class TestCleanName:
