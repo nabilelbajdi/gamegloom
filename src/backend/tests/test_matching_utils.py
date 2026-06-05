@@ -47,6 +47,16 @@ class TestIsNonGame:
         # The pattern is a whole-word prefix, so this stays a game (defensive).
         assert is_non_game("Never Alone") is False
 
+    def test_apps_and_demos_are_non_game(self):
+        assert is_non_game("SONY PICTURES CORE") is True
+        assert is_non_game("Prime Video") is True
+        assert is_non_game("VERY BAD DREAMS FREE DEMO") is True
+        assert is_non_game("The Last Guardian VR DEMO") is True
+
+    def test_demo_pattern_not_overzealous(self):
+        assert is_non_game("Demon's Souls") is False
+        assert is_non_game("Democracy 3") is False
+
 
 class TestExtractPsConceptId:
     def test_extracts_from_playstation_concept_url(self):

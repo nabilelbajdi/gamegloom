@@ -23,6 +23,7 @@ NON_GAME_TITLES = {
     "spotify", "netflix", "youtube", "amazon prime video", "hulu", "disney+",
     "apple tv", "crunchyroll", "plex", "twitch", "hbo max", "peacock",
     "paramount+", "amazon video", "vudu", "vidzone", "vrideo", "vrideo vr",
+    "prime video", "my videos", "animax", "sony pictures core", "now tv",
     # Steam-specific
     "steamvr", "steamvr collectables", "steamvr tutorial",
     # Utilities & companions
@@ -39,6 +40,12 @@ NON_GAME_TITLES = {
 NON_GAME_PATTERNS = [
     # Media-app brands with suffixed variants (YouTube, YouTube TV, YouTube Kids, ...)
     r"^youtube\b",
+    r"\bu-next\b",
+    # Trailing "demo" (FREE DEMO, VR DEMO, - DEMO, : Demo); \b keeps "Demon's Souls" safe
+    r"\bdemo\b\s*$",
+    r"content viewer",
+    r"music concert",
+    r"piano collections",
     r"demo disc",
     r"playstation\s*vr demo",
     r"^\s*demo\s*$",
