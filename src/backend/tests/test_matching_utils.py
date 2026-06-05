@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.api.v1.core.matching_utils import (
     is_non_game,
+    extract_ps_concept_id,
     clean_name,
     clean_platform_name,
     generate_slug,
@@ -44,6 +45,23 @@ class TestIsNonGame:
     def test_youtube_prefixed_real_titles_not_blocked(self):
         # The pattern is a whole-word prefix, so this stays a game (defensive).
         assert is_non_game("Never Alone") is False
+
+
+class TestExtractPsConceptId:
+    def test_extracts_from_playstation_concept_url(self):
+        external = [
+            {"url": "https://store.steampowered.com/app/295790", "uid": "295790"},
+            {"url": "https://store.playstation.com/en-us/concept/202994", "uid": "202994"},
+        ]
+        assert extract_ps_concept_id(external) == 202994
+
+    def test_none_when_no_playstation_entry(self):
+        external = [{"url": "https://store.steampowered.com/app/295790", "uid": "295790"}]
+        assert extract_ps_concept_id(external) is None
+
+    def test_handles_empty_and_none(self):
+        assert extract_ps_concept_id([]) is None
+        assert extract_ps_concept_id(None) is None
 
 
 class TestCleanName:

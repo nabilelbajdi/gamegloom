@@ -93,6 +93,9 @@ class Game(Base):
     
     # New queryable fields
     slug: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    # Sony concept id (parsed from IGDB external_games PlayStation URL). Bridges a
+    # PSN title_id -> psn_title_lookup.concept_id -> this -> game, exactly.
+    ps_concept_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     game_status_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game status ID")
     game_status_name: Mapped[str | None] = mapped_column(String, nullable=True, comment="Game status name (released, alpha, beta, etc)")
     game_type_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="Game type ID")

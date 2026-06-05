@@ -323,6 +323,24 @@ def normalize_for_match(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+_PS_CONCEPT_RE = re.compile(r"store\.playstation\.com/.*?/concept/(\d+)", re.IGNORECASE)
+
+
+def extract_ps_concept_id(external_games) -> Optional[int]:
+    """
+    Pull the Sony concept id from an IGDB external_games list. PlayStation entries
+    carry a URL like store.playstation.com/en-us/concept/202994; that id is the same
+    concept_id stored in psn_title_lookup, so it bridges a PSN title to an IGDB game.
+    Returns None when there is no PlayStation entry.
+    """
+    for entry in external_games or []:
+        url = (entry or {}).get("url") or ""
+        m = _PS_CONCEPT_RE.search(url)
+        if m:
+            return int(m.group(1))
+    return None
+
+
 def _sequel_ordinal(disambig_name: Optional[str]) -> Optional[int]:
     """
     Ordinal used to pick among identically-named IGDB entries, read from a hint

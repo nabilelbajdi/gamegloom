@@ -64,6 +64,29 @@ class TestFindIgdbMatch:
         assert find_igdb_match(db_session, "Totally Made Up Nonexistent Title Qwxyz") == (None, None, None, None, None)
 
 
+class TestPsConceptBridge:
+    """PSN concept_id (psn_title_lookup) -> Game.ps_concept_id exact bridge, ahead of name matching."""
+
+    def test_concept_id_matches_even_when_name_does_not(self, db_session):
+        db_session.add(Game(igdb_id=7618, name="Never Alone: Kisima Ingitchuna",
+                            slug="never-alone-kisima-ingitchuna", ps_concept_id=202994))
+        db_session.add(PsnTitleLookup(title_id="CUSA01305_00", name="Zzz Unmatchable Zzz", concept_id=202994))
+        db_session.commit()
+        igdb_id, _, _, conf, method = psn_service.match_game_to_igdb(
+            db_session, platform_id="CUSA01305_00", platform_name="Zzz Unmatchable Zzz"
+        )
+        assert igdb_id == 7618 and conf == 0.97 and method == "ps_concept"
+
+    def test_falls_back_to_name_when_no_concept_match(self, db_session):
+        db_session.add(Game(igdb_id=8173, name="Overwatch", slug="overwatch", ps_concept_id=None))
+        db_session.add(PsnTitleLookup(title_id="X_00", name="Overwatch", concept_id=999999))
+        db_session.commit()
+        igdb_id, _, _, _, method = psn_service.match_game_to_igdb(
+            db_session, platform_id="X_00", platform_name="Overwatch"
+        )
+        assert igdb_id == 8173 and method == "name"
+
+
 class TestReverseSubtitle:
     """Platform reports the base title; IGDB stores it with a colon subtitle
     ('Never Alone' vs 'Never Alone: Kisima Ingitchuna')."""

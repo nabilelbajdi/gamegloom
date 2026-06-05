@@ -18,8 +18,9 @@ from sqlalchemy.orm import Session
 from ...settings import settings
 from ..models.user_platform_link import UserPlatformLink, PlatformType
 from ..models.psn_title_lookup import PsnTitleLookup
+from ..models.game import Game
 from ..core.matching_utils import (
-    is_non_game, clean_platform_name, find_igdb_match, NO_MATCH
+    is_non_game, clean_platform_name, find_igdb_match, pick_best_match, NO_MATCH
 )
 
 logger = logging.getLogger(__name__)
@@ -136,12 +137,23 @@ def match_game_to_igdb(
     Returns:
         (igdb_id, igdb_name, cover_url, confidence, method) - any can be None
     """
-    names = []
-    if platform_name:
-        names.append(platform_name)
     lookup = db.query(PsnTitleLookup).filter(
         PsnTitleLookup.title_id == platform_id
     ).first()
+
+    # 0. Exact concept-id bridge: Sony's concept_id == IGDB's PlayStation concept,
+    # so this resolves the game by ID with no name guessing. Highest confidence.
+    if lookup and lookup.concept_id:
+        candidates = db.query(Game).filter(Game.ps_concept_id == lookup.concept_id).all()
+        if candidates:
+            game = pick_best_match(candidates, first_played)
+            if game:
+                logger.debug(f"[Match] {platform_name} → {game.name} (ps_concept)")
+                return (game.igdb_id, game.name, game.cover_image, 0.97, "ps_concept")
+
+    names = []
+    if platform_name:
+        names.append(platform_name)
     lookup_name = lookup.name if lookup and lookup.name else None
     if lookup_name and lookup_name not in names:
         names.append(lookup_name)
