@@ -40,6 +40,9 @@ scripts/data_management/fetch_progress.json
 scripts/**/*.log
 scripts
 
+# Documentation
+docs/
+
 # User uploaded content
 src/backend/static/avatars/
 src/frontend/public/images/avatars/
