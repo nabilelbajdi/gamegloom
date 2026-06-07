@@ -29,6 +29,7 @@ const SearchPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [searchStatus, setSearchStatus] = useState("success");
+  const [retryCount, setRetryCount] = useState(0);
   const [searchResults, setSearchResults] = useState([]);
   const [viewMode, setViewMode] = useState(() => readFunctional("searchViewMode") || "grid");
   const [sortOption, setSortOption] = useState("relevance"); // Don't persist - should always start with relevance for search
@@ -159,7 +160,7 @@ const SearchPage = () => {
     };
 
     fetchSearchResults();
-  }, [query, category]);
+  }, [query, category, retryCount]);
 
   // Load more results
   const handleLoadMore = async () => {
@@ -621,12 +622,7 @@ const SearchPage = () => {
                 {searchStatus === "error" ? (
                   <ErrorState
                     message="Search failed. Please try again."
-                    onRetry={() => {
-                      const params = new URLSearchParams();
-                      params.set("query", query);
-                      if (category !== "all") params.set("category", category);
-                      setSearchParams(params);
-                    }}
+                    onRetry={() => setRetryCount(c => c + 1)}
                   />
                 ) : loading ? (
                   viewMode === "grid" ? (

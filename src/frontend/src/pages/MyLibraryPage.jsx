@@ -261,8 +261,9 @@ const MyLibraryPage = () => {
     return <LoadingState />;
   }
 
-  // Error state - collection fetch failed
-  if (collectionError && !collection) {
+  // Error state - collection fetch failed and nothing loaded (mutation errors,
+  // which keep the existing collection, are surfaced via toast instead).
+  if (collectionError && !(collection.want_to_play?.length || collection.playing?.length || collection.played?.length)) {
     return (
       <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
         <LibraryHeader />
