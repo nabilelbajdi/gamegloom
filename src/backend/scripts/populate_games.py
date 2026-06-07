@@ -40,6 +40,11 @@ from backend.app.api.settings import settings
 RATE_LIMIT_DELAY = 0.3  # 300ms to be safe
 BATCH_SIZE = 500  # IGDB max per request
 
+# Minimum user-rating count for a released game to enter the catalog.
+# Caps the released pool at ~20.5K games (IGDB count, 2026-06-07) and keeps a
+# quality floor: every catalog game has at least this many user ratings.
+MIN_TOTAL_RATING_COUNT = 3
+
 
 def fetch_games_batch(query: str) -> list:
     """Fetch a batch of games from IGDB."""
@@ -90,6 +95,20 @@ def store_games(db, games_data: list) -> tuple[int, int, int]:
     return new_count, updated_count, skipped_count
 
 
+def build_released_query(offset: int, batch_limit: int) -> str:
+    """Build the IGDB query for released games (main games with a cover and a
+    minimum user-rating count), sorted by rating count and paginated."""
+    return f"""
+        {services.IGDB_GAME_FIELDS}
+        where total_rating_count >= {MIN_TOTAL_RATING_COUNT}
+            & cover != null
+            & version_parent = null;
+        sort total_rating_count desc;
+        limit {batch_limit};
+        offset {offset};
+    """
+
+
 def populate_released_games(limit: int = 10000) -> dict:
     """
     Fetch released games with good ratings.
@@ -108,19 +127,10 @@ def populate_released_games(limit: int = 10000) -> dict:
         while offset < limit:
             batch_limit = min(BATCH_SIZE, limit - offset)
             
-            # IGDB_GAME_FIELDS already starts with "fields ..." 
+            # IGDB_GAME_FIELDS already starts with "fields ..."
             # Simple query - let meets_quality_requirements() filter out mods/packs
-            query = f"""
-                {services.IGDB_GAME_FIELDS}
-                where total_rating_count >= 1 
-                    & cover != null 
-                    & version_parent = null;
-                sort total_rating_count desc;
-                limit {batch_limit};
-                offset {offset};
-            """
-            # category: 0=main game, 8=remake, 9=remaster, 10=expanded game, 11=port
-            
+            query = build_released_query(offset, batch_limit)
+
             logger.info(f"Fetching batch at offset {offset}...")
             games = fetch_games_batch(query)
             
@@ -220,16 +230,19 @@ def get_current_game_count() -> int:
         db.close()
 
 
-def main():
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Bulk populate game database from IGDB')
-    parser.add_argument('--batch', choices=['released', 'anticipated', 'all'], 
+    parser.add_argument('--batch', choices=['released', 'anticipated', 'all'],
                        default='all', help='Which batch to run')
-    parser.add_argument('--limit', type=int, default=5000, 
+    parser.add_argument('--limit', type=int, default=25000,
                        help='Max games to fetch per batch')
     parser.add_argument('--dry-run', action='store_true',
                        help='Show what would be done without making changes')
-    
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = build_arg_parser().parse_args()
     
     start_count = get_current_game_count()
     logger.info(f"Starting game count: {start_count}")
