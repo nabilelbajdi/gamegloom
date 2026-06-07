@@ -7,27 +7,24 @@ import {
     ArrowLeft,
     Calendar,
     User,
-    Star,
-    ChevronDown,
-    Check,
-    ArrowUpDown
+    Star
 } from "lucide-react";
 import ErrorState from "../components/common/ErrorState";
 import EmptyState from "../components/common/EmptyState";
 import { getPublicList, toggleListLike } from "../api";
 import { useAuth } from "../context/AuthContext";
 import ViewToggle from "../components/common/ViewToggle";
+import SortDropdown from "../components/common/SortDropdown";
 import GridGameCard from "../components/game/GridGameCard";
 import GameListCard from "../components/common/GameListCard";
 import { formatDistanceToNow } from "date-fns";
 import { readFunctional, writeFunctional } from "../utils/consent";
+import useFilterParams from "../hooks/useFilterParams";
 
-// Sort options for list detail
-const SORT_OPTIONS = [
-    { value: "added", label: "Date Added" },
-    { value: "name", label: "Name" },
-    { value: "rating", label: "Top Rated" }
-];
+const LIST_DETAIL_FILTER_SCHEMA = {
+    filters: [],
+    sort: { values: ["added", "name", "rating"], default: "added" },
+};
 
 // Simple cache for list details (5 minutes TTL)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -46,18 +43,13 @@ const ListDetailPage = () => {
     const [error, setError] = useState(null);
     const [retryCount, setRetryCount] = useState(0);
     const [viewMode, setViewMode] = useState(() => readFunctional("listDetailViewMode") || "grid");
-    const [sortBy, setSortBy] = useState(() => readFunctional("listDetailSortBy") || "added");
-    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const { sortOption: sortBy, setSort: setSortBy } = useFilterParams(LIST_DETAIL_FILTER_SCHEMA);
     const [liking, setLiking] = useState(false);
 
     // Persist preferences (no-op if user hasn't accepted cookie consent)
     useEffect(() => {
         writeFunctional("listDetailViewMode", viewMode);
     }, [viewMode]);
-
-    useEffect(() => {
-        writeFunctional("listDetailSortBy", sortBy);
-    }, [sortBy]);
 
     useEffect(() => {
         const fetchList = async () => {
@@ -247,47 +239,8 @@ const ListDetailPage = () => {
                     {/* View Toggle */}
                     <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
 
-                    {/* Sort Dropdown - Styled like SortDropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${sortDropdownOpen
-                                ? "bg-surface/80 text-white"
-                                : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
-                                } transition-all`}
-                        >
-                            <ArrowUpDown className="w-3.5 h-3.5" />
-                            <span>Sort: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}</span>
-                            <ChevronDown
-                                className={`w-3 h-3 transition-transform ${sortDropdownOpen ? "rotate-180" : ""}`}
-                            />
-                        </button>
-
-                        {sortDropdownOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-surface-dark rounded-lg shadow-lg z-50 border border-gray-800/50 overflow-hidden">
-                                <div className="p-2">
-                                    {SORT_OPTIONS.map(option => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => {
-                                                setSortBy(option.value);
-                                                setSortDropdownOpen(false);
-                                            }}
-                                            className={`w-full text-left px-3 py-1.5 rounded text-[13px] flex items-center cursor-pointer ${sortBy === option.value
-                                                ? "bg-surface/80 text-white font-semibold"
-                                                : "text-gray-400 hover:bg-surface hover:text-white"
-                                                } transition-colors`}
-                                        >
-                                            {sortBy === option.value && (
-                                                <Check className="w-3 h-3 mr-1.5 text-primary" />
-                                            )}
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    {/* Sort Dropdown */}
+                    <SortDropdown sortOption={sortBy} onSortChange={setSortBy} isListPage={true} />
                 </motion.div>
 
                 {/* Games Grid/List */}

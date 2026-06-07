@@ -37,12 +37,20 @@ const DISCOVERY_SORT_OPTIONS = [
   { value: "name_asc", label: "Alphabetical Order" }
 ];
 
+// List detail pages - sort within a single user list
+const LIST_SORT_OPTIONS = [
+  { value: "added", label: "Date Added" },
+  { value: "name", label: "Name" },
+  { value: "rating", label: "Top Rated" },
+];
+
 const SortDropdown = ({
   sortOption = "last_played",
   onSortChange,
   isSearchPage = false,
   isSyncPage = false,
-  isDiscoveryPage = false
+  isDiscoveryPage = false,
+  isListPage = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -54,7 +62,9 @@ const SortDropdown = ({
       ? SEARCH_SORT_OPTIONS
       : isDiscoveryPage
         ? DISCOVERY_SORT_OPTIONS
-        : LIBRARY_SORT_OPTIONS;
+        : isListPage
+          ? LIST_SORT_OPTIONS
+          : LIBRARY_SORT_OPTIONS;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
