@@ -21,6 +21,12 @@ import ActiveFilters from "../components/common/ActiveFilters";
 import { gamePassesAllFilters } from "../utils/filterUtils";
 import { createSlug } from "../utils/stringUtils";
 import { readFunctional, writeFunctional } from "../utils/consent";
+import useFilterParams from "../hooks/useFilterParams";
+
+const LIBRARY_FILTER_SCHEMA = {
+  filters: ["genres", "themes", "platforms", "gameModes", "playerPerspectives", "contentTypes", "minRating"],
+  sort: { values: ["last_played", "playtime_high", "added_new", "rating_high", "release_new", "name_asc"], default: "last_played" },
+};
 
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
@@ -32,27 +38,16 @@ const MyLibraryPage = () => {
   // Component state
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState(() => readFunctional("librarySortOption") || "last_played");
   const [viewMode, setViewMode] = useState(() => readFunctional("libraryViewMode") || "grid");
   const [selectedList, setSelectedList] = useState(null);
 
-  // Persist preferences (no-op if user hasn't accepted cookie consent)
-  useEffect(() => {
-    writeFunctional("librarySortOption", sortOption);
-  }, [sortOption]);
+  // Filter and sort state synced to the URL
+  const { filters, sortOption, applyFilters, setSort, clearAll } = useFilterParams(LIBRARY_FILTER_SCHEMA);
 
+  // Persist preferences (no-op if user hasn't accepted cookie consent)
   useEffect(() => {
     writeFunctional("libraryViewMode", viewMode);
   }, [viewMode]);
-
-  // Filter states
-  const [genreFilters, setGenreFilters] = useState([]);
-  const [themeFilters, setThemeFilters] = useState([]);
-  const [platformFilters, setPlatformFilters] = useState([]);
-  const [gameModeFilters, setGameModeFilters] = useState([]);
-  const [perspectiveFilters, setPerspectiveFilters] = useState([]);
-  const [minRatingFilter, setMinRatingFilter] = useState(0);
-  const [contentTypeFilters, setContentTypeFilters] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -89,11 +84,18 @@ const MyLibraryPage = () => {
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
 
+    // Preserve existing filter/sort params; only change tab (and clear list when leaving my_lists)
+    const params = new URLSearchParams(location.search);
     if (tabId === 'all') {
-      navigate('/library', { replace: true });
+      params.delete('tab');
     } else {
-      navigate(`/library?tab=${tabId}`, { replace: true });
+      params.set('tab', tabId);
     }
+    if (tabId !== 'my_lists') {
+      params.delete('list');
+    }
+    const queryString = params.toString();
+    navigate(queryString ? `/library?${queryString}` : '/library', { replace: true });
   };
 
   // Function to handle list selection with URL update
@@ -104,7 +106,11 @@ const MyLibraryPage = () => {
     const list = lists.find(list => list.id === listId);
     if (list) {
       const listSlug = createSlug(list.name);
-      navigate(`/library?tab=my_lists&list=${listSlug}`, { replace: true });
+      // Preserve existing filter/sort params while setting tab + list
+      const params = new URLSearchParams(location.search);
+      params.set('tab', 'my_lists');
+      params.set('list', listSlug);
+      navigate(`/library?${params.toString()}`, { replace: true });
 
       // Lazy load the list details (games) if not already loaded
       if (!list.games || list.games.length === 0) {
@@ -202,55 +208,6 @@ const MyLibraryPage = () => {
     return { allGenres, allThemes, allPlatforms, allGameModes, allPlayerPerspectives, allContentTypes };
   }, [collection]);
 
-  // Filter handlers
-  const handleFilterChange = (filters) => {
-    setGenreFilters(filters.genres || []);
-    setThemeFilters(filters.themes || []);
-    setPlatformFilters(filters.platforms || []);
-    setGameModeFilters(filters.gameModes || []);
-    setPerspectiveFilters(filters.playerPerspectives || []);
-    setMinRatingFilter(filters.minRating || 0);
-    setContentTypeFilters(filters.contentTypes || []);
-  };
-
-  const handleRemoveGenre = (genre) => {
-    setGenreFilters(prev => prev.filter(g => g !== genre));
-  };
-
-  const handleRemoveTheme = (theme) => {
-    setThemeFilters(prev => prev.filter(t => t !== theme));
-  };
-
-  const handleRemovePlatform = (platform) => {
-    setPlatformFilters(prev => prev.filter(p => p !== platform));
-  };
-
-  const handleRemoveGameMode = (mode) => {
-    setGameModeFilters(prev => prev.filter(m => m !== mode));
-  };
-
-  const handleRemovePerspective = (perspective) => {
-    setPerspectiveFilters(prev => prev.filter(p => p !== perspective));
-  };
-
-  const handleRemoveContentType = (contentType) => {
-    setContentTypeFilters(prev => prev.filter(ct => ct !== contentType));
-  };
-
-  const handleRemoveRating = () => {
-    setMinRatingFilter(0);
-  };
-
-  const handleClearAllFilters = () => {
-    setGenreFilters([]);
-    setThemeFilters([]);
-    setPlatformFilters([]);
-    setGameModeFilters([]);
-    setPerspectiveFilters([]);
-    setMinRatingFilter(0);
-    setContentTypeFilters([]);
-  };
-
   // Auth redirect
   if (!loading && !user) {
     return <Navigate to="/login" />;
@@ -318,28 +275,28 @@ const MyLibraryPage = () => {
     }
 
     // Apply content type filter
-    if (contentTypeFilters.length > 0) {
+    if (filters.contentTypes.length > 0) {
       baseGames = baseGames.filter(game =>
         game.game_type_name && (
-          contentTypeFilters.includes(game.game_type_name) ||
-          (game.game_type_name === "Main Game" && contentTypeFilters.includes("Base Game"))
+          filters.contentTypes.includes(game.game_type_name) ||
+          (game.game_type_name === "Main Game" && filters.contentTypes.includes("Base Game"))
         )
       );
     }
 
     // Apply other filters
-    if (genreFilters.length > 0 || themeFilters.length > 0 ||
-      platformFilters.length > 0 || gameModeFilters.length > 0 ||
-      perspectiveFilters.length > 0 || minRatingFilter > 0) {
+    if (filters.genres.length > 0 || filters.themes.length > 0 ||
+      filters.platforms.length > 0 || filters.gameModes.length > 0 ||
+      filters.playerPerspectives.length > 0 || filters.minRating > 0) {
 
       baseGames = baseGames.filter(game =>
         gamePassesAllFilters(game, {
-          genres: genreFilters,
-          themes: themeFilters,
-          platforms: platformFilters,
-          gameModes: gameModeFilters,
-          playerPerspectives: perspectiveFilters,
-          minRating: minRatingFilter
+          genres: filters.genres,
+          themes: filters.themes,
+          platforms: filters.platforms,
+          gameModes: filters.gameModes,
+          playerPerspectives: filters.playerPerspectives,
+          minRating: filters.minRating
         })
       );
     }
@@ -396,15 +353,15 @@ const MyLibraryPage = () => {
                   allGameModes={allGameModes}
                   allPlayerPerspectives={allPlayerPerspectives}
                   allContentTypes={allContentTypes}
-                  activeGenres={genreFilters}
-                  activeThemes={themeFilters}
-                  activePlatforms={platformFilters}
-                  activeGameModes={gameModeFilters}
-                  activePlayerPerspectives={perspectiveFilters}
-                  activeContentTypes={contentTypeFilters}
-                  minRating={minRatingFilter}
+                  activeGenres={filters.genres}
+                  activeThemes={filters.themes}
+                  activePlatforms={filters.platforms}
+                  activeGameModes={filters.gameModes}
+                  activePlayerPerspectives={filters.playerPerspectives}
+                  activeContentTypes={filters.contentTypes}
+                  minRating={filters.minRating}
                   titleFilter={searchQuery}
-                  onFilterChange={handleFilterChange}
+                  onFilterChange={applyFilters}
                   onTitleFilterChange={(value) => setSearchQuery(value)}
                 />
               </div>
@@ -443,21 +400,21 @@ const MyLibraryPage = () => {
                                 allGameModes={allGameModes}
                                 allPlayerPerspectives={allPlayerPerspectives}
                                 allContentTypes={allContentTypes}
-                                activeGenres={genreFilters}
-                                activeThemes={themeFilters}
-                                activePlatforms={platformFilters}
-                                activeGameModes={gameModeFilters}
-                                activePlayerPerspectives={perspectiveFilters}
-                                activeContentTypes={contentTypeFilters}
-                                minRating={minRatingFilter}
-                                onFilterChange={handleFilterChange}
+                                activeGenres={filters.genres}
+                                activeThemes={filters.themes}
+                                activePlatforms={filters.platforms}
+                                activeGameModes={filters.gameModes}
+                                activePlayerPerspectives={filters.playerPerspectives}
+                                activeContentTypes={filters.contentTypes}
+                                minRating={filters.minRating}
+                                onFilterChange={applyFilters}
                               />
                             </div>
 
                             {/* Sort Dropdown */}
                             <SortDropdown
                               sortOption={sortOption}
-                              onSortChange={setSortOption}
+                              onSortChange={setSort}
                             />
 
                             {/* View Toggle */}
@@ -470,21 +427,21 @@ const MyLibraryPage = () => {
 
                         {/* Active Filters Display */}
                         <ActiveFilters
-                          genreFilters={genreFilters}
-                          themeFilters={themeFilters}
-                          platformFilters={platformFilters}
-                          gameModeFilters={gameModeFilters}
-                          perspectiveFilters={perspectiveFilters}
-                          contentTypeFilters={contentTypeFilters}
-                          minRating={minRatingFilter}
-                          onRemoveGenre={handleRemoveGenre}
-                          onRemoveTheme={handleRemoveTheme}
-                          onRemovePlatform={handleRemovePlatform}
-                          onRemoveGameMode={handleRemoveGameMode}
-                          onRemovePerspective={handleRemovePerspective}
-                          onRemoveContentType={handleRemoveContentType}
-                          onRemoveRating={handleRemoveRating}
-                          onClearAll={handleClearAllFilters}
+                          genreFilters={filters.genres}
+                          themeFilters={filters.themes}
+                          platformFilters={filters.platforms}
+                          gameModeFilters={filters.gameModes}
+                          perspectiveFilters={filters.playerPerspectives}
+                          contentTypeFilters={filters.contentTypes}
+                          minRating={filters.minRating}
+                          onRemoveGenre={(v) => applyFilters({ genres: filters.genres.filter((x) => x !== v) })}
+                          onRemoveTheme={(v) => applyFilters({ themes: filters.themes.filter((x) => x !== v) })}
+                          onRemovePlatform={(v) => applyFilters({ platforms: filters.platforms.filter((x) => x !== v) })}
+                          onRemoveGameMode={(v) => applyFilters({ gameModes: filters.gameModes.filter((x) => x !== v) })}
+                          onRemovePerspective={(v) => applyFilters({ playerPerspectives: filters.playerPerspectives.filter((x) => x !== v) })}
+                          onRemoveContentType={(v) => applyFilters({ contentTypes: filters.contentTypes.filter((x) => x !== v) })}
+                          onRemoveRating={() => applyFilters({ minRating: 0 })}
+                          onClearAll={clearAll}
                         />
                       </div>
 
@@ -499,13 +456,13 @@ const MyLibraryPage = () => {
                           viewMode={viewMode}
                           sortOption={sortOption}
                           activeFilters={{
-                            genres: genreFilters,
-                            themes: themeFilters,
-                            platforms: platformFilters,
-                            gameModes: gameModeFilters,
-                            playerPerspectives: perspectiveFilters,
-                            contentTypes: contentTypeFilters,
-                            minRating: minRatingFilter
+                            genres: filters.genres,
+                            themes: filters.themes,
+                            platforms: filters.platforms,
+                            gameModes: filters.gameModes,
+                            playerPerspectives: filters.playerPerspectives,
+                            contentTypes: filters.contentTypes,
+                            minRating: filters.minRating
                           }}
                         />
                       </div>
