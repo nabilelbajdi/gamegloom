@@ -34,7 +34,8 @@ const GameCategoryPage = ({
     latestGames,
     genreGames,
     themeGames,
-    recommendedGames
+    recommendedGames,
+    categoryStatus
   } = useGameStore();
 
   const [loading, setLoading] = useState(true);
@@ -412,17 +413,27 @@ const GameCategoryPage = ({
 
                 {/* Games Display */}
                 <div className="p-5">
-                  {viewMode === "grid" ? (
-                    <GamesGrid
-                      games={sortedGames}
-                      loading={loading}
-                    />
-                  ) : (
-                    <GamesList
-                      games={sortedGames}
-                      loading={loading}
-                    />
-                  )}
+                  {(() => {
+                    const filter = genreFilter || themeFilter || null;
+                    const statusKey = filter ? `${categoryType}:${filter}` : categoryType;
+                    const status = categoryStatus[statusKey];
+                    const retryFn = () => fetchGames(categoryType, filter);
+                    return viewMode === "grid" ? (
+                      <GamesGrid
+                        games={sortedGames}
+                        loading={loading}
+                        status={status}
+                        onRetry={retryFn}
+                      />
+                    ) : (
+                      <GamesList
+                        games={sortedGames}
+                        loading={loading}
+                        status={status}
+                        onRetry={retryFn}
+                      />
+                    );
+                  })()}
 
                   {/* Load More - subtle text link */}
                   {(categoryType === "genre" || categoryType === "theme") && hasMore && !loading && sortedGames.length > 0 && (

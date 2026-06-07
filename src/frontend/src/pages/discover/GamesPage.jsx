@@ -10,6 +10,7 @@ import SortDropdown from "../../components/common/SortDropdown";
 import ViewToggle from "../../components/common/ViewToggle";
 import ActiveFilters from "../../components/common/ActiveFilters";
 import ScrollToTop from "../../components/common/ScrollToTop";
+import ErrorState from "../../components/common/ErrorState";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
 import { readFunctional, writeFunctional } from "../../utils/consent";
 
@@ -33,6 +34,8 @@ const GamesPage = () => {
     const [games, setGames] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [pageStatus, setPageStatus] = useState("loading");
+    const [retryCount, setRetryCount] = useState(0);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
 
@@ -59,25 +62,33 @@ const GamesPage = () => {
         writeFunctional("allGamesSortOption", sortOption);
     }, [sortOption]);
 
-    // Fetch games on mount and when sort changes
+    // Fetch games on mount, when sort changes, or when retried
     useEffect(() => {
         const loadGames = async () => {
             setLoading(true);
+            setPageStatus("loading");
             setHasMore(true);
 
-            const [gamesData, count] = await Promise.all([
-                fetchAllGames(50, 0, SORT_MAP[sortOption]),
-                fetchAllGamesCount()
-            ]);
+            try {
+                const [gamesData, count] = await Promise.all([
+                    fetchAllGames(50, 0, SORT_MAP[sortOption]),
+                    fetchAllGamesCount()
+                ]);
 
-            setGames(gamesData || []);
-            setTotalCount(count);
-            setHasMore(gamesData?.length >= 50 && gamesData?.length < count);
-            setLoading(false);
+                setGames(gamesData || []);
+                setTotalCount(count);
+                setHasMore(gamesData?.length >= 50 && gamesData?.length < count);
+                setPageStatus("success");
+            } catch {
+                setGames([]);
+                setPageStatus("error");
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadGames();
-    }, [sortOption]);
+    }, [sortOption, retryCount]);
 
     // Load more games
     const handleLoadMore = async () => {
@@ -320,7 +331,12 @@ const GamesPage = () => {
 
                                 {/* Games Display */}
                                 <div className="p-5">
-                                    {viewMode === "grid" ? (
+                                    {pageStatus === "error" ? (
+                                        <ErrorState
+                                            message="Couldn't load games."
+                                            onRetry={() => setRetryCount(c => c + 1)}
+                                        />
+                                    ) : viewMode === "grid" ? (
                                         <GamesGrid
                                             games={filteredGames}
                                             loading={loading}
@@ -329,6 +345,8 @@ const GamesPage = () => {
                                         <GamesList
                                             games={filteredGames}
                                             loading={loading}
+                                            status={pageStatus}
+                                            onRetry={() => setRetryCount(c => c + 1)}
                                         />
                                     )}
 
