@@ -13,6 +13,7 @@ import { gamePassesAllFilters } from "../utils/filterUtils";
 import { normalizeGamesData, formatRating } from "../utils/gameUtils";
 import { Search, X, Filter, Info, ChevronDown, Gamepad2, Users, Monitor, ChevronLeft, ChevronRight, Tags } from "lucide-react";
 import PageMeta from "../components/common/PageMeta";
+import ErrorState from "../components/common/ErrorState";
 import { readFunctional, writeFunctional } from "../utils/consent";
 
 // Number of games to display per page
@@ -27,6 +28,7 @@ const SearchPage = () => {
   const category = searchParams.get("category") || "all";
 
   const [loading, setLoading] = useState(true);
+  const [searchStatus, setSearchStatus] = useState("success");
   const [searchResults, setSearchResults] = useState([]);
   const [viewMode, setViewMode] = useState(() => readFunctional("searchViewMode") || "grid");
   const [sortOption, setSortOption] = useState("relevance"); // Don't persist - should always start with relevance for search
@@ -120,6 +122,7 @@ const SearchPage = () => {
       }
 
       setLoading(true);
+      setSearchStatus("loading");
       setHasMore(true);
       try {
         // Fetch first batch and total count in parallel
@@ -144,10 +147,12 @@ const SearchPage = () => {
         setSearchResults(resultsWithIndex || []);
         setTotalCount(count);
         setHasMore(results.length >= 50 && results.length < count);
+        setSearchStatus("success");
       } catch (error) {
         console.error("Error searching games:", error);
         setSearchResults([]);
         setTotalCount(0);
+        setSearchStatus("error");
       } finally {
         setLoading(false);
       }
@@ -613,7 +618,17 @@ const SearchPage = () => {
 
               {/* Games Display */}
               <div className="p-5">
-                {loading ? (
+                {searchStatus === "error" ? (
+                  <ErrorState
+                    message="Search failed. Please try again."
+                    onRetry={() => {
+                      const params = new URLSearchParams();
+                      params.set("query", query);
+                      if (category !== "all") params.set("category", category);
+                      setSearchParams(params);
+                    }}
+                  />
+                ) : loading ? (
                   viewMode === "grid" ? (
                     <GamesGrid games={[]} loading={true} />
                   ) : (
