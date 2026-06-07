@@ -47,3 +47,6 @@ docs/
 src/backend/static/avatars/
 src/frontend/public/images/avatars/
 codebase_analysis.md.resolved
+
+# Superpowers brainstorm companion
+.superpowers/

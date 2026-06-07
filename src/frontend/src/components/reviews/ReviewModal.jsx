@@ -127,7 +127,7 @@ const ReviewModal = ({ review, onClose }) => {
 
                     {/* Category Ratings */}
                     {(review.story_rating || review.gameplay_rating || review.visuals_rating || review.audio_rating || review.performance_rating) && (
-                        <div className="grid grid-cols-5 gap-2 mb-4 pb-4 border-b border-gray-700/50">
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4 pb-4 border-b border-gray-700/50">
                             {[
                                 { key: 'story_rating', label: 'Story' },
                                 { key: 'gameplay_rating', label: 'Gameplay' },
