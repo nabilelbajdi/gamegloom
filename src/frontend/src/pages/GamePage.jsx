@@ -160,12 +160,8 @@ const GamePage = () => {
   useEffect(() => {
     const loadGame = async () => {
       setDetailStatus("loading");
-      try {
-        await fetchGameDetails(gameId);
-        setDetailStatus("success");
-      } catch {
-        setDetailStatus("error");
-      }
+      const ok = await fetchGameDetails(gameId);
+      setDetailStatus(ok ? "success" : "error");
     };
 
     loadGame();
@@ -206,7 +202,11 @@ const GamePage = () => {
         <div className="container mx-auto px-4 py-16">
           <ErrorState
             message="Couldn't load this game."
-            onRetry={() => fetchGameDetails(gameId, true)}
+            onRetry={async () => {
+              setDetailStatus("loading");
+              const ok = await fetchGameDetails(gameId, true);
+              setDetailStatus(ok ? "success" : "error");
+            }}
           />
         </div>
       </div>

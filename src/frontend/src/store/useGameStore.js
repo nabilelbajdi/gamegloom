@@ -223,14 +223,16 @@ const useGameStore = create((set, get) => ({
       // If identifier is a number (IGDB ID), check if we already have it
       if (!isNaN(identifier)) {
         const numericId = parseInt(identifier);
-        if (gameDetails[numericId]) return;
+        if (gameDetails[numericId]) return true;
       } else {
         // If identifier is a slug, check if we have any game with this slug
         const foundGame = Object.values(gameDetails).find(g => g.slug === identifier);
-        if (foundGame) return;
+        if (foundGame) return true;
       }
     }
 
+    // Returns true when the game is available, false on a missing game or fetch
+    // failure, so callers can show an error instead of an endless skeleton.
     try {
       const data = await fetchGameDetails(identifier);
       if (data) {
@@ -241,9 +243,12 @@ const useGameStore = create((set, get) => ({
             [data.igdb_id]: transformedData
           },
         }));
+        return true;
       }
+      return false;
     } catch (error) {
       console.error(`Error fetching game ${identifier} details:`, error);
+      return false;
     }
   },
 }));
