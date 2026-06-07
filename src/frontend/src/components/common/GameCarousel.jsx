@@ -5,6 +5,7 @@ import GridGameCard from "../game/GridGameCard";
 import SectionHeader from "./SectionHeader";
 import { Link } from "react-router-dom";
 import ErrorState from "./ErrorState";
+import { CarouselSkeleton } from "./Skeleton";
 
 const GameCarousel = memo(({
   games,
@@ -117,12 +118,17 @@ const GameCarousel = memo(({
   ) : null;
 
   const cardWidth = `calc(${100 / slidesToShow}% - ${(slidesToShow - 1) * 8 / slidesToShow}px)`;
+  const sectionMargin = title === "Trending Now" ? "mt-4" : "mt-10";
 
   if (displayedGames.length === 0) {
+    // Show a placeholder row while the fetch is in flight (or hasn't started yet).
+    if (status === "loading" || !status) {
+      return <CarouselSkeleton title={title} slidesToShow={slidesToShow} className={sectionMargin} />;
+    }
     // Surface a retry when the fetch failed, instead of silently hiding the row.
     if (status === "error") {
       return (
-        <section className={title === "Trending Now" ? "mt-4" : "mt-10"}>
+        <section className={sectionMargin}>
           <div className="flex justify-between items-center mb-2">
             <SectionHeader title={title} viewAllLink={viewAllLink} icon={sectionIcon} showGradient={true} />
           </div>
@@ -134,7 +140,7 @@ const GameCarousel = memo(({
   }
 
   return (
-    <section className={title === "Trending Now" ? "mt-4" : "mt-10"}>
+    <section className={sectionMargin}>
       {/* Section Header */}
       <div className="flex justify-between items-center mb-2">
         <SectionHeader

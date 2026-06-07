@@ -49,8 +49,8 @@ export const ListSkeleton = ({ count = 8 }) => (
 );
 
 // Carousel loading row: title header + a row of card skeletons.
-export const CarouselSkeleton = ({ title, slidesToShow = 5 }) => (
-  <section className="mt-4">
+export const CarouselSkeleton = ({ title, slidesToShow = 5, className = "mt-4" }) => (
+  <section className={className}>
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold text-light">{title}</h2>
     </div>

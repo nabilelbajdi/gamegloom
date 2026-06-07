@@ -5,7 +5,38 @@ import useGameStore from "../../store/useGameStore";
 import { getUpcomingFeaturedGames, normalizePlatformName, getHighResImageUrl, getYouTubeThumbnail } from "../../utils/gameUtils";
 import CountdownText from "../common/CountdownText";
 import VideoModal from "../common/VideoModal";
+import { Skeleton } from "../common/Skeleton";
 import { format } from "date-fns";
+
+// Loading placeholder that mirrors the Coming Soon hero-grid layout.
+const FeaturedAnticipatedSkeleton = () => (
+  <section className="relative pt-8 pb-16 md:pb-24 -mt-20 overflow-hidden">
+    <div className="container mx-auto px-4 md:px-6 relative z-10">
+      <header className="mb-8 md:mb-12 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-px bg-gradient-to-r from-primary to-transparent" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="h-12 md:h-14 w-64" />
+        <Skeleton className="h-6 w-full max-w-xl" />
+      </header>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 lg:h-[500px]">
+        <Skeleton className="lg:col-span-8 w-full h-[450px] lg:h-full rounded-2xl md:rounded-3xl" />
+        <div className="lg:col-span-4 flex flex-col gap-3 h-full">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-4 items-center p-3 rounded-xl">
+              <Skeleton className="w-16 h-20 rounded-lg flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+);
 
 // Function to format hype count
 const formatHypeCount = (count) => {
@@ -20,7 +51,7 @@ const formatHypeCount = (count) => {
 };
 
 const FeaturedAnticipatedGames = () => {
-  const { anticipatedGames, fetchGames, gameDetails, fetchGameDetails } = useGameStore();
+  const { anticipatedGames, fetchGames, gameDetails, fetchGameDetails, categoryStatus } = useGameStore();
   const [games, setGames] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -101,7 +132,13 @@ const FeaturedAnticipatedGames = () => {
     }));
   };
 
-  if (!games || games.length === 0) return null;
+  if (!games || games.length === 0) {
+    // Skeleton while the anticipated fetch is in flight; the Anticipated carousel
+    // below owns the error/retry for this same data, so stay quiet otherwise.
+    const status = categoryStatus["anticipated"];
+    if (status === "loading" || !status) return <FeaturedAnticipatedSkeleton />;
+    return null;
+  }
 
   const activeGameBasic = games[activeIndex];
   // Prefer detailed data if available (contains artworks/screenshots), otherwise fallback to basic
