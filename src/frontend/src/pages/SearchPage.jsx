@@ -573,7 +573,7 @@ const SearchPage = () => {
                   onRemovePerspective={(v) => applyFilters({ playerPerspectives: filters.playerPerspectives.filter((x) => x !== v) })}
                   onRemoveContentType={(v) => applyFilters({ contentTypes: filters.contentTypes.filter((x) => x !== v) })}
                   onRemoveRating={() => applyFilters({ minRating: 0 })}
-                  onClearAll={clearAll}
+                  onClearAll={handleClearAllFilters}
                 />
               </div>
 

@@ -10,15 +10,11 @@ const FUNCTIONAL_KEYS = [
   "rememberMe",
   "rememberedUsername",
   "recentlyViewedGames",
-  "librarySortOption",
   "libraryViewMode",
   "listDetailViewMode",
-  "listDetailSortBy",
   "allGamesViewMode",
-  "allGamesSortOption",
   "searchViewMode",
   "categoryViewMode",
-  "categorySortOption",
 ];
 
 export const CONSENT_CHANGED_EVENT = "gamegloom:consent-changed";
