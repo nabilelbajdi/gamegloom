@@ -8,7 +8,9 @@ import LibraryHeader from "../components/library/LibraryHeader";
 import LibraryTabs from "../components/library/LibraryTabs";
 import GameLibraryGrid from "../components/library/GameLibraryGrid";
 import LoadingState from "../components/library/LoadingState";
-import { EmptyLibrary, EmptyListGames } from "../components/library/EmptyState";
+import { EmptyListGames } from "../components/library/EmptyState";
+import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
 import UserLists from "../components/library/UserLists";
 import ScrollToTop from "../components/common/ScrollToTop";
 import SortDropdown from "../components/common/SortDropdown";
@@ -22,7 +24,7 @@ import { readFunctional, writeFunctional } from "../utils/consent";
 
 const MyLibraryPage = () => {
   const { user, loading } = useAuth();
-  const { collection, fetchCollection, isLoading } = useUserGameStore();
+  const { collection, fetchCollection, isLoading, error: collectionError } = useUserGameStore();
   const { lists, fetchLists, fetchListDetails, listsLoading } = useUserListStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -259,6 +261,21 @@ const MyLibraryPage = () => {
     return <LoadingState />;
   }
 
+  // Error state - collection fetch failed
+  if (collectionError && !collection) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+        <LibraryHeader />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <ErrorState
+            message="Couldn't load your library."
+            onRetry={() => fetchCollection(true)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const getActiveGamesCount = () => {
     let baseGames = [];
     switch (activeTab) {
@@ -362,7 +379,11 @@ const MyLibraryPage = () => {
       <div className="flex-1 bg-[var(--bg-base)] pb-12">
         <div className="container mx-auto px-4 py-6">
           {totalGames === 0 && activeTab !== "my_lists" ? (
-            <EmptyLibrary />
+            <EmptyState
+              title="Your library is empty"
+              message="Add games you want to play, are playing, or have played."
+              action={{ label: "Discover games", to: "/discover" }}
+            />
           ) : (
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Left Column - Filter Panel */}
