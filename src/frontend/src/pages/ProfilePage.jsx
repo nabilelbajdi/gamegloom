@@ -7,6 +7,7 @@ import ProfileBio from '../components/profile/ProfileBio';
 import ActivityFeed from '../components/profile/ActivityFeed';
 import GameProgress from '../components/profile/GameProgress';
 import RecommendedGames from '../components/profile/RecommendedGames';
+import ErrorState from '../components/common/ErrorState';
 import { Heart } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -23,6 +24,8 @@ const ProfilePage = () => {
   const [activities, setActivities] = useState([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+  const [profileError, setProfileError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [displayedActivities, setDisplayedActivities] = useState(4);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [backdrop, setBackdrop] = useState(null);
@@ -38,6 +41,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const loadData = async () => {
       if (user) {
+        setProfileError(false);
         try {
           const [userStats, activitiesData] = await Promise.all([
             fetchUserStats(),
@@ -48,6 +52,7 @@ const ProfilePage = () => {
           setActivities(activitiesData.activities || []);
         } catch (err) {
           console.error('Error fetching user data:', err);
+          setProfileError(true);
         } finally {
           setIsLoadingStats(false);
           setIsLoadingActivities(false);
@@ -56,7 +61,7 @@ const ProfilePage = () => {
     };
 
     loadData();
-  }, [user]);
+  }, [user, retryCount]);
 
   const handleLoadMoreActivities = async () => {
     if (displayedActivities < activities.length) {
@@ -82,6 +87,19 @@ const ProfilePage = () => {
       <div className="container max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
           <p className="text-lg text-gray-500">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="mt-14 bg-[var(--bg-base)]">
+        <div className="container max-w-7xl mx-auto px-4 py-16">
+          <ErrorState
+            message="Couldn't load your profile. Please try again."
+            onRetry={() => setRetryCount(c => c + 1)}
+          />
         </div>
       </div>
     );

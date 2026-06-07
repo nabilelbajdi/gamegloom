@@ -1,9 +1,10 @@
 // src/pages/GamePage.jsx
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PageMeta from "../components/common/PageMeta";
 import useGameStore from "../store/useGameStore";
 import useUserGameStore from "../store/useUserGameStore";
+import ErrorState from "../components/common/ErrorState";
 import GameSticky from "../components/GamePage/GameSticky";
 import GameDetails from "../components/GamePage/GameDetails";
 import GameMedia from "../components/GamePage/GameMedia";
@@ -149,6 +150,7 @@ const GamePage = () => {
   const { fetchCollection, collection } = useUserGameStore();
   const { user } = useAuth();
   const isLoggedIn = !!user;
+  const [detailStatus, setDetailStatus] = useState("loading");
 
   const isNumericId = !isNaN(gameId);
   const game = isNumericId
@@ -156,8 +158,17 @@ const GamePage = () => {
     : Object.values(gameDetails).find(g => g.slug === gameId);
 
   useEffect(() => {
-    // Always fetch game details
-    fetchGameDetails(gameId);
+    const loadGame = async () => {
+      setDetailStatus("loading");
+      try {
+        await fetchGameDetails(gameId);
+        setDetailStatus("success");
+      } catch {
+        setDetailStatus("error");
+      }
+    };
+
+    loadGame();
 
     // Only fetch collection if the user is logged in
     if (isLoggedIn) {
@@ -188,6 +199,19 @@ const GamePage = () => {
       }
     }
   }, [game]);
+
+  if (detailStatus === "error" && !game) {
+    return (
+      <div className="min-h-screen bg-gray-900 pt-20 pb-16">
+        <div className="container mx-auto px-4 py-16">
+          <ErrorState
+            message="Couldn't load this game."
+            onRetry={() => fetchGameDetails(gameId, true)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (!game) return <GamePageSkeleton />;
 
