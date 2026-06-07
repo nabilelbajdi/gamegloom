@@ -1,9 +1,10 @@
 // src/components/common/GameCarousel.jsx
 import React, { useRef, useState, useEffect, memo } from "react";
-import { ChevronLeft, ChevronRight, TrendingUp, RotateCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import GridGameCard from "../game/GridGameCard";
 import SectionHeader from "./SectionHeader";
 import { Link } from "react-router-dom";
+import ErrorState from "./ErrorState";
 
 const GameCarousel = memo(({
   games,
@@ -125,17 +126,7 @@ const GameCarousel = memo(({
           <div className="flex justify-between items-center mb-2">
             <SectionHeader title={title} viewAllLink={viewAllLink} icon={sectionIcon} showGradient={true} />
           </div>
-          <div className="flex flex-col items-center justify-center gap-3 py-10 rounded-lg bg-surface-dark/40 text-center">
-            <p className="text-gray-400 text-sm">Couldn't load {title.toLowerCase()}.</p>
-            {onRetry && (
-              <button
-                onClick={onRetry}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors text-sm font-medium cursor-pointer"
-              >
-                <RotateCw size={16} /> Retry
-              </button>
-            )}
-          </div>
+          <ErrorState message={`Couldn't load ${title.toLowerCase()}.`} onRetry={onRetry} />
         </section>
       );
     }
