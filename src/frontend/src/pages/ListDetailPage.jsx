@@ -12,6 +12,8 @@ import {
     Check,
     ArrowUpDown
 } from "lucide-react";
+import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
 import { getPublicList, toggleListLike } from "../api";
 import { useAuth } from "../context/AuthContext";
 import ViewToggle from "../components/common/ViewToggle";
@@ -42,6 +44,7 @@ const ListDetailPage = () => {
     const [list, setList] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
     const [viewMode, setViewMode] = useState(() => readFunctional("listDetailViewMode") || "grid");
     const [sortBy, setSortBy] = useState(() => readFunctional("listDetailSortBy") || "added");
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
@@ -84,7 +87,7 @@ const ListDetailPage = () => {
         };
 
         fetchList();
-    }, [listId]);
+    }, [listId, retryCount]);
 
     const handleLike = async () => {
         if (!user) {
@@ -152,20 +155,10 @@ const ListDetailPage = () => {
         return (
             <div className="min-h-screen bg-dark pt-20 pb-16">
                 <div className="max-w-7xl mx-auto px-4">
-                    <motion.div
-                        className="text-center py-16 px-6 text-gray-400 bg-surface-dark/30 rounded-xl border border-gray-800/20"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        <h4 className="mb-2 font-bold text-lg text-gray-300">List Not Found</h4>
-                        <p className="text-sm mb-4">{error}</p>
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="text-primary hover:underline"
-                        >
-                            Go Back
-                        </button>
-                    </motion.div>
+                    <ErrorState
+                        message="Couldn't load this list."
+                        onRetry={() => setRetryCount(c => c + 1)}
+                    />
                 </div>
             </div>
         );
@@ -299,15 +292,11 @@ const ListDetailPage = () => {
 
                 {/* Games Grid/List */}
                 {sortedGames.length === 0 ? (
-                    <motion.div
-                        className="text-center py-16 px-6 text-gray-400 bg-surface-dark/30 rounded-xl border border-gray-800/20"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        <Star className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                        <h4 className="mb-2 font-bold text-lg text-gray-300">This list is empty</h4>
-                        <p className="text-sm">No games have been added to this list yet.</p>
-                    </motion.div>
+                    <EmptyState
+                        icon={Star}
+                        title="This list is empty"
+                        message="No games have been added to this list yet."
+                    />
                 ) : (
                     <motion.div
                         className={

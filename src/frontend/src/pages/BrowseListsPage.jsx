@@ -6,6 +6,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { getPublicLists, getFeaturedLists, likeList, unlikeList } from "../api";
 import ListCard, { ListCardSkeleton } from "../components/lists/ListCard";
 import { useAuth } from "../context/AuthContext";
+import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
 import debounce from "lodash/debounce";
 
 const TABS = [
@@ -41,6 +43,7 @@ const BrowseListsPage = () => {
     const [lists, setLists] = useState(hasCachedData ? listsCache.data[initialCacheKey].lists : []);
     const [featuredList, setFeaturedList] = useState(listsCache.featured || null);
     const [loading, setLoading] = useState(!hasCachedData);
+    const [fetchError, setFetchError] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [activeTab, setActiveTab] = useState(initialTab);
     const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -87,6 +90,7 @@ const BrowseListsPage = () => {
         if (pageNum === 1) setLoading(true);
         else setLoadingMore(true);
 
+        setFetchError(false);
         try {
             const data = await getPublicLists(pageNum, 16, activeTab, debouncedSearch || undefined);
 
@@ -106,6 +110,7 @@ const BrowseListsPage = () => {
             setPage(pageNum);
         } catch (error) {
             console.error("Error fetching lists:", error);
+            if (pageNum === 1) setFetchError(true);
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -306,24 +311,25 @@ const BrowseListsPage = () => {
                             <ListCardSkeleton key={i} />
                         ))}
                     </div>
+                ) : fetchError ? (
+                    <ErrorState
+                        message="Couldn't load lists. Please try again."
+                        onRetry={() => fetchLists(1, false)}
+                    />
                 ) : lists.length === 0 ? (
-                    <motion.div
-                        className="text-center py-20 px-6"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
-                        <div className="w-16 h-16 rounded-full bg-surface/50 flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-gray-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                            {debouncedSearch ? "No lists found" : "No lists yet"}
-                        </h3>
-                        <p className="text-gray-500 text-sm max-w-md mx-auto">
-                            {debouncedSearch
-                                ? "Try a different search term or browse all lists"
-                                : "Be the first to create a public list!"}
-                        </p>
-                    </motion.div>
+                    debouncedSearch ? (
+                        <EmptyState
+                            icon={Search}
+                            title="No lists found"
+                            message={`No lists match "${debouncedSearch}". Try a different search term.`}
+                        />
+                    ) : (
+                        <EmptyState
+                            title="No lists yet"
+                            message="Be the first to create a public list."
+                            action={{ label: "Create a list", to: "/library?tab=my_lists" }}
+                        />
+                    )
                 ) : (
                     <>
                         <motion.div
