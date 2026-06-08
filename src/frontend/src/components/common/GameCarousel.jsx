@@ -6,6 +6,7 @@ import SectionHeader from "./SectionHeader";
 import { Link } from "react-router-dom";
 import ErrorState from "./ErrorState";
 import { CarouselSkeleton } from "./Skeleton";
+import useIsMobile from "../../hooks/useIsMobile";
 
 const GameCarousel = memo(({
   games,
@@ -17,6 +18,7 @@ const GameCarousel = memo(({
   status,
   onRetry
 }) => {
+  const isMobile = useIsMobile();
   const scrollContainerRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
@@ -117,8 +119,12 @@ const GameCarousel = memo(({
     <TrendingUp size={22} className="text-primary fill-primary" />
   ) : null;
 
-  const cardWidth = `calc(${100 / slidesToShow}% - ${(slidesToShow - 1) * 8 / slidesToShow}px)`;
-  const sectionMargin = title === "Trending Now" ? "mt-4" : "mt-10";
+  // Mobile shows ~2.3 wider cards with a peek of the next; desktop keeps the slidesToShow grid.
+  const cardWidth = isMobile
+    ? "min(42vw, 170px)"
+    : `calc(${100 / slidesToShow}% - ${(slidesToShow - 1) * 8 / slidesToShow}px)`;
+  // On mobile the parent (HomeMobile) controls vertical rhythm via its gap; avoid double spacing.
+  const sectionMargin = isMobile ? "" : (title === "Trending Now" ? "mt-4" : "mt-10");
 
   if (displayedGames.length === 0) {
     // Show a placeholder row while the fetch is in flight (or hasn't started yet).
@@ -150,7 +156,7 @@ const GameCarousel = memo(({
           showGradient={true}
         />
 
-        <div className="flex items-center gap-2">
+        {!isMobile && <div className="flex items-center gap-2">
           {/* Custom Navigation Arrows */}
           <button
             onClick={scrollLeft}
@@ -168,7 +174,7 @@ const GameCarousel = memo(({
           >
             <ChevronRight size={18} />
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Game Cards Container */}
@@ -197,7 +203,7 @@ const GameCarousel = memo(({
       </div>
 
       {/* Subtle Slide Indicators */}
-      {totalSlides > 1 && (
+      {!isMobile && totalSlides > 1 && (
         <div className="flex justify-center mt-4">
           <div className="flex items-center">
             {renderSlideIndicators()}
