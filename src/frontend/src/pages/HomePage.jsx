@@ -9,8 +9,13 @@ import FeaturedAnticipatedGames from "../components/home/FeaturedAnticipatedGame
 import TrendingGames from "../components/home/TrendingGames";
 import HighlyRatedGames from "../components/home/HighlyRatedGames";
 import LatestGames from "../components/home/LatestGames";
+import useIsMobile from "../hooks/useIsMobile";
+import HomeMobile from "./mobile/HomeMobile";
 
 const HomePage = () => {
+    const isMobile = useIsMobile();
+    if (isMobile) return <HomeMobile />;
+
     return (
         <>
             <PageMeta />
