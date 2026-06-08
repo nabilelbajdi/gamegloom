@@ -13,6 +13,8 @@ import RelatedContent from "../components/GamePage/RelatedContent";
 import ReviewList from "../components/reviews/ReviewList";
 import { hasConsent, readFunctional, writeFunctional } from "../utils/consent";
 import { useAuth } from "../context/AuthContext";
+import useIsMobile from "../hooks/useIsMobile";
+import GamePageMobile from "./mobile/GamePageMobile";
 
 // Loading Skeleton Component
 const GamePageSkeleton = () => {
@@ -149,6 +151,7 @@ const GamePage = () => {
   const { gameDetails, fetchGameDetails } = useGameStore();
   const { fetchCollection, collection } = useUserGameStore();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const isLoggedIn = !!user;
   const [detailStatus, setDetailStatus] = useState("loading");
 
@@ -250,6 +253,9 @@ const GamePage = () => {
       </div>
 
       {/* Content */}
+      {isMobile ? (
+        <GamePageMobile game={game} />
+      ) : (
       <div className="relative container mx-auto px-4 md:px-20 py-8 md:py-8 grid grid-cols-1 md:grid-cols-[minmax(280px,320px)_1fr] gap-16 items-start">
         {/* Game Cover Sticky Section */}
         <div className="w-full flex justify-center mb-8 md:mb-0 md:sticky md:top-20">
@@ -276,6 +282,7 @@ const GamePage = () => {
           <GameMedia screenshots={game.screenshots} videos={game.videos} artworks={game.artworks} />
         </div>
       </div>
+      )}
     </div>
   );
 };

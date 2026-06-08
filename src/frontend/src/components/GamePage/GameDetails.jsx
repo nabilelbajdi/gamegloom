@@ -4,8 +4,9 @@ import { Menu, Calendar, Gamepad2, Tags, Filter, Users, Building, Monitor, Joyst
 import { Link } from "react-router-dom";
 import StarRating from "../UI/StarRating";
 import GameMediaPreview from "./GameMediaPreview";
+import GameHeader from "./GameHeader";
 
-const GameDetails = ({ game, trailer }) => {
+const GameDetails = ({ game, trailer, showHeader = true }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isStorylineExpanded, setIsStorylineExpanded] = useState(false);
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
@@ -36,63 +37,7 @@ const GameDetails = ({ game, trailer }) => {
   return (
     <div className="pt-6 md:pt-12">
       {/* Header section */}
-      <div className="flex items-center justify-between gap-4 mb-3">
-        <div className="flex-1">
-          {/* Game Title */}
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-white">{game.name}</h1>
-          {/* Quick Info: Game Type, Developer, Release Year, Time to Beat */}
-          <div className="flex items-center text-gray-400 text-sm font-semibold mt-1 gap-3">
-            {/* Game Type */}
-            {game.game_type_name && (
-              <span className="inline-flex items-center gap-1">
-                <Gamepad className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>{game.game_type_name}</span>
-              </span>
-            )}
-
-            {game.game_type_name && (game.developers || game.firstReleaseDate || game.time_to_beat?.normally) && (
-              <div className="h-3 w-px bg-gray-700"></div>
-            )}
-
-            {/* Developer */}
-            {game.developers && (
-              <span className="inline-flex items-center gap-1">
-                <Building className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>{game.developers.split(", ")[0]}</span>
-              </span>
-            )}
-
-            {game.developers && (game.firstReleaseDate || game.time_to_beat?.normally) && (
-              <div className="h-3 w-px bg-gray-700"></div>
-            )}
-
-            {/* Release Year */}
-            {game.firstReleaseDate && (
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>{new Date(game.firstReleaseDate).getFullYear()}</span>
-              </span>
-            )}
-
-            {game.firstReleaseDate && game.time_to_beat?.normally && (
-              <div className="h-3 w-px bg-gray-700"></div>
-            )}
-
-            {/* Time to Beat */}
-            {game.time_to_beat?.normally && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>{game.time_to_beat.normally.formatted} to beat</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Rating Section */}
-        <div className="flex-shrink-0">
-          <StarRating rating={game.rating} totalRatingCount={game.overallRatingCount || game.totalRatingCount} aggregatedRatingCount={game.aggregatedRatingCount} firstReleaseDate={game.firstReleaseDate} />
-        </div>
-      </div>
+      {showHeader && <GameHeader game={game} />}
 
       {/* Separator */}
       <div className="container mx-auto my-2 h-px bg-gradient-to-r from-transparent via-primary to-transparent"></div>

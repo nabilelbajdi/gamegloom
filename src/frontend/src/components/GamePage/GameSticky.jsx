@@ -13,7 +13,7 @@ import ListSelectionModal from "../game/ListSelectionModal";
 import ReviewFormModal from "../reviews/ReviewFormModal";
 import useClickOutside from "../../hooks/useClickOutside";
 
-const GameSticky = ({ game }) => {
+const GameSticky = ({ game, showCover = true }) => {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,11 +197,13 @@ const GameSticky = ({ game }) => {
   };
 
   return (
-    <div className="sticky top-12 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-2 mt-12 sm:mt-0 flex flex-col items-center">
+    <div className={`flex flex-col items-center ${showCover ? "sticky top-12 self-start w-[280px] sm:w-[260px] md:w-[300px] lg:w-[320px] sm:py-2 mt-12 sm:mt-0" : "w-full"}`}>
       {/* Game Cover */}
-      <div className="w-full">
-        <GameCover game={game} />
-      </div>
+      {showCover && (
+        <div className="w-full">
+          <GameCover game={game} />
+        </div>
+      )}
 
       {/* Rating Section */}
       <div className="mt-3 pt-3 w-full border-t border-gray-800/30">
