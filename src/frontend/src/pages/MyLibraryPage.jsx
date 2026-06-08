@@ -319,8 +319,8 @@ const MyLibraryPage = () => {
       <LibraryHeader />
 
       {/* Tabs Navigation - Sticky at top since navbar scrolls away */}
-      <div className="sticky top-0 z-30 bg-[var(--bg-base)]/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
-        <div className="container mx-auto px-4 py-2">
+      <div className="sticky top-14 md:top-0 z-30 bg-[var(--bg-base)]/95 backdrop-blur-sm border-b border-gray-800 shadow-lg">
+        <div className="container mx-auto px-3 sm:px-4 py-2">
           <LibraryTabs
             activeTab={activeTab}
             setActiveTab={handleTabChange}
@@ -335,7 +335,7 @@ const MyLibraryPage = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 bg-[var(--bg-base)] pb-12">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {totalGames === 0 && activeTab !== "my_lists" ? (
             <EmptyState
               title="Your library is empty"
