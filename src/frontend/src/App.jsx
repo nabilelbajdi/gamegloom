@@ -5,6 +5,9 @@ import LoadingBar from "react-top-loading-bar";
 import { useRouteLoadingBar } from "./hooks/useRouteLoadingBar";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import useIsMobile from "./hooks/useIsMobile";
+import MobileTopBar from "./components/layout/mobile/MobileTopBar";
+import BottomNav from "./components/layout/mobile/BottomNav";
 import HomePage from "./pages/HomePage";
 import ScrollToTopOnMount from "./components/common/ScrollToTopOnMount";
 import ToastContainer from "./components/common/Toast/ToastContainer";
@@ -57,6 +60,7 @@ function AppContent() {
   const { user, onboarded } = useAuth();
 
   const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/onboarding'].includes(location.pathname);
+  const isMobile = useIsMobile();
 
   // Route freshly-registered users into onboarding once (they can skip it there).
   useEffect(() => {
@@ -68,10 +72,11 @@ function AppContent() {
   return (
     <>
       <ScrollToTopOnMount />
-      {!isAuthPage && <Navbar />}
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Routes>
+      {!isAuthPage && (isMobile ? <MobileTopBar /> : <Navbar />)}
+      <div className={!isAuthPage && isMobile ? "pb-[calc(4rem+env(safe-area-inset-bottom))]" : ""}>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/library" element={<MyLibraryPage />} />
             <Route path="/discover" element={<DiscoverPage />} />
@@ -100,10 +105,11 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
-      {!isAuthPage && <Footer />}
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+      {!isAuthPage && (isMobile ? <BottomNav /> : <Footer />)}
     </>
   );
 }
