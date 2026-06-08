@@ -14,7 +14,7 @@ export default function HomeMobile() {
     <div className="bg-[var(--bg-base)]">
       <PageMeta />
       <Hero />
-      <div className="flex flex-col gap-6 px-3 py-4">
+      <div className="flex flex-col gap-8 px-4 py-5">
         <ForYouGames />
         <TrendingGames />
         <AnticipatedGames />

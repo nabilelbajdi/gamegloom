@@ -12,6 +12,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { motion, AnimatePresence } from "framer-motion";
+import useIsMobile from "../../hooks/useIsMobile";
 
 // CSS for Quote Animation
 const quoteAnimationStyle = {
@@ -31,6 +32,7 @@ const HeroSection = () => {
   const { info } = useToastStore();
   const { user } = useAuth();
   const { fetchCollection } = useUserGameStore();
+  const isMobile = useIsMobile();
   const [featuredGames, setFeaturedGames] = useState([]);
   const [currentGameIndex, setCurrentGameIndex] = useState(0);
   const [backgroundImage, setBackgroundImage] = useState("");
@@ -166,12 +168,15 @@ const HeroSection = () => {
   const updateBackgroundImage = (game) => {
     if (!game) return;
 
+    // On mobile, request a lighter IGDB size for the fixed hero background.
+    const sized = (url) => (isMobile && url ? url.replace(/\/t_[^/]+\//, "/t_720p/") : url);
+
     if (game.artworks && game.artworks.length > 0) {
-      setBackgroundImage(game.artworks[0]);
+      setBackgroundImage(sized(game.artworks[0]));
     } else if (game.screenshots && game.screenshots.length > 0) {
-      setBackgroundImage(game.screenshots[0]);
+      setBackgroundImage(sized(game.screenshots[0]));
     } else if (game.coverImage || game.cover_image) {
-      setBackgroundImage(game.coverImage || game.cover_image);
+      setBackgroundImage(sized(game.coverImage || game.cover_image));
     }
   };
 
@@ -224,7 +229,8 @@ const HeroSection = () => {
     slidesToScroll: 1,
     arrows: false,
     beforeChange: handleBeforeChange,
-    autoplay: true,
+    // On mobile the featured card is hidden; keep the background fixed (no cycling).
+    autoplay: !isMobile,
     autoplaySpeed: 5000,
     fade: true,
     pauseOnHover: false
@@ -266,7 +272,7 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative h-screen w-full flex items-center overflow-hidden">
+    <section className="relative min-h-[60vh] md:h-screen w-full flex items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         {backgroundImage ? (
@@ -289,7 +295,7 @@ const HeroSection = () => {
       <div className="relative container mx-auto px-3 w-full">
         <div className="grid md:grid-cols-2 gap-6 items-center">
           {/* Left Side Content - Clean Search Hero */}
-          <div className="space-y-8 py-8">
+          <div className="space-y-6 py-6 md:space-y-8 md:py-8">
             <motion.div
               className="space-y-6"
               initial={{ opacity: 0, y: 20 }}
@@ -401,7 +407,7 @@ const HeroSection = () => {
 
               {/* Subtle Stats */}
               <motion.p
-                className="text-sm text-light/50 font-light tracking-wide"
+                className="hidden md:block text-sm text-light/50 font-light tracking-wide"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.7, delay: 1.1 }}
