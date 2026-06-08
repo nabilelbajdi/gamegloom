@@ -398,7 +398,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] pb-12">
       <PageMeta title={query ? `Search: ${query}` : "Search Games"} />
-      <div className="container mx-auto px-4 pt-20 pb-4">
+      <div className="container mx-auto px-4 pt-4 md:pt-20 pb-4">
         {/* Integrated Header */}
         <div className="mb-6 px-1">
           <div className="flex flex-col gap-3">
