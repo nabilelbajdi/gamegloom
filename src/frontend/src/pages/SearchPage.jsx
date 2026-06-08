@@ -516,7 +516,8 @@ const SearchPage = () => {
                         type="text"
                         value={searchQuery}
                         onChange={handleSearchInput}
-                        placeholder="New search..."
+                        autoFocus={!query}
+                        placeholder="Search games..."
                         className="w-full sm:w-56 bg-zinc-800 text-sm text-white rounded-md pl-10 pr-4 py-2.5 focus:outline-none border-none shadow-sm h-[38px]"
                         aria-label="Enter a new search term"
                       />
@@ -535,10 +536,11 @@ const SearchPage = () => {
                       {/* Filter Toggle (Mobile/Tablet) */}
                       <button
                         onClick={() => setShowFilterPanel(!showFilterPanel)}
-                        className="lg:hidden flex items-center gap-1 bg-gray-800 rounded-lg px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        className="lg:hidden flex items-center gap-1 bg-gray-800 rounded-lg px-2.5 py-2 sm:px-3 sm:py-1.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        aria-label="Filters"
                       >
                         <Filter size={16} />
-                        <span>Filters</span>
+                        <span className="hidden sm:inline">Filters</span>
                       </button>
 
                       {/* Sort Dropdown */}
@@ -617,6 +619,12 @@ const SearchPage = () => {
                       )}
                     </div>
                   </>
+                ) : !query ? (
+                  <div className="text-center py-12">
+                    <Search size={36} className="text-gray-600 mx-auto mb-3" />
+                    <h3 className="text-lg font-semibold text-gray-300 mb-2">Search thousands of games</h3>
+                    <p className="text-gray-500 text-sm">Type a title in the search box above to get started.</p>
+                  </div>
                 ) : (
                   <div className="text-center py-12">
                     <h3 className="text-lg font-semibold text-gray-300 mb-2">

@@ -93,13 +93,14 @@ const SortDropdown = ({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={`Sort by: ${getCurrentSortLabel()}`}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer ${isOpen
           ? "bg-surface/80 text-white"
           : "bg-surface/30 text-gray-400 hover:text-white hover:bg-surface/50"
           } transition-all`}
       >
         <ArrowUpDown className="w-3.5 h-3.5" />
-        <span>Sort by: {getCurrentSortLabel()}</span>
+        <span className="hidden sm:inline">Sort by: {getCurrentSortLabel()}</span>
         <ChevronDown
           className={`w-3 h-3 ${isOpen ? "text-white" : "text-gray-500"} transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
