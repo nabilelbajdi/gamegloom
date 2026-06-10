@@ -33,7 +33,6 @@ from ..models.game import Game
 from ..models.password_reset_token import PasswordResetToken
 from ..models.token import Token
 from ..models.user_oauth_account import UserOAuthAccount
-from ..models.user_preference import UserPreference
 from ...db_setup import get_db
 from ...settings import settings
 
@@ -449,7 +448,6 @@ async def delete_account(
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session=False)
     db.query(EmailVerification).filter(EmailVerification.user_id == user_id).delete(synchronize_session=False)
     db.query(UserOAuthAccount).filter(UserOAuthAccount.user_id == user_id).delete(synchronize_session=False)
-    db.query(UserPreference).filter(UserPreference.user_id == user_id).delete(synchronize_session=False)
 
     # Lists: likes the user gave, then their owned lists (clearing likes-on-them + association rows first)
     db.query(ListLike).filter(ListLike.user_id == user_id).delete(synchronize_session=False)

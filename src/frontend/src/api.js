@@ -355,17 +355,6 @@ export const getGame = async (gameId) => {
   return fetchGames(`games/${gameId}`);
 };
 
-// Fetch Recommendations
-export const fetchRecommendations = async () => {
-  const response = await apiFetch(`/recommendations/games`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch recommendations");
-  }
-
-  return await response.json();
-};
-
 // User Profile Functions
 export const updateUserProfile = async (userData) => {
   const response = await apiFetch(`/me/profile`, {
@@ -702,30 +691,6 @@ export const logoutApi = async () => {
   } catch (e) {
     // swallow — local logout will still happen
   }
-};
-
-/**
- * Get the current user's onboarding/personalization preferences.
- * GET /me/preferences
- */
-export const fetchPreferences = async () => {
-  const response = await apiFetch(`/me/preferences`);
-  if (!response.ok) throw new Error("Failed to fetch preferences");
-  return response.json();
-};
-
-/**
- * Upsert personalization preferences (genres, themes, backdrop, onboarded flag).
- * PUT /me/preferences
- */
-export const updatePreferences = async (prefs) => {
-  const response = await apiFetch(`/me/preferences`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(prefs),
-  });
-  if (!response.ok) throw new Error("Failed to update preferences");
-  return response.json();
 };
 
 /**

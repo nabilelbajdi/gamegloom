@@ -3,7 +3,7 @@ import { create } from "zustand";
 import {
   fetchTrendingGames, fetchAnticipatedGames, fetchHighlyRatedGames,
   fetchLatestGames, fetchGameDetails, fetchGamesByGenre, fetchGamesByTheme,
-  fetchRecommendations, fetchGameCount
+  fetchGameCount
 } from "../api";
 import { transformGameData } from "../utils/transformGameData";
 
@@ -16,7 +16,6 @@ const useGameStore = create((set, get) => ({
   latestGames: [],
   genreGames: {},
   themeGames: {},
-  recommendedGames: [],
   // Per-section load status keyed by category ("trending", "genre:rpg", ...):
   // "loading" | "success" | "error". Lets carousels show a retry instead of a
   // silent blank when a fetch fails.
@@ -106,9 +105,6 @@ const useGameStore = create((set, get) => ({
         case "theme":
           data = await fetchGamesByTheme(filter, 50, 0);
           break;
-        case "recommendations":
-          data = await fetchRecommendations();
-          break;
         default:
           data = [];
       }
@@ -146,8 +142,6 @@ const useGameStore = create((set, get) => ({
                   [filter]: transformedGames
                 }
               };
-            case "recommendations":
-              return { recommendedGames: transformedGames };
             default:
               return state;
           }

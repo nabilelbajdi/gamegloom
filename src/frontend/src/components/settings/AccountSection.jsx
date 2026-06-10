@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { User, Lock, Link2, Check, X, Loader2, Sparkles } from "lucide-react";
+import { User, Lock, Link2, Check, X, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import API_URL from "../../utils/apiConfig";
 import {
@@ -15,7 +14,6 @@ const PROVIDER_LABELS = { google: "Google", github: "GitHub" };
 
 const AccountSection = ({ onPasswordChange }) => {
   const { user, checkAuth } = useAuth();
-  const navigate = useNavigate();
   const toast = useToastStore();
 
   const [connections, setConnections] = useState({ has_password: false, providers: [] });
@@ -213,17 +211,6 @@ const AccountSection = ({ onPasswordChange }) => {
           </div>
         );
       })}
-
-      {/* Re-run onboarding */}
-      <div className="clear-row-wrapper">
-        <button className="clear-row" onClick={() => navigate("/onboarding")}>
-          <div className="clear-row-icon"><Sparkles size={18} /></div>
-          <div className="clear-row-content">
-            <p className="clear-row-title">Personalize your profile</p>
-            <p className="clear-row-meta">Re-run onboarding to update genres, games, and your backdrop</p>
-          </div>
-        </button>
-      </div>
     </section>
   );
 };

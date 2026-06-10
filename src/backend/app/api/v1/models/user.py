@@ -21,7 +21,6 @@ class User(Base):
     user_games = relationship("UserGame", backref="user", cascade="all, delete-orphan")
     platform_links = relationship("UserPlatformLink", back_populates="user", cascade="all, delete-orphan")
     oauth_accounts = relationship("UserOAuthAccount", back_populates="user", cascade="all, delete-orphan")
-    preferences = relationship("UserPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email})>"

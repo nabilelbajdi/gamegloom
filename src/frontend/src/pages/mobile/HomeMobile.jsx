@@ -1,6 +1,5 @@
 import PageMeta from "../../components/common/PageMeta";
 import Hero from "../../components/home/HeroSection";
-import ForYouGames from "../../components/home/ForYouGames";
 import TrendingGames from "../../components/home/TrendingGames";
 import AnticipatedGames from "../../components/home/AnticipatedGames";
 import HighlyRatedGames from "../../components/home/HighlyRatedGames";
@@ -15,7 +14,6 @@ export default function HomeMobile() {
       <PageMeta />
       <Hero />
       <div className="flex flex-col gap-8 px-4 py-5">
-        <ForYouGames />
         <TrendingGames />
         <AnticipatedGames />
         <HighlyRatedGames />

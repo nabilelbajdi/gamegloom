@@ -20,7 +20,6 @@ const NAV_ITEMS = [
       { name: "Latest Releases", path: "/discover/latest-releases" },
     ]
   },
-  { name: "For you", path: "/discover/recommendations" },
   { name: "Games", path: "/games" },
   { name: "Lists", path: "/lists" }
 ];

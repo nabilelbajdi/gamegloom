@@ -389,28 +389,6 @@ class UserProfileUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserPreferenceUpdate(BaseModel):
-    """Partial update of onboarding/personalization preferences."""
-    favorite_genres: Optional[List[str]] = None
-    favorite_themes: Optional[List[str]] = None
-    playstyles: Optional[List[str]] = None
-    theme_key: Optional[str] = Field(None, max_length=40)
-    backdrop_image: Optional[str] = Field(None, max_length=500)
-    backdrop_game_id: Optional[int] = None
-    mark_onboarded: Optional[bool] = None
-
-
-class UserPreferenceResponse(BaseModel):
-    """Personalization preferences with a derived `onboarded` flag."""
-    favorite_genres: List[str] = []
-    favorite_themes: List[str] = []
-    playstyles: List[str] = []
-    theme_key: str = "obsidian"
-    backdrop_image: Optional[str] = None
-    backdrop_game_id: Optional[int] = None
-    onboarded: bool = False
-
-
 class UsernameUpdate(BaseModel):
     """Schema for claiming/changing a username."""
     username: str = Field(..., min_length=3, max_length=50)

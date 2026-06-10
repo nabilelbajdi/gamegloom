@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from typing import List
 
-from ..core import schemas, cache
+from ..core import schemas
 from ..models.user_game import UserGame, GameStatus
 from ..models.game import Game
 from ..models.user import User
@@ -54,10 +54,6 @@ async def add_game_to_collection(
     db.add(db_user_game)
     db.commit()
     db.refresh(db_user_game)
-
-    # Library is a recommendation taste signal (and recs exclude owned games),
-    # so drop the cached recommendations to reflect the change.
-    await cache.invalidate(f"recs:user:{current_user.id}")
     return db_user_game
 
 @router.get("/collection", response_model=schemas.UserGameResponse)
@@ -157,7 +153,6 @@ async def clear_all_games(
     ).delete()
 
     db.commit()
-    await cache.invalidate(f"recs:user:{current_user.id}")
     return {"message": f"Cleared {deleted_count} games from your library", "count": deleted_count}
 
 
@@ -193,5 +188,4 @@ async def remove_game_from_collection(
     # Keep platform cache as-is; re-sync will reset to pending if needed
 
     db.commit()
-    await cache.invalidate(f"recs:user:{current_user.id}")
     return {"message": "Game successfully removed from collection"}

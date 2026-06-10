@@ -28,7 +28,7 @@ const quoteAnimationStyle = {
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const { highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, fetchGames } = useGameStore();
+  const { highlyRatedGames, trendingGames, anticipatedGames, fetchGames } = useGameStore();
   const { info } = useToastStore();
   const { user } = useAuth();
   const { fetchCollection } = useUserGameStore();
@@ -94,35 +94,16 @@ const HeroSection = () => {
     if (!anticipatedGames || anticipatedGames.length === 0) {
       fetchGames("anticipated");
     }
-
-    // Only fetch recommendations for logged-in users
-    if (user && (!recommendedGames || recommendedGames.length === 0)) {
-      fetchGames("recommendations");
-    }
-  }, [highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, fetchGames, user]);
+  }, [highlyRatedGames, trendingGames, anticipatedGames, fetchGames]);
 
   useEffect(() => {
-    // Different game selection logic based on login status
+    // Populate the hero carousel once the source shelves have loaded.
     if (featuredGames.length === 0) {
-      if (user && recommendedGames?.length > 0) {
-        // For logged-in users with recommendations
-        const validRecommendedGames = recommendedGames
-          .filter(game => game && game.igdb_id && game.name && (game.coverImage || game.cover_image));
-
-        if (validRecommendedGames.length > 0) {
-          const selectedGames = validRecommendedGames.slice(0, 10);
-          setFeaturedGames(selectedGames);
-          updateBackgroundImage(selectedGames[0]);
-          document.documentElement.style.setProperty('--carousel-duration', `${sliderSettings.autoplaySpeed}ms`);
-        } else {
-          selectRandomHighlyRatedGames();
-        }
-      } else if (highlyRatedGames?.length > 0 && trendingGames?.length > 0 && anticipatedGames?.length > 0) {
-        // For non-logged-in users
+      if (highlyRatedGames?.length > 0 && trendingGames?.length > 0 && anticipatedGames?.length > 0) {
         selectRandomHighlyRatedGames();
       }
     }
-  }, [highlyRatedGames, trendingGames, anticipatedGames, recommendedGames, featuredGames.length, user]);
+  }, [highlyRatedGames, trendingGames, anticipatedGames, featuredGames.length]);
 
   const selectRandomHighlyRatedGames = () => {
     // Get valid games from all lists
@@ -250,7 +231,7 @@ const HeroSection = () => {
     },
     {
       icon: <BookMarked className="w-4 h-4" />,
-      title: "Get Recommendations",
+      title: "Discover Games",
       description: "Find your next favorite game"
     }
   ] : [

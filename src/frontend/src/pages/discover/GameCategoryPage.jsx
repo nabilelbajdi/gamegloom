@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import useGameStore from "../../store/useGameStore";
-import { useAuth } from "../../context/AuthContext";
 import { fetchGameCount } from "../../api";
 import CategoryHeader from "../../components/discover/CategoryHeader";
 import GamesGrid from "../../components/discover/GamesGrid";
@@ -30,8 +28,6 @@ const GameCategoryPage = ({
   genreFilter = null,
   themeFilter = null
 }) => {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const {
     fetchGames,
     loadMoreGames,
@@ -41,7 +37,6 @@ const GameCategoryPage = ({
     latestGames,
     genreGames,
     themeGames,
-    recommendedGames,
     categoryStatus
   } = useGameStore();
 
@@ -66,18 +61,11 @@ const GameCategoryPage = ({
       case "latest": return latestGames;
       case "genre": return genreFilter ? (genreGames[genreFilter] || []) : [];
       case "theme": return themeFilter ? (themeGames[themeFilter] || []) : [];
-      case "recommendations": return recommendedGames;
       default: return [];
     }
   };
 
   useEffect(() => {
-    // Only redirect to login if auth is loaded and user is not authenticated
-    if (!authLoading && categoryType === "recommendations" && !user) {
-      navigate("/login");
-      return;
-    }
-
     const loadGames = async () => {
       setLoading(true);
       setHasMore(true);
@@ -100,14 +88,14 @@ const GameCategoryPage = ({
     };
 
     loadGames();
-  }, [categoryType, fetchGames, genreFilter, themeFilter, user, navigate, authLoading]);
+  }, [categoryType, fetchGames, genreFilter, themeFilter]);
 
   const games = getGamesForCategory();
 
   // Preserve default ordering
   const gamesWithIndex = games.map((game, index) => ({
     ...game,
-    originalIndex: categoryType !== "recommendations" ? index : null
+    originalIndex: index
   }));
 
   // Extract all unique genres, themes, platforms, game modes, and player perspectives from games
