@@ -10,7 +10,7 @@ const SCHEMA = {
 
 // Builds a renderHook wrapper that mounts the hook under a MemoryRouter at initialUrl.
 function wrapperFor(initialUrl) {
-  // eslint-disable-next-line react/prop-types, react/display-name
+  // eslint-disable-next-line react/display-name
   return ({ children }) => <MemoryRouter initialEntries={[initialUrl]}>{children}</MemoryRouter>;
 }
 
