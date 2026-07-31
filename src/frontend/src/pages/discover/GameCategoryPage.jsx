@@ -13,6 +13,7 @@ import ActiveFilters from "../../components/common/ActiveFilters";
 import ScrollToTop from "../../components/common/ScrollToTop";
 import { gamePassesAllFilters } from "../../utils/filterUtils";
 import { readFunctional, writeFunctional } from "../../utils/consent";
+import { shortenPlatform } from "../../utils/gameDisplay";
 import useFilterParams from "../../hooks/useFilterParams";
 
 // Filter and sort keys persisted in the URL for this page
@@ -121,12 +122,7 @@ const GameCategoryPage = ({
       .filter(game => game.platforms)
       .flatMap(game => typeof game.platforms === 'string'
         ? game.platforms.split(',').map(p => p.trim())
-          .map(p => p.replace("PC (Microsoft Windows)", "PC")
-            .replace("PlayStation 5", "PS5")
-            .replace("PlayStation 4", "PS4")
-            .replace("Nintendo Switch", "Switch")
-            .replace("PlayStation 3", "PS3")
-            .replace("PlayStation 2", "PS2"))
+          .map(shortenPlatform)
         : game.platforms)
     )].sort();
 

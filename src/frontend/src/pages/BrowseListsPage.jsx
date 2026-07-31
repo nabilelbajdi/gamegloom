@@ -8,6 +8,7 @@ import ListCard, { ListCardSkeleton } from "../components/lists/ListCard";
 import { useAuth } from "../context/AuthContext";
 import ErrorState from "../components/common/ErrorState";
 import EmptyState from "../components/common/EmptyState";
+import { getHighResImage } from "../utils/gameDisplay";
 import debounce from "lodash/debounce";
 
 const TABS = [
@@ -232,7 +233,7 @@ const BrowseListsPage = () => {
                         <div
                             className="absolute inset-0 bg-cover bg-center"
                             style={{
-                                backgroundImage: `url(${featuredList.games?.[0]?.coverImage?.replace('t_cover_big', 't_1080p').replace('t_thumb', 't_1080p') ||
+                                backgroundImage: `url(${getHighResImage(featuredList.games?.[0]?.coverImage) ||
                                     "/images/placeholder-cover.jpg"
                                     })`,
                             }}

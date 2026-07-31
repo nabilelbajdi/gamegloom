@@ -12,6 +12,7 @@ import SimilarGames from "../components/GamePage/SimilarGames";
 import RelatedContent from "../components/GamePage/RelatedContent";
 import ReviewList from "../components/reviews/ReviewList";
 import { hasConsent, readFunctional, writeFunctional } from "../utils/consent";
+import { getHighResImage, pickHeroArt } from "../utils/gameDisplay";
 import { useAuth } from "../context/AuthContext";
 import useIsMobile from "../hooks/useIsMobile";
 import GamePageMobile from "./mobile/GamePageMobile";
@@ -218,19 +219,8 @@ const GamePage = () => {
 
   if (!game) return <GamePageSkeleton />;
 
-  // Function to convert screenshot URLs to high resolution (1080p)
-  const getHighResImage = (url) => {
-    if (!url || !url.includes('/t_')) return url;
-    return url.replace(/\/t_[^/]+\//, '/t_1080p/');
-  };
-
-  // First artwork, else first screenshot — indexing must stay deterministic so
-  // the background doesn't swap on every re-render.
-  const backgroundImage = game.artworks?.length > 0
-    ? getHighResImage(game.artworks[0])
-    : (game.screenshots?.length > 0
-      ? getHighResImage(game.screenshots[0])
-      : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
+  const backgroundImage =
+    pickHeroArt(game) || getHighResImage(game.coverImage) || "/public/images/fallback.jpg";
 
   const ogDescription = game.summary
     ? game.summary.slice(0, 160)

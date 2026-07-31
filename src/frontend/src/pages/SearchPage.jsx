@@ -15,6 +15,7 @@ import { Search, X, Filter, Info, ChevronDown, Gamepad2, Users, Monitor, Chevron
 import PageMeta from "../components/common/PageMeta";
 import ErrorState from "../components/common/ErrorState";
 import { readFunctional, writeFunctional } from "../utils/consent";
+import { shortenPlatform } from "../utils/gameDisplay";
 import useFilterParams from "../hooks/useFilterParams";
 
 // Number of games to display per page
@@ -247,12 +248,7 @@ const SearchPage = () => {
       .filter(game => game.platforms)
       .flatMap(game => typeof game.platforms === 'string'
         ? game.platforms.split(',').map(p => p.trim())
-          .map(p => p.replace("PC (Microsoft Windows)", "PC")
-            .replace("PlayStation 5", "PS5")
-            .replace("PlayStation 4", "PS4")
-            .replace("Nintendo Switch", "Switch")
-            .replace("PlayStation 3", "PS3")
-            .replace("PlayStation 2", "PS2"))
+          .map(shortenPlatform)
         : game.platforms)
     )].sort();
 

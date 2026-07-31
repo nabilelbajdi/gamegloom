@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { getHighResImage } from "../../utils/gameDisplay";
 
 const ImageGallery = ({ images, initialIndex = 0, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -42,12 +43,6 @@ const ImageGallery = ({ images, initialIndex = 0, onClose }) => {
       document.body.style.overflow = "auto";
     };
   }, [handleKeyDown]);
-
-  // Convert thumbnail URLs to high resolution (1080p)
-  const getHighResImage = (url) => {
-    if (!url || !url.includes('/t_')) return url;
-    return url.replace(/\/t_[^/]+\//, '/t_1080p/');
-  };
 
   if (!images || images.length === 0) return null;
 

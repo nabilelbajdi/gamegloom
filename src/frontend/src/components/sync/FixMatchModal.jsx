@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Search, Loader2, Check } from 'lucide-react';
 import { searchGames } from '../../api';
+import { getHighResImage } from '../../utils/gameDisplay';
 import debounce from 'lodash/debounce';
 import './FixMatchModal.css';
 
@@ -93,13 +94,8 @@ const FixMatchModal = ({ game, onClose, onFixed }) => {
         return () => document.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
-    // Generate cover URL - already full URL, just change size
-    const getCoverUrl = (result) => {
-        const coverUrl = result.cover_image || result.coverImage;
-        if (!coverUrl) return null;
-        // Replace any size specifier with t_1080p for best quality
-        return coverUrl.replace(/\/t_[^/]+\//, '/t_1080p/');
-    };
+    const getCoverUrl = (result) =>
+        getHighResImage(result.cover_image || result.coverImage) || null;
 
     // Dynamic grid class based on result count
     const getGridClass = () => {

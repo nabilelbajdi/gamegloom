@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { getHighResImage, pickHeroArt } from "../../utils/gameDisplay";
 
 const HeroSection = ({
   featuredGame,
@@ -25,32 +26,11 @@ const HeroSection = ({
     }
   };
 
-  // Helper to get the best available high-resolution image
-  const getHighResImage = (game) => {
-    if (!game) return null;
-
-    if (game.artworks && game.artworks.length > 0) {
-      return game.artworks[0].replace('t_thumb', 't_1080p');
-    }
-
-    if (game.screenshots && game.screenshots.length > 0) {
-      return game.screenshots[0].replace('t_thumb', 't_1080p');
-    }
-
-    if (game.backgroundImage) {
-      return game.backgroundImage.replace('t_thumb', 't_1080p')
-        .replace('t_cover_big', 't_1080p');
-    }
-
-    if (game.coverImage) {
-      return game.coverImage.replace('t_thumb', 't_1080p')
-        .replace('t_cover_big', 't_1080p');
-    }
-
-    return null;
-  };
-
-  const backgroundImage = getHighResImage(featuredGame);
+  const backgroundImage =
+    pickHeroArt(featuredGame) ||
+    getHighResImage(featuredGame?.backgroundImage) ||
+    getHighResImage(featuredGame?.coverImage) ||
+    null;
 
   return (
     <section className="relative h-[500px] overflow-hidden">

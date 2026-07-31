@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import StarRating from "../UI/StarRating";
 import GameMediaPreview from "./GameMediaPreview";
 import GameHeader from "./GameHeader";
+import { shortPlatforms } from "../../utils/gameDisplay";
 
 const GameDetails = ({ game, trailer, showHeader = true }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -147,16 +148,7 @@ const GameDetails = ({ game, trailer, showHeader = true }) => {
               <Gamepad2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
               <span>
                 <span className="text-gray-500">Platforms: </span>
-                <span className="text-gray-300 truncate">{game.platforms
-                  .replace("PC (Microsoft Windows)", "PC")
-                  .replace("PlayStation 5", "PS5")
-                  .replace("PlayStation 4", "PS4")
-                  .replace("Nintendo Switch", "Switch")
-                  .replace("PlayStation 3", "PS3")
-                  .replace("PlayStation 2", "PS2")
-                  .split(", ")
-                  .sort()
-                  .join(", ")}</span>
+                <span className="text-gray-300 truncate">{shortPlatforms(game.platforms)}</span>
               </span>
             </div>
           )}
