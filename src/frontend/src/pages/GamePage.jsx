@@ -224,11 +224,12 @@ const GamePage = () => {
     return url.replace(/\/t_[^/]+\//, '/t_1080p/');
   };
 
-  // OPTION 3: Use the first artwork available
+  // First artwork, else first screenshot — indexing must stay deterministic so
+  // the background doesn't swap on every re-render.
   const backgroundImage = game.artworks?.length > 0
     ? getHighResImage(game.artworks[0])
     : (game.screenshots?.length > 0
-      ? getHighResImage(game.screenshots[Math.floor(Math.random() * game.screenshots.length)])
+      ? getHighResImage(game.screenshots[0])
       : (game.coverImage ? getHighResImage(game.coverImage) : "/public/images/fallback.jpg"));
 
   const ogDescription = game.summary
