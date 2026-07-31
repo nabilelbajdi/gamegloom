@@ -23,12 +23,11 @@ const COMPLETION_LABELS = {
 };
 
 const ReviewModal = ({ review, onClose }) => {
-    if (!review) return null;
-
-    const { user, rating, content, created_at, likes_count } = review;
-
-    // Lock body scroll and ESC key handler
+    // Lock body scroll and ESC key handler. Runs before the empty-review guard
+    // below so the hook order stays stable, hence the internal early return.
     useEffect(() => {
+        if (!review) return;
+
         document.body.style.overflow = 'hidden';
 
         const handleEscape = (e) => {
@@ -40,7 +39,11 @@ const ReviewModal = ({ review, onClose }) => {
             document.body.style.overflow = 'unset';
             document.removeEventListener('keydown', handleEscape);
         };
-    }, [onClose]);
+    }, [onClose, review]);
+
+    if (!review) return null;
+
+    const { user, rating, content, created_at, likes_count } = review;
 
     // Handle click outside modal
     const handleBackdropClick = (e) => {

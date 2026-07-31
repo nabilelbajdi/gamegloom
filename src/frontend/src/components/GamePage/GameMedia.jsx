@@ -17,12 +17,16 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
     { id: 'artworks', title: 'Artworks', icon: <Image className="w-4 h-4 mr-1" />, content: artworks },
   ].filter(tab => tab.content && tab.content.length > 0);
 
+  const [activeTab, setActiveTab] = useState(null);
+
   // Check if any media content exists
   if (tabs.length === 0) {
     return null;
   }
 
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  // Falls back to the first tab before anything is picked, and when the
+  // selected tab disappears after the game's media changes.
+  const selectedTab = tabs.some(tab => tab.id === activeTab) ? activeTab : tabs[0].id;
 
   // Function to open the gallery
   const openGallery = (images, initialIndex) => {
@@ -36,10 +40,10 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
       <h2 className="text-2xl font-bold text-light mb-4">Media</h2>
       
       {/* Tab Navigation */}
-      <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TabNavigation tabs={tabs} activeTab={selectedTab} setActiveTab={setActiveTab} />
       
       {/* Media Content Sections */}
-      {activeTab === 'videos' && videos && videos.length > 0 && (
+      {selectedTab === 'videos' && videos && videos.length > 0 && (
         <MediaSection 
           type="videos"
           items={videos}
@@ -47,7 +51,7 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
         />
       )}
       
-      {activeTab === 'artworks' && artworks && artworks.length > 0 && (
+      {selectedTab === 'artworks' && artworks && artworks.length > 0 && (
         <MediaSection 
           type="artworks"
           items={artworks}
@@ -55,7 +59,7 @@ const GameMedia = React.memo(({ screenshots, videos, artworks }) => {
         />
       )}
       
-      {activeTab === 'screenshots' && screenshots && screenshots.length > 0 && (
+      {selectedTab === 'screenshots' && screenshots && screenshots.length > 0 && (
         <MediaSection 
           type="screenshots"
           items={screenshots}

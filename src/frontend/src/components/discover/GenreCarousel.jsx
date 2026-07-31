@@ -18,16 +18,17 @@ const GenreCarousel = ({
   const sliderRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   
-  if (!categories || categories.length === 0) return null;
-
   const slidesToShow = 4;
-  const totalSlides = Math.ceil(categories.length / slidesToShow);
-  
+
   const handleAfterChange = useCallback((current) => {
     const newSlideIndex = Math.floor(current / slidesToShow);
     setCurrentSlide(newSlideIndex);
     onSlideChange(newSlideIndex);
   }, [slidesToShow, onSlideChange]);
+
+  if (!categories || categories.length === 0) return null;
+
+  const totalSlides = Math.ceil(categories.length / slidesToShow);
   
   const settings = {
     ...getSliderSettings(categories.length, slidesToShow),

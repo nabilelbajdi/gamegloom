@@ -30,23 +30,27 @@ const RelatedContent = memo(({
     { id: 'packs', title: 'Add-ons', icon: <Package className="w-4 h-4 mr-1" />, content: packs }
   ].filter(tab => tab.content && tab.content.length > 0);
 
+  const [activeTab, setActiveTab] = useState(null);
+
   // Check if any related content exists
   if (tabs.length === 0) {
     return null;
   }
 
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  // Falls back to the first tab before anything is picked, and when the
+  // selected tab disappears after the game's content changes.
+  const selectedTab = tabs.some(tab => tab.id === activeTab) ? activeTab : tabs[0].id;
 
   return (
     <section className="mt-12">
       <h2 className="text-2xl font-bold text-light mb-4">Related Content</h2>
       
       {/* Tab Navigation */}
-      <TabNavigation tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TabNavigation tabs={tabs} activeTab={selectedTab} setActiveTab={setActiveTab} />
       
       {/* Active Tab Content */}
       {tabs.map(tab => (
-        activeTab === tab.id && (
+        selectedTab === tab.id && (
           <ContentSection 
             key={tab.id}
             title={tab.title}
