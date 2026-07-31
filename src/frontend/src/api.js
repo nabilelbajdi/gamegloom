@@ -407,9 +407,9 @@ export const fetchUserStats = async () => {
   }
 };
 
-export const fetchUserActivities = async (limit = 10) => {
+export const fetchUserActivities = async (limit = 10, offset = 0) => {
   try {
-    const response = await apiFetch(`/users/activities?limit=${limit}`);
+    const response = await apiFetch(`/users/activities?limit=${limit}&offset=${offset}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch user activities");

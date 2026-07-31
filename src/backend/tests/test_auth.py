@@ -3,6 +3,8 @@
 Tests for authentication endpoints: register, login, and /me.
 """
 import pytest
+import pytest_asyncio
+from backend.app.api.v1.models.game import Game
 
 pytestmark = pytest.mark.asyncio
 
@@ -206,3 +208,59 @@ class TestCookieAuth:
         # Cookies cleared -> subsequent cookie-auth request is unauthorized.
         me = await client.get("/api/v1/me")
         assert me.status_code in [401, 403]
+
+
+@pytest_asyncio.fixture
+async def activity_user(client, db_session, test_user_data):
+    """A logged-in user with five collection activities to page through."""
+    for i in range(5):
+        db_session.add(Game(igdb_id=9000 + i, name=f"Activity Game {i}", slug=f"activity-game-{i}"))
+    db_session.commit()
+
+    await client.post("/api/v1/register", json=test_user_data)
+    login = await client.post("/api/v1/login", json={
+        "username": test_user_data["username"],
+        "password": test_user_data["password"],
+    })
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+    client.cookies.clear()
+
+    for i in range(5):
+        await client.post(
+            "/api/v1/user-games",
+            json={"game_id": 9000 + i, "status": "want_to_play"},
+            headers=headers,
+        )
+    return headers
+
+
+class TestUserActivitiesPagination:
+    """GET /api/v1/users/activities must honour offset so 'load more' advances."""
+
+    async def test_offset_returns_the_next_page(self, client, activity_user):
+        first = await client.get("/api/v1/users/activities?limit=2&offset=0", headers=activity_user)
+        second = await client.get("/api/v1/users/activities?limit=2&offset=2", headers=activity_user)
+        assert first.status_code == 200 and second.status_code == 200
+
+        first_ids = [a["id"] for a in first.json()["activities"]]
+        second_ids = [a["id"] for a in second.json()["activities"]]
+        assert len(first_ids) == 2 and len(second_ids) == 2
+        # The bug: offset was ignored, so page two repeated page one.
+        assert set(first_ids).isdisjoint(second_ids)
+
+    async def test_has_more_flips_false_on_the_last_page(self, client, activity_user):
+        response = await client.get("/api/v1/users/activities?limit=2&offset=0", headers=activity_user)
+        assert response.json()["has_more"] is True
+
+        response = await client.get("/api/v1/users/activities?limit=10&offset=0", headers=activity_user)
+        assert response.json()["has_more"] is False
+
+    async def test_offset_past_the_end_returns_empty(self, client, activity_user):
+        response = await client.get("/api/v1/users/activities?limit=5&offset=99", headers=activity_user)
+        assert response.status_code == 200
+        assert response.json()["activities"] == []
+        assert response.json()["has_more"] is False
+
+    async def test_negative_offset_rejected(self, client, activity_user):
+        response = await client.get("/api/v1/users/activities?limit=5&offset=-1", headers=activity_user)
+        assert response.status_code == 422

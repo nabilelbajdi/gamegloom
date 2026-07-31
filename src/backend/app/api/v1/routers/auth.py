@@ -694,6 +694,7 @@ async def get_user_stats(
 @router.get("/users/activities", response_model=schemas.UserActivityResponse)
 async def get_user_activities(
     limit: int = Query(10, ge=1, le=50),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(security.get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -802,11 +803,16 @@ async def get_user_activities(
             target_username=review_user.username
         ))
     
-    # Sort activities by timestamp (newest first) and apply limit
+    # Sort activities by timestamp (newest first), then page. The pool is bounded
+    # by the 30-day window and the per-source limits above, so deep offsets simply
+    # run out rather than paging forever.
     activities.sort(key=lambda x: x.timestamp, reverse=True)
-    activities = activities[:limit]
+    page = activities[offset:offset + limit]
 
-    return schemas.UserActivityResponse(activities=activities)
+    return schemas.UserActivityResponse(
+        activities=page,
+        has_more=offset + limit < len(activities),
+    )
 
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)

@@ -454,6 +454,7 @@ class UserActivity(BaseModel):
 class UserActivityResponse(BaseModel):
     """Schema for user activity response."""
     activities: List[UserActivity]
+    has_more: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
