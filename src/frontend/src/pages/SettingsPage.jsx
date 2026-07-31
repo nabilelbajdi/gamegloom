@@ -3,7 +3,7 @@ import PageMeta from '../components/common/PageMeta';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, ChevronRight, Trash2, Camera, Edit3, Check, X, Mail, Download } from 'lucide-react';
-import { fetchIntegrationStatus, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount, exportMyData, fetchConnections } from '../api';
+import { fetchIntegrationStatus, linkSteamAccount, unlinkPlatform, clearAllGames, updateUserProfile, resendVerificationEmail, deleteAccount, exportMyData, fetchConnections } from '../api';
 import { format } from 'date-fns';
 import BrandLogo from '../components/common/BrandLogo';
 import PSNConnectModal from '../components/settings/PSNConnectModal';
