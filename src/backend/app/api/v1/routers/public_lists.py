@@ -121,7 +121,7 @@ def build_list_public_response(
 async def get_public_lists(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=50),
-    sort: str = Query("popular", regex="^(popular|recent|featured)$"),
+    sort: str = Query("popular", pattern="^(popular|recent|featured)$"),
     search: Optional[str] = Query(None, min_length=1, max_length=100),
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
