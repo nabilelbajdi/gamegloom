@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PageMeta from "../components/common/PageMeta";
 import { motion } from "framer-motion";
-import { Search, Sparkles, TrendingUp, Clock, Heart, Loader2 } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { Search, Sparkles, TrendingUp, Clock, Loader2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { getPublicLists, getFeaturedLists, likeList, unlikeList } from "../api";
 import ListCard, { ListCardSkeleton } from "../components/lists/ListCard";
+import FeaturedListHero, { FeaturedListHeroSkeleton } from "../components/lists/FeaturedListHero";
 import { useAuth } from "../context/AuthContext";
 import ErrorState from "../components/common/ErrorState";
 import EmptyState from "../components/common/EmptyState";
-import { getHighResImage } from "../utils/gameDisplay";
 import debounce from "lodash/debounce";
 
 const TABS = [
@@ -16,6 +16,10 @@ const TABS = [
     { id: "recent", label: "Recent", icon: Clock },
     { id: "featured", label: "Featured", icon: Sparkles }
 ];
+
+// Mirrors the backend's featured criteria so the copy can't quietly disagree with
+// what the API actually filters on.
+const FEATURED_EXPLAINER = "Lists with a description and at least five games.";
 
 // Simple cache for public lists (5 minutes TTL)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -29,8 +33,6 @@ const listsCache = {
 const BrowseListsPage = () => {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const initialLoad = useRef(true);
 
     // Get initial tab for cache lookup
     const initialTab = searchParams.get("tab") || "popular";
@@ -43,6 +45,7 @@ const BrowseListsPage = () => {
     // State - initialize from cache if available
     const [lists, setLists] = useState(hasCachedData ? listsCache.data[initialCacheKey].lists : []);
     const [featuredList, setFeaturedList] = useState(listsCache.featured || null);
+    const [featuredLoading, setFeaturedLoading] = useState(!listsCache.featured);
     const [loading, setLoading] = useState(!hasCachedData);
     const [fetchError, setFetchError] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -123,6 +126,7 @@ const BrowseListsPage = () => {
         // Use cache if fresh
         if (listsCache.featured && (Date.now() - listsCache.featuredTimestamp) < CACHE_DURATION) {
             setFeaturedList(listsCache.featured);
+            setFeaturedLoading(false);
             return;
         }
 
@@ -135,6 +139,8 @@ const BrowseListsPage = () => {
             }
         } catch (error) {
             console.error("Error fetching featured list:", error);
+        } finally {
+            setFeaturedLoading(false);
         }
     };
 
@@ -205,6 +211,17 @@ const BrowseListsPage = () => {
         setPage(1);
     };
 
+    // The hero spotlights the strongest list, which only makes sense on the
+    // unsearched Popular and Featured views.
+    const heroEligible = !debouncedSearch && (activeTab === "popular" || activeTab === "featured");
+    const showHero = heroEligible && (featuredList !== null || featuredLoading);
+
+    // Drop the hero's list from the grid; showing the same list twice in a row
+    // reads as a bug rather than emphasis.
+    const visibleLists = showHero && featuredList
+        ? lists.filter(item => item.id !== featuredList.id)
+        : lists;
+
     return (
         <div className="min-h-screen bg-dark pt-20 pb-16">
             <PageMeta title="Browse Lists" description="Explore curated game lists created by the GameGloom community." />
@@ -215,54 +232,23 @@ const BrowseListsPage = () => {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <h1 className="text-3xl font-bold text-white mb-2">Browse Lists</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                        Browse Lists
+                    </h1>
+                    <div className="mt-3 mb-3 h-px w-16 bg-gradient-to-r from-primary to-transparent" />
                     <p className="text-gray-400">
-                        Discover curated game collections from the community
+                        Curated game collections from the community
                     </p>
                 </motion.div>
 
                 {/* Featured Hero */}
-                {featuredList && !debouncedSearch && activeTab === "popular" && (
+                {showHero && (
                     <motion.div
-                        className="mb-8 rounded-2xl overflow-hidden relative h-48 md:h-64 group cursor-pointer"
+                        className="mb-8"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        onClick={() => navigate(`/lists/${featuredList.id}`)}
                     >
-                        {/* Background - upscale cover image for better quality */}
-                        <div
-                            className="absolute inset-0 bg-cover bg-center"
-                            style={{
-                                backgroundImage: `url(${getHighResImage(featuredList.games?.[0]?.coverImage) ||
-                                    "/images/placeholder-cover.jpg"
-                                    })`,
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent" />
-
-                        {/* Content */}
-                        <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                                <span className="text-xs text-primary font-semibold uppercase tracking-wide">Featured List</span>
-                            </div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 group-hover:text-primary transition-colors">
-                                {featuredList.name}
-                            </h2>
-                            {featuredList.description && (
-                                <p className="text-gray-300 text-sm md:text-base line-clamp-2 max-w-xl mb-3">
-                                    {featuredList.description}
-                                </p>
-                            )}
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
-                                <span>by {featuredList.creator?.username}</span>
-                                <span>{featuredList.game_count || featuredList.games?.length} games</span>
-                                <span className="flex items-center gap-1">
-                                    <Heart size={14} className={featuredList.user_liked ? "fill-red-500 text-red-500" : ""} />
-                                    {featuredList.likes_count}
-                                </span>
-                            </div>
-                        </div>
+                        {featuredList ? <FeaturedListHero list={featuredList} /> : <FeaturedListHeroSkeleton />}
                     </motion.div>
                 )}
 
@@ -298,11 +284,18 @@ const BrowseListsPage = () => {
                     </div>
                 </div>
 
-                {/* Results count */}
+                {/* Results count, plus what Featured actually means */}
                 {!loading && (
-                    <p className="text-sm text-gray-500 mb-4">
-                        {debouncedSearch ? `Found ${total} lists for "${debouncedSearch}"` : `${total} lists`}
-                    </p>
+                    <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <p className="text-sm text-gray-500">
+                            {debouncedSearch
+                                ? `Found ${total} ${total === 1 ? "list" : "lists"} for "${debouncedSearch}"`
+                                : `${total} ${total === 1 ? "list" : "lists"}`}
+                        </p>
+                        {activeTab === "featured" && !debouncedSearch && (
+                            <p className="text-sm text-gray-600">{FEATURED_EXPLAINER}</p>
+                        )}
+                    </div>
                 )}
 
                 {/* Lists Grid */}
@@ -324,6 +317,13 @@ const BrowseListsPage = () => {
                             title="No lists found"
                             message={`No lists match "${debouncedSearch}". Try a different search term.`}
                         />
+                    ) : activeTab === "featured" ? (
+                        <EmptyState
+                            icon={Sparkles}
+                            title="Nothing featured yet"
+                            message={`${FEATURED_EXPLAINER} Add a description and a few more games to get a list in here.`}
+                            action={{ label: "View your lists", to: "/library?tab=my_lists" }}
+                        />
                     ) : (
                         <EmptyState
                             title="No lists yet"
@@ -338,7 +338,7 @@ const BrowseListsPage = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         >
-                            {lists.map(list => (
+                            {visibleLists.map(list => (
                                 <ListCard
                                     key={list.id}
                                     list={list}
@@ -355,7 +355,7 @@ const BrowseListsPage = () => {
                         )}
 
                         {/* End of results */}
-                        {!hasMore && lists.length > 0 && (
+                        {!hasMore && visibleLists.length > 0 && (
                             <p className="text-center text-gray-600 text-sm py-8">
                                 You've reached the end
                             </p>
