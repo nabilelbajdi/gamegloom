@@ -286,6 +286,10 @@ class GameBasicInfo(BaseModel):
     game_type_name: str | None = None
     playtime_minutes: int | None = None
     last_played_at: datetime | None = None
+    # Landscape art for backdrops. Only populated where a caller needs it, since
+    # these arrays are large and most collection views only render the cover.
+    artworks: List[str] | None = None
+    screenshots: List[str] | None = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -487,7 +491,6 @@ class UserList(UserListBase):
     id: int
     user_id: int
     is_public: bool = False
-    is_featured: bool = False
     likes_count: int = 0
     created_at: datetime
     updated_at: datetime
@@ -501,7 +504,6 @@ class UserListPublic(UserListBase):
     id: int
     user_id: int
     is_public: bool = True
-    is_featured: bool = False
     likes_count: int = 0
     created_at: datetime
     updated_at: datetime

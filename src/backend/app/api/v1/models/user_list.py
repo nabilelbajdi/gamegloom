@@ -26,7 +26,6 @@ class UserList(Base):
     
     # Public/community list fields
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
     likes_count: Mapped[int] = mapped_column(Integer, default=0)
     
     # Relationship with games (many-to-many)

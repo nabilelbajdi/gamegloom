@@ -4,7 +4,7 @@ Endpoints for discovering, viewing, and liking public game lists.
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, func, desc
+from sqlalchemy import and_, func, desc, select
 from typing import List, Optional
 from datetime import datetime, timezone
 
@@ -20,9 +20,33 @@ router = APIRouter(
     tags=["lists"]
 )
 
+# A list earns "featured" on merit instead of a manually set flag: it needs a
+# description and enough games to be worth opening. This keeps the Featured tab
+# distinct from Popular, which sorts the same pool without filtering it.
+FEATURED_MIN_GAMES = 5
 
-def build_public_games_info(db: Session, user_list: UserList, limit: int = None):
-    """Build list of GameBasicInfo for public list display."""
+
+def apply_featured_criteria(query):
+    """Narrow a UserList query to lists good enough to surface as editor's picks."""
+    game_count = (
+        select(func.count(user_list_games.c.game_id))
+        .where(user_list_games.c.user_list_id == UserList.id)
+        .scalar_subquery()
+    )
+    return query.filter(
+        UserList.description.isnot(None),
+        func.length(func.trim(UserList.description)) > 0,
+        game_count >= FEATURED_MIN_GAMES,
+    )
+
+
+def build_public_games_info(db: Session, user_list: UserList, limit: int = None,
+                            include_artwork: bool = False):
+    """Build list of GameBasicInfo for public list display.
+
+    include_artwork attaches landscape artwork and screenshots, which the featured
+    hero uses as a backdrop. Left off elsewhere to keep grid payloads small.
+    """
     games_info = []
     games_to_process = user_list.games[:limit] if limit else user_list.games
     
@@ -63,7 +87,9 @@ def build_public_games_info(db: Session, user_list: UserList, limit: int = None)
                 first_release_date=game.first_release_date,
                 added_at=game_added_at,
                 updated_at=datetime.now(timezone.utc),
-                status="in_list"
+                status="in_list",
+                artworks=game.artworks if include_artwork else None,
+                screenshots=game.screenshots if include_artwork else None
             )
         )
     
@@ -75,7 +101,8 @@ def build_list_public_response(
     user_list: UserList, 
     current_user_id: Optional[int] = None,
     include_games: bool = True,
-    game_limit: int = None
+    game_limit: int = None,
+    include_artwork: bool = False
 ) -> schemas.UserListPublic:
     """Build a UserListPublic response with creator info and like status."""
     # Get creator info
@@ -98,7 +125,10 @@ def build_list_public_response(
         user_liked = like is not None
     
     # Get games if requested
-    games = build_public_games_info(db, user_list, game_limit) if include_games else []
+    games = (
+        build_public_games_info(db, user_list, game_limit, include_artwork)
+        if include_games else []
+    )
     
     return schemas.UserListPublic(
         id=user_list.id,
@@ -106,7 +136,6 @@ def build_list_public_response(
         description=user_list.description,
         user_id=user_list.user_id,
         is_public=user_list.is_public,
-        is_featured=user_list.is_featured,
         likes_count=user_list.likes_count,
         created_at=user_list.created_at,
         updated_at=user_list.updated_at,
@@ -132,7 +161,7 @@ async def get_public_lists(
     Sort options:
     - popular: By likes count (descending)
     - recent: By updated date (descending)
-    - featured: Featured lists first, then by likes
+    - featured: Only lists meeting the editor's-pick bar, best first
     
     Search:
     - Searches list name and description (case-insensitive)
@@ -154,7 +183,10 @@ async def get_public_lists(
     elif sort == "recent":
         query = query.order_by(desc(UserList.updated_at))
     elif sort == "featured":
-        query = query.order_by(desc(UserList.is_featured), desc(UserList.likes_count))
+        # Filter before counting so pagination reflects the narrowed pool.
+        query = apply_featured_criteria(query).order_by(
+            desc(UserList.likes_count), desc(UserList.updated_at)
+        )
     
     # Get total count
     total = query.count()
@@ -185,17 +217,18 @@ async def get_featured_lists(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Get featured/popular lists for homepage display."""
-    lists = db.query(UserList).filter(
-        UserList.is_public == True
+    """Get editor's-pick lists for the browse hero and homepage display."""
+    lists = apply_featured_criteria(
+        db.query(UserList).filter(UserList.is_public == True)
     ).order_by(
-        desc(UserList.is_featured),
-        desc(UserList.likes_count)
+        desc(UserList.likes_count),
+        desc(UserList.updated_at)
     ).limit(limit).all()
     
     current_user_id = current_user.id if current_user else None
     return [
-        build_list_public_response(db, lst, current_user_id, include_games=True, game_limit=5)
+        build_list_public_response(db, lst, current_user_id, include_games=True,
+                                   game_limit=5, include_artwork=True)
         for lst in lists
     ]
 
